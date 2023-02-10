@@ -5,24 +5,22 @@ from scipy.signal import savgol_filter
 def FindOptimalOrder_SGF(DataInterval, WindowSize, PRN, NumInt):
     #Pre computed values for optimar order and error for the filter
     #are written, expecting to be changed through the next loop
-    OptimalError = 0.0
+    OptimalR2 = 0.0
     OptimalOrder = 1
+    IntervalTime = diff(DataInterval[PRN][0][NumInt]).mean()
     # Only explore polynomial orders from 1 to 10
     for order in range(1, 11):
         interval_tendency = savgol_filter(DataInterval[PRN][1][NumInt], WindowSize[PRN][NumInt],
-        order,delta=diff(DataInterval[PRN][0][NumInt]).mean(),mode="nearest")
+        order, delta=IntervalTime, mode="nearest")
 
-        meanFilter = interval_tendency.mean()
         meanOriSignal = DataInterval[PRN][1][NumInt].mean()
-
+        sr = sum((DataInterval[PRN][1][NumInt] - interval_tendency)**2.0)
         st = sum((DataInterval[PRN][1][NumInt] - meanOriSignal)**2.0)
-        sr = sum((DataInterval[PRN][1][NumInt] - meanFilter)**2.0)
 
         # Computing R2 score
-        r2 = 1.0 - (sr/st)
-
-        if r2 > OptimalError:
-            OptimalError  = r2
+        R2 = 1.0 - (sr/st)
+        if OptimalR2 < R2 < 1.0:
+            OptimalR2  = R2
             OptimalOrder = order
 
     return OptimalOrder

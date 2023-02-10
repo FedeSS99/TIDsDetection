@@ -7,9 +7,9 @@ import os
 from numpy import array, where
 from collections import Counter
 
-from DataAnalysisRoutines.VTEC_IntervalsSubRoutines import ObtainIntervalsWith_SGFilter
-from PlottingResultsRoutines.VTEC_PlottingSIgnals import CMN_SignalPlots, CreateSignalPlotFigure
-from DataAnalysisRoutines.VTEC_WaveletSpectrum import CMN_WaveletAnalysis
+from DataScripts.VTEC_IntervalsSubRoutines import ObtainIntervalsWith_SGFilter
+from DataScripts.VTEC_WaveletSpectrum import CMN_WaveletAnalysis
+from PlottingScripts.VTEC_PlottingSignals import CMN_SignalPlots, CreateSignalPlotFigure
 
 def select_file(window):
     window.cmn_file = askopenfile(title="Select cmn file to read", filetypes=[("Cmn", "*.Cmn")])
