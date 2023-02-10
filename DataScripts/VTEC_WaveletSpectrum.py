@@ -11,15 +11,15 @@ def GetCOIcurveToPeriods(coi, dt, N):
     coi = coi * dt * (N / 2 - np.abs(np.arange(0, N) - (N - 1) / 2))
     return coi
 
-def ObtainDataFromRegion(Spectrum, TID_Region, Time, Period):
+def ObtainDataFromRegion(Spectrum, Signal, TID_Region, Time, Period):
     #Obtain data from the power spectrum given the pair of
     #coordinates in TID_Region and return values like time, period
     #and power from Time, Period and Spectrum
-    x0, y0 = TID_Region[0]
-    x1, y1 = TID_Region[1]
+    t0, p0 = TID_Region[0]
+    t1, p1 = TID_Region[1]
 
-    minTime, maxTime = min(x0, x1), max(x0, x1)
-    minPeriod, maxPeriod = min(y0, y1), max(y0, y1)
+    minTime, maxTime = min(t0, t1), max(t0, t1)
+    minPeriod, maxPeriod = min(p0, p1), max(p0, p1)
 
     #Get indexes in Time and Period array given the minimum and
     #maximum respective values
@@ -38,10 +38,12 @@ def ObtainDataFromRegion(Spectrum, TID_Region, Time, Period):
     IndexMaxPeriodTID = np.argwhere(RegionTID == maxPowerTID)
     TimeTID = Time[MaskMinTime + IndexMaxPeriodTID[0][1]]
     PeriodTID = Period[MaskMinPeriod + IndexMaxPeriodTID[0][0]]
-    MidTimeTID = 0.5*(maxTime + minTime)
-    MidPeriodTID = 0.5*(maxPeriod + minPeriod)
 
-    return MidTimeTID, TimeTID, MidPeriodTID, PeriodTID, maxPowerTID
+    # Get min and max amplitude on Signal between minTime and maxTime interval
+    minSig = Signal[MaskTime].min()
+    maxSig = Signal[MaskTime].max()
+
+    return TimeTID, PeriodTID, maxPowerTID, minTime, maxTime, minPeriod, maxPeriod, minSig, maxSig
 
 def ObtainWidthAndHeight(Region):
     #Obtaining region dimensions by the following scheme:
@@ -156,7 +158,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     CantRegions = len(TIDsRegions)
     DataRegions = []
     for i in range(CantRegions):
-        DataRegion = ObtainDataFromRegion(powerWavelet, TIDsRegions[i], time_data_CMN, Periods)
+        DataRegion = ObtainDataFromRegion(powerWavelet, vtec_data_CMN, TIDsRegions[i], time_data_CMN, Periods)
         DataRegions.append(DataRegion)
 
     MainFigure.clear()
@@ -215,13 +217,11 @@ def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, MainPlotName, fileOutR
                 RepeatedEvents.append(j)
 
     RepeatedEvents = set(RepeatedEvents)
-
     for i in range(NumEvents):
         if i not in RepeatedEvents:
-            InitTime, FinalTime = TIDsEvents[i][0][0], TIDsEvents[i][1][0]
-            InitPeriod, FinalPeriod = TIDsEvents[i][0][1], TIDsEvents[i][1][1]
-            MidTime, Time = DataEvents[i][0], DataEvents[i][1]
-            MidPeriod, Period = DataEvents[i][2], DataEvents[i][3]
-            PowerTID = DataEvents[i][4] 
-            dataString = f"{InitTime:.6f} {FinalTime:.6f} {InitPeriod:.6f} {FinalPeriod:.6f} {MidTime:.6f} {Time:.6f} {MidPeriod:.6f} {Period:.6f} {PowerTID:.8e}\n"
+            TimeTID, PeriodTID, maxPowerTID = DataEvents[i][:3]
+            minTime, maxTime = DataEvents[i][3:5]
+            minPeriod, maxPeriod = DataEvents[i][5:7]
+            minSig, maxSig = DataEvents[i][7:] 
+            dataString = f"{TimeTID:.6f} {PeriodTID:.6f} {maxPowerTID:.6f} {minTime:.6f} {maxTime:.6f} {minPeriod:.6f} {maxPeriod:.6f} {minSig:.6f} {maxSig:.6f}\n"
             fileOutResults.write(dataString)

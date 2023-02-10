@@ -63,7 +63,7 @@ def select_file(window):
         # Start a file to save TIDs data from detrended signals
         with open(plot_name+"_TIDs.dat", "w") as OutTIDs: 
             OutTIDs.write(f"#TIDs data obtained with {plot_name}\n")
-            OutTIDs.write("#InitTime FinalTime InitPeriod MaxPeriod MidTime TimeTID MidPeriod MaxPowPeriod MaxPower\n")
+            OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)
 
 
