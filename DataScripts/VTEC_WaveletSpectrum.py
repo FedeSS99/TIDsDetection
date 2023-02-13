@@ -1,6 +1,5 @@
 from matplotlib.gridspec import GridSpec
-from matplotlib.pyplot import figure, colorbar, show
-from matplotlib.colors import LogNorm
+from matplotlib.pyplot import figure, colorbar
 from math import log2, pi, sqrt
 import numpy as np
 import scipy.signal as signal
@@ -163,6 +162,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
 
     MainFigure.clear()
     return TIDsRegions, DataRegions
+
 
 def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, MainPlotName, fileOutResults):
     #Fourier Factor for Morlet

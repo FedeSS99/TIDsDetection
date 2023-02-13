@@ -23,6 +23,10 @@ def select_file(window):
         cmn_file_path = window.cmn_file.name
         new_path_name = cmn_file_path.split("/")[-1]
         plot_name = new_path_name.split(".")[0]
+        STATION_NAME = plot_name[:4]
+
+        if not os.path.exists(STATION_NAME):
+            os.mkdir(STATION_NAME)
 
         #------------------------------------------------------------------------------------
         with open(cmn_file_path, "+r") as cmn_file:
@@ -61,7 +65,7 @@ def select_file(window):
         CMN_SignalPlots(Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn, SignalPlots)
         
         # Start a file to save TIDs data from detrended signals
-        with open(plot_name+"_TIDs.dat", "w") as OutTIDs: 
+        with open(STATION_NAME+"/"+plot_name+"_TIDs.dat", "w") as OutTIDs: 
             OutTIDs.write(f"#TIDs data obtained with {plot_name}\n")
             OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)

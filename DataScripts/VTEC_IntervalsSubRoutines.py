@@ -2,7 +2,7 @@ from numpy import array, split, where, diff
 from scipy.signal import savgol_filter
 
 
-def FindOptimalOrder_SGF(DataInterval, WindowSize, PRN, NumInt):
+def FindOptimalOrder_SGF(DataInterval, WindowSize_PRN_P, PRN, NumInt):
     #Pre computed values for optimar order and error for the filter
     #are written, expecting to be changed through the next loop
     OptimalR2 = 0.0
@@ -10,7 +10,7 @@ def FindOptimalOrder_SGF(DataInterval, WindowSize, PRN, NumInt):
     IntervalTime = diff(DataInterval[PRN][0][NumInt]).mean()
     # Only explore polynomial orders from 1 to 10
     for order in range(1, 11):
-        interval_tendency = savgol_filter(DataInterval[PRN][1][NumInt], WindowSize[PRN][NumInt],
+        interval_tendency = savgol_filter(DataInterval[PRN][1][NumInt], WindowSize_PRN_P,
         order, delta=IntervalTime, mode="nearest")
 
         meanOriSignal = DataInterval[PRN][1][NumInt].mean()
@@ -41,29 +41,32 @@ def ObtainIntervalsWith_SGFilter(time_vtec_readings, time_window):
     timeOriginal = dict()
     vtecOriginal = dict()
 
+    prnNumbers =time_vtec_readings.keys()
     #A for cycle that will split and save each satellite data set in the previous
     #list
-    prnNumbers =time_vtec_readings.keys()
     for prn in prnNumbers:
         time_difference = diff(time_vtec_readings[prn][0])
         minDiff = time_difference.min()
         intervals_cut = where(time_difference>2.0*minDiff)[0]
 
         if intervals_cut.shape[0] > 0:
-            dataIntervals = (split(time_vtec_readings[prn][0], intervals_cut+1), split(time_vtec_readings[prn][1], intervals_cut+1))
-            all_intervals[prn] = [dataIntervals[0], dataIntervals[1]]
+            dataIntervals = [split(time_vtec_readings[prn][i], intervals_cut+1) for i in range(2)]
+            all_intervals[prn] = dataIntervals
         else:
-            all_intervals[prn] = [array([time_vtec_readings[prn][0]]), array([time_vtec_readings[prn][1]])]
+            all_intervals[prn] = [array([time_vtec_readings[prn][i]]) for i in range(2)]
 
         timeOriginal[prn] = all_intervals[prn][0]
         vtecOriginal[prn] = all_intervals[prn][1]
 
         #The average time interval for each time data set is required to know
-        #the windows size that will be used on the running average
+        #the windows size that will be used on the Savitzky-Golay filter
         windows_sizes = []
         for time_interval in all_intervals[prn][0]:
-            average_delta_t = diff(time_interval).mean()
-            windows_sizes.append(int(time_window/average_delta_t + 0.5))
+            try:
+                average_delta_t = diff(time_interval).mean()
+                windows_sizes.append(int(time_window/average_delta_t + 0.5))
+            except ValueError:
+                windows_sizes.append(-1.0)
 
         all_windows_sizes[prn] = windows_sizes
 
@@ -73,12 +76,14 @@ def ObtainIntervalsWith_SGFilter(time_vtec_readings, time_window):
         time_interval_no_tendency = []
         vtec_interval_no_tendency = []
         for p in range(len(all_intervals[prn][1])):
-            if all_windows_sizes[prn][p]<len(all_intervals[prn][1][p]):
+            WindowSize_PRN_P = all_windows_sizes[prn][p]
+
+            if WindowSize_PRN_P<len(all_intervals[prn][1][p]) and WindowSize_PRN_P != -1.0:
                 # Find order of SG filter that minimizes error
-                OptimalOrder = FindOptimalOrder_SGF(all_intervals, all_windows_sizes, prn, p)
+                OptimalOrder = FindOptimalOrder_SGF(all_intervals, WindowSize_PRN_P, prn, p)
 
                 #Detrending data with the optimal filter order with the minimum error
-                interval_tendency = savgol_filter(all_intervals[prn][1][p], all_windows_sizes[prn][p],
+                interval_tendency = savgol_filter(all_intervals[prn][1][p], WindowSize_PRN_P,
                 OptimalOrder,delta=diff(all_intervals[prn][0][p]).mean(),mode="nearest")
 
                 sizeIntervalTendency = interval_tendency.shape[0]
@@ -87,7 +92,8 @@ def ObtainIntervalsWith_SGFilter(time_vtec_readings, time_window):
                 time_interval_no_tendency.append(array(all_intervals[prn][0][p][num_elements_interval-sizeIntervalTendency:]))
                 vtec_interval_no_tendency.append(array(all_intervals[prn][1][p][num_elements_interval-sizeIntervalTendency:]-interval_tendency))
 
-        time_no_tendency[prn] = time_interval_no_tendency
-        vtec_no_tendency[prn] = vtec_interval_no_tendency
+            if time_interval_no_tendency:
+                time_no_tendency[prn] = time_interval_no_tendency
+                vtec_no_tendency[prn] = vtec_interval_no_tendency
 
     return timeOriginal, vtecOriginal, time_no_tendency, vtec_no_tendency
