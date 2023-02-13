@@ -7,28 +7,21 @@ def SingleTIDs_Analysis(TID_path):
         tid_file_lines = tid_file.readlines()
 
         #Reading and saving data from tid_file
-        MinPeriods, MaxPeriods = [], []
-        MidTimeTIDs, TimeTIDs = [], []
-        MidPeriodTIDs, PeriodTIDs = [], []
-        MaxPowerTIDs = []
+        TimeTIDS, PeriodTIDS, PowerTIDS = [], [], []
         #Starting at third line
         for line in tid_file_lines[2:]:
-            splitData = line.split()
+            TID_Data = [float(x) for x in line.split()] 
 
-            MinPeriods.append(splitData[2])
-            MaxPeriods.append(splitData[3])
-            MidTimeTIDs.append(splitData[4])
-            TimeTIDs.append(splitData[5])
-            MidPeriodTIDs.append(splitData[6])
-            PeriodTIDs.append(splitData[7])
-            MaxPowerTIDs.append(splitData[8])
+            TimeTIDS.append( TID_Data[0] )
+            PeriodTIDS.append( TID_Data[1] )
+            PowerTIDS.append( TID_Data[2] )
 
         #Declaring lists of data as numpy arrays
-        MinPeriods, MaxPeriods = array(MinPeriods, dtype=float64), array(MaxPeriods, dtype=float64)
-        MidTimeTIDs = array(MidTimeTIDs, dtype=float64)
-        TimeTIDs = array(TimeTIDs, dtype=float64)
-        MidPeriodTIDs = array(MidPeriodTIDs, dtype=float64)
-        PeriodTIDs = array(PeriodTIDs, dtype=float64)
-        MaxPowerTIDs = array(MaxPowerTIDs, dtype=float64)
+        TimeTIDS = array(TimeTIDS, dtype=float64)
+        PeriodTIDS = array(TimeTIDS, dtype=float64)
+        PowerTIDS = array(TimeTIDS, dtype=float64)
 
-    return MinPeriods, MaxPeriods, MidTimeTIDs, TimeTIDs, MidPeriodTIDs, PeriodTIDs, MaxPowerTIDs
+    if TimeTIDS.size == PeriodTIDS.size == PowerTIDS.size:
+        return TimeTIDS, PeriodTIDS, PowerTIDS
+    else:
+        return False

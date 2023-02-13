@@ -1,14 +1,13 @@
 from tqdm import tqdm
 from tkinter import Button, Tk
 from os import listdir
-import tkfilebrowser
 from numpy import where, concatenate
 from matplotlib import rcParams
-from matplotlib.pyplot import close, style
+from matplotlib.pyplot import close
 
-from DataAnalysisRoutines.GetDataFile import SingleTIDs_Analysis
-from DataAnalysisRoutines.HistogramOcurrence import Time_Months_Ocurrence_Analysis
-from PlottingResultsRoutines.CreatePlots import *
+from DataScripts.GetDataFile import SingleTIDs_Analysis
+from DataScripts.HistogramOcurrence import Time_Months_Ocurrence_Analysis
+from PlottingScripts.CreatePlots import *
 
 #Ignore events that occoured in dates where a geomagnetic
 #storm had a major effect in the Dst value
@@ -60,13 +59,14 @@ def StarAnnualAnalysis():
                 for fileTID, MonthFile, Date_TID in tqdm(zip(files_month_full_path, MonthPerFile, Dates_TIDs)):
                     if Date_TID not in StormDays:
                         Results = SingleTIDs_Analysis(fileTID)
-                        SizeResults = Results[0].size
-                        if SizeResults > 0:
+                        if SizeResults:
                             ActiveDays += 1
+                            SizeResults = Results[0].size
+
                             MonthArray.append(SizeResults*[MonthFile])
-                            ResultsTimeTID.append(Results[3])
-                            ResultsPeriodTID.append(Results[5])
-                            ResultsPowerTID.append(Results[6])
+                            ResultsTimeTID.append(Results[0])
+                            ResultsPeriodTID.append(Results[1])
+                            ResultsPowerTID.append(Results[2])
 
             MonthArray = concatenate(tuple(MonthArray), dtype=int)
             ResultsTimeTID = concatenate(tuple(ResultsTimeTID))
@@ -140,17 +140,4 @@ if __name__=="__main__":
     rcParams["font.family"] = "serif"
     rcParams["savefig.dpi"] = 400
 
-    #Create Tkinter app to select and extract data from TIDs
-    #identified in time series of dTEC given .Cmn files
-    window = Tk()
-    window.geometry('360x100')
-    window.resizable(width=False, height=False)
-    window.title('Annual TIDs Data Analysis')
-
-    ButtonSelect = Button(window, text='Select Years', command=lambda: Select_Years_Directory())
-    ButtonStarAnalysis = Button(window, text="Start Analysis", command=lambda: StarAnnualAnalysis())
-    ButtonClose = Button(window, text='Close window', command=lambda: window.quit())
-    ButtonSelect.pack()
-    ButtonStarAnalysis.pack()
-    ButtonClose.pack()
-    window.mainloop()
+    
