@@ -24,9 +24,10 @@ def select_file(window):
         new_path_name = cmn_file_path.split("/")[-1]
         plot_name = new_path_name.split(".")[0]
         STATION_NAME = plot_name[:4]
+        SAVEFILE_PATH = "../Análisis/"+STATION_NAME
 
-        if not os.path.exists(STATION_NAME):
-            os.mkdir(STATION_NAME)
+        if not os.path.exists(SAVEFILE_PATH):
+            os.mkdir(SAVEFILE_PATH)
 
         #------------------------------------------------------------------------------------
         with open(cmn_file_path, "+r") as cmn_file:
@@ -65,7 +66,7 @@ def select_file(window):
         CMN_SignalPlots(Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn, SignalPlots)
         
         # Start a file to save TIDs data from detrended signals
-        with open(STATION_NAME+"/"+plot_name+"_TIDs.dat", "w") as OutTIDs: 
+        with open(SAVEFILE_PATH+"/"+plot_name+"_TIDs.dat", "w") as OutTIDs: 
             OutTIDs.write(f"#TIDs data obtained with {plot_name}\n")
             OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)
@@ -75,6 +76,7 @@ if __name__=="__main__":
     #Change Matplotlib's backend and font family
     use('TkAgg')
     rcParams.update({'font.family':'serif'})
+    rcParams.update({'savefig.dpi': 300})
 
     #Create and show Tkinter app for user to start the analysis of data
     #in .Cmn file

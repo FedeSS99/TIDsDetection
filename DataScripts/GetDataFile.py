@@ -18,8 +18,8 @@ def SingleTIDs_Analysis(TID_path):
 
         #Declaring lists of data as numpy arrays
         TimeTIDS = array(TimeTIDS, dtype=float64)
-        PeriodTIDS = array(TimeTIDS, dtype=float64)
-        PowerTIDS = array(TimeTIDS, dtype=float64)
+        PeriodTIDS = array(PeriodTIDS, dtype=float64)
+        PowerTIDS = array(PowerTIDS, dtype=float64)
 
     if TimeTIDS.size == PeriodTIDS.size == PowerTIDS.size:
         return TimeTIDS, PeriodTIDS, PowerTIDS

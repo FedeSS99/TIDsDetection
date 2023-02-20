@@ -14,8 +14,8 @@ def FindOptimalOrder_SGF(DataInterval, WindowSize_PRN_P, PRN, NumInt):
         order, delta=IntervalTime, mode="nearest")
 
         meanOriSignal = DataInterval[PRN][1][NumInt].mean()
-        sr = sum((DataInterval[PRN][1][NumInt] - interval_tendency)**2.0)
-        st = sum((DataInterval[PRN][1][NumInt] - meanOriSignal)**2.0)
+        sr = ((DataInterval[PRN][1][NumInt] - interval_tendency)**2.0).sum()
+        st = ((DataInterval[PRN][1][NumInt] - meanOriSignal)**2.0).sum()
 
         # Computing R2 score
         R2 = 1.0 - (sr/st)

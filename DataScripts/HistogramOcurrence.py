@@ -17,7 +17,8 @@ def Time_Months_Ocurrence_Analysis(Time, Months_TIDs):
         index = Month - 1
 
         TimeHistogramByMonth, _ = histogram(TimeByMonth, bins=TimeBins, range=TimeRange)
+        TimeHistogramByMonth = 100*TimeHistogramByMonth/TimeHistogramByMonth.sum()
         HistogramMonths[index,:] = TimeHistogramByMonth[:]
 
-    HistogramMonths *= (100/HistogramMonths.sum())
+    #HistogramMonths *= (100/HistogramMonths.sum())
     return HistogramMonths
