@@ -79,7 +79,7 @@ def addTimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
             BoxPlot = Plots[1].boxplot(PowerMask, sym="x", positions=[Index + 0.5], patch_artist=True,
                                         widths=0.25)
             
-            for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"]]:
+            for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
                 for patch in ComponentBoxPlot:
                     patch.set_color(Color)
                     patch.set_linewidth(2)
@@ -91,6 +91,11 @@ def addTimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
     #Plots[1].errorbar(x=MidTimes, y=MeanPerHours, yerr=StdPerHours, ecolor=Color,
     #                color=Color, elinewidth=2.0, capthick=2.0, capsize=10.0, fmt="o",
     #                label=Name)
+
+    Plots[1].set_xticks([])
+    XTICKS = [i for i in range(0, 25, 4)]
+    Plots[1].set_xticks(ticks=XTICKS, labels=XTICKS)
+
     return BoxPlot["boxes"][0]
 
 

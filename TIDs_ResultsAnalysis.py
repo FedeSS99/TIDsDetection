@@ -26,6 +26,8 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     #saved with VTEC_MainRoutine_IndividualCMN.py
     RESULTS = []
     PowerPlot = CreateResultsFigurePower()
+    ListBoxPlots = []
+    ListLegendsBoxPlots = []
     for Region in DICT_REGION_STATIONS.keys():
         ActiveDays = 0
         TotalDays = 0
@@ -33,10 +35,10 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         ResultsPeriodTID = []
         ResultsPowerTID = []
         MonthArray = []
-        ListBoxPlots = []
-        ListLegendsBoxPlots = []
+
 
         NameOut = DICT_REGION_STATIONS[Region]["Path"].split("/")[-1]
+        print(f"-- Working on {NameOut} region --")
         #Obtain the full path of the files located in the selected directories and
         #the dates and months of these same files
         for path in DICT_REGION_STATIONS[Region]["Stations"]:
@@ -66,9 +68,9 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         #Get the timezone given NameOut
         if NameOut == "Center":
             TimeZone = -6.0
-        elif NameOut == "North":
+        if NameOut == "North":
             TimeZone = -8.0
-        elif NameOut == "South":
+        if NameOut == "South":
             TimeZone = -5.0
         #Apply timezone to get correct Local Time Hours
         ResultsTimeTID += TimeZone
@@ -90,23 +92,22 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     for DataResults in RESULTS:
         #Get a string Coord to use in the analysis' plots results
         NamePlot = DataResults[-1]
-        Coord = NameOut
         
-        if NameOut == "Center":
+        if NamePlot == "Center":
             NamePower = "LNIG-MNIG-UCOE"
             ColorPower = "red"
             RegIndex = 0
-        elif NameOut == "North":
+        if NamePlot == "North":
             NamePower = "PTEX"
             ColorPower = "green"
             RegIndex = 1
-        elif NameOut == "South":
+        if NamePlot == "South":
             NamePower = "CN24"
             ColorPower = "blue"
             RegIndex = 2
 
         #Start creating Matplotlib plot to visualize the statistics given the data from RESULTS
-        PlotsResults = CreateFiguresResults(Coord)
+        PlotsResults = CreateFiguresResults(NameOut)
         AddTimeMonthsHistogramToPlot(DataResults[2], MIN, MAX, PlotsResults, NamePlot)
         AddPeriodHistogramToPlot(DataResults[3], DataResults[0], DataResults[1], PlotsResults, NamePlot)
         BoxPlotObject = addTimePowerDataResultsToPlot(DataResults[0], DataResults[4], PowerPlot, ColorPower, RegIndex)
@@ -139,8 +140,8 @@ if __name__=="__main__":
     DATA_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/TIDs/Análisis/"
     RESULTS_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/TIDs/Resultados/"
 
-    SUBDIRECTORIES_DATA = [["mnig", "lnig"]]
-    SUBDIRECTORIES_RESULTS = ["Center"]
+    SUBDIRECTORIES_DATA = [["mnig", "lnig"], ["ptex"]]
+    SUBDIRECTORIES_RESULTS = ["Center", "North"]
 
     InputDict = CreateInputDictionary(SUBDIRECTORIES_DATA, SUBDIRECTORIES_RESULTS,
                                         DATA_COMMON_PATH, RESULTS_COMMON_PATH)
