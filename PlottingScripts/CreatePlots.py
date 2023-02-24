@@ -324,15 +324,15 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
             MeanAmps_Dict["Night"]["STD"].append( 0 )
 
     # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
-    Indexes = list(range(24))
+    Indexes = list(range(0,24,2))
     for Index in Indexes:
-        MaskTime = np.where((Index <= Time_TIDs) & (Time_TIDs <= Index+1), True, False)
+        MaskTime = np.where((Index <= Time_TIDs) & (Time_TIDs <= Index+2), True, False)
         AverageMinMax_Amps = (np.abs(MinA[MaskTime]) + MaxA[MaskTime])/2.0
         AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
         if AverageMinMax_Amps.size  > 0:
 
             BoxPlot = Plots[1][3][0].boxplot(AverageMinMax_Amps, sym="x", positions=[Index + 0.5], patch_artist=True,
-                                        widths=0.25)
+                                        widths=0.5)
             
             for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
                 for patch in ComponentBoxPlot:

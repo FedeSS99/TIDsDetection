@@ -122,7 +122,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
         Add_BarsFreq_Month(DataResults[0], DataResults[1], PlotsResults, NamePlot)
         Add_AmplitudesAnalysis(DataResults[5], DataResults[6], DataResults[0], DataResults[1], PlotsResults, NamePlot)
-        for i in range(2,5):
+        for i in range(2,6):
             close(i)
     
     PowerPlot[1].set_yscale("log", subs=None)
