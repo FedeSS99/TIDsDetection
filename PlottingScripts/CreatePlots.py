@@ -1,13 +1,15 @@
 from matplotlib import use
 from matplotlib.pyplot import figure, colorbar
+from matplotlib.cm import get_cmap
+from matplotlib.colors import LinearSegmentedColormap, BoundaryNorm
 
 from statistics import quantiles
 import numpy as np
-from scipy.interpolate import interp1d
 from lmfit.models import GaussianModel
 
 use("TkAgg")
 
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateResultsFigurePower():
     #Create main figure for each analysis
     FigurePowerTime = figure(1, figsize=(8,6))
@@ -22,22 +24,26 @@ def CreateResultsFigurePower():
 
     return (FigurePowerTime, SubPlot_PowerTime)
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateFiguresResults(Coord):
     #Create main figure for each analysis
     FigureTimeHist = figure(2, figsize=(6,6))
     FigurePeriodsHist = figure(3, figsize=(6,6))
     Figure_MonthBars = figure(4, figsize=(6,6))
+    Figure_AmpsAnalysis = figure(5, figsize=(6,6))
 
     SubPlot_TimeHist = FigureTimeHist.add_subplot(111)
     SubPlot_PeriodHist = FigurePeriodsHist.add_subplot(111)
     SubPlot_MonthsFreq = Figure_MonthBars.add_subplot(111)
+    Sub1_AmpsAnalysis = Figure_AmpsAnalysis.add_subplot(211)
+    Sub2_AmpsAnalysis = Figure_AmpsAnalysis.add_subplot(212)
 
     #Setting titles
     Coord_String = f"\n{Coord} Region"
     SubPlot_TimeHist.set_title(f"Annual Ocurrence of TIDs through LT"+Coord_String)
     SubPlot_PeriodHist.set_title(f"Distribution of observed periods"+Coord_String)
     SubPlot_MonthsFreq.set_title(f"Number of TIDs by Day-Night"+Coord_String)
+    Figure_AmpsAnalysis.suptitle(f"Analysis of dTEC amplitudes by LT and Month"+Coord_String)
 
     #Time Histogram labels
     SubPlot_TimeHist.set_xlabel("Local Time (Hours)")
@@ -45,36 +51,31 @@ def CreateFiguresResults(Coord):
     #Period Histogram labels
     SubPlot_PeriodHist.set_xlabel("TID Period (Minutes)")
     SubPlot_PeriodHist.set_ylabel("Probability Density")
-    #Month frequencies tables
+    #Month frequencies labels
     SubPlot_MonthsFreq.set_ylabel("Number of events")
+    #Amplitudes analysis labels
+    Sub1_AmpsAnalysis.set_xlabel("Local Time (Hours)")
+    Sub1_AmpsAnalysis.set_ylabel("Amplitude (dTEC units)")
+    Sub2_AmpsAnalysis.set_ylabel("Amplitude (dTEC units)")
 
-    return [(FigureTimeHist, FigurePeriodsHist, Figure_MonthBars), (SubPlot_TimeHist, SubPlot_PeriodHist, SubPlot_MonthsFreq)]
 
+    return [(FigureTimeHist, FigurePeriodsHist, Figure_MonthBars, Figure_AmpsAnalysis), 
+            (SubPlot_TimeHist, SubPlot_PeriodHist, SubPlot_MonthsFreq, (Sub1_AmpsAnalysis, Sub2_AmpsAnalysis))]
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 def SavePlot(GenName, RegName, PlotFigure):
     for format in ["png", "pdf"]:
-        PlotFigure.savefig(f"./../Resultados/{RegName}/{GenName}_{RegName}.{format}")
+        PlotFigure.savefig(f"./../Resultados/{RegName}/{GenName}{RegName}.{format}")
 
-def addTimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
-    #Plotting mean power with its deviation
-    #Lists to save middle times, mean power and deviation
-    #MidTimes = []
-    #MeanPerHours = []
-    #StdPerHours = []
+# -------------------------------------------------------------------------------------------------------------------------------------------------
+def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
+    #Plotting boxplots for each hour interval given the station's index
     Indexes = list(range(Start, 24, 3))
-    LastIndex = Indexes[-1]
-    DictBoxPlots = dict()
-    ClearLabels = len(Indexes)*[]
     for Index in Indexes:
         MaskTime = np.where((Index <= Time) & (Time <= Index+1), True, False)
         PowerMask = Power[MaskTime]
         PowerMask = PowerMask.reshape(PowerMask.size, 1)
         if PowerMask.size  > 0:
-            #MeanPower = PowerMask.mean()
-            #StdPower = PowerMask.std()
-
-            #MidTimes.append(i + 0.5)
-            #MeanPerHours.append(MeanPower)
-            #StdPerHours.append(StdPower)
 
             BoxPlot = Plots[1].boxplot(PowerMask, sym="x", positions=[Index + 0.5], patch_artist=True,
                                         widths=0.25)
@@ -88,18 +89,14 @@ def addTimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
                 BoxComponent.set_facecolor("None")
                 BoxComponent.set_edgecolor(Color)
 
-    #Plots[1].errorbar(x=MidTimes, y=MeanPerHours, yerr=StdPerHours, ecolor=Color,
-    #                color=Color, elinewidth=2.0, capthick=2.0, capsize=10.0, fmt="o",
-    #                label=Name)
-
     Plots[1].set_xticks([])
     XTICKS = [i for i in range(0, 25, 4)]
     Plots[1].set_xticks(ticks=XTICKS, labels=XTICKS)
 
     return BoxPlot["boxes"][0]
 
-
-def AddTimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
+# -------------------------------------------------------------------------------------------------------------------------------------------------
+def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     #Setting number of bins and time range for histogram
     TimeRange = (0.0, 24.0)
     MonthRange = (0, 12)
@@ -114,11 +111,22 @@ def AddTimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     Plots[1][0].set_ylim(*MonthRange)
     Plots[1][0].set_xticks(timeTicks)
 
-    #ImageArray = np.ma.masked_where(HistogramMonths == 0.0, HistogramMonths)
-    #HistogramaImagen = Plots[1][0].imshow(ImageArray, cmap="nipy_spectral",
-    #vmin=absMin, vmax=absMax, aspect="auto", origin="lower", extent=extent)
-    HistogramaImagen = Plots[1][0].imshow(HistogramMonths, cmap="nipy_spectral", interpolation="none",
-    vmin=absMin, vmax=absMax, aspect="auto", origin="lower", extent=extent)
+    # Define the colormap
+    Cmap = get_cmap("jet")
+    # Extract all colors from the jet map
+    Cmaplist = [Cmap(i) for i in range(Cmap.N)]
+    # Force the first color entry to be black
+    Cmaplist[0] = (0, 0, 0, 1.0)
+
+    # Create the new map
+    Cmap = LinearSegmentedColormap.from_list('Ocurrence Map', Cmaplist, Cmap.N)
+
+    # define the bins and normalize
+    bounds = np.linspace(absMin, absMax, 6)
+    Norm = BoundaryNorm(bounds, Cmap.N)
+
+    HistogramaImagen = Plots[1][0].imshow(HistogramMonths, cmap=Cmap, norm=Norm,
+    interpolation="spline16", aspect="auto", origin="lower", extent=extent)
     colorbar(HistogramaImagen, ax=Plots[1][0], label="% Ocurrence")
 
     #Extract terminator hours
@@ -135,11 +143,11 @@ def AddTimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     Plots[1][0].plot(RiseHours, NumMonthTerminator, "--w", linewidth=1.0)
     Plots[1][0].plot(SetHours, NumMonthTerminator, "--w", linewidth=1.0)
 
-    SavePlot("OcurrenceTIDs", Name, Plots[0][0])
+    SavePlot("OcurrenceTIDs_", Name, Plots[0][0])
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 Gaussian_Dist = lambda x, A, sig, mu: (A/(sig*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sig)**2.0)
-def AddPeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
+def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
     
     Period = 60.0*Period
     #Extract terminator hours
@@ -211,9 +219,10 @@ def AddPeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
         label=labelFit)
 
     Plots[1][1].legend()
-    SavePlot("PeriodDistribution", Name, Plots[0][1])
+    SavePlot("PeriodDistribution_", Name, Plots[0][1])
 
-def BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
+# -------------------------------------------------------------------------------------------------------------------------------------------------
+def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
     #Setting y ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     MonthAxisData = np.linspace(0.5,11.5,12,endpoint=True)
@@ -255,4 +264,106 @@ def BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
     align="edge", edgecolor="k", facecolor="b", label="Night")
 
     Plots[1][2].legend()
-    SavePlot("DayNightTIDs", Name, Plots[0][2])
+    SavePlot("DayNightTIDs_", Name, Plots[0][2])
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------
+def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
+    #Setting y ticks with months names
+    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    #MonthTicks = ["Jan", "Mar", "May", "Jul", "Sep", "Nov"]
+    MonthAxisData = np.linspace(0.5,11.5,12,endpoint=True)
+    Plots[1][3][1].set_xticks(MonthAxisData, MonthTicks)
+
+    #Extract terminator hours
+    if "Center" in Name:
+        TerminatorsFile = "TerminatorHours_Center1.dat"
+    elif "North" in Name:
+        TerminatorsFile = "TerminatorHours_North.dat"
+    elif "South" in Name:
+        TerminatorsFile = "TerminatorHours_South.dat"
+
+    RiseHours, SetHours = np.loadtxt(TerminatorsFile, dtype=np.float64,
+    usecols=(1, 2), unpack=True, skiprows=1)
+    SizeData = RiseHours.size
+    DivH_12 = SizeData//12
+    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
+
+    # START ANALYSIS BY MONTHS DIVIDED IN DAY AND NIGHT ACTIVITY
+    MeanAmps_Dict = dict(Day=dict(Means=[], STD=[]), Night=dict(Means=[], STD=[]))
+    for month in range(1,13,1):
+        Conds_month = Months_TIDs==month
+        if Conds_month.any():
+            Time_Conds_month = Time_TIDs[Conds_month]
+            MinA_Conds_month = MinA[Conds_month]
+            MaxA_Conds_month = MaxA[Conds_month]
+
+            MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
+            MaskNight = ~MaskDay
+
+            # Mean and Std of average amplitud from absolut min and max amplitude for...
+
+            # day and ...
+            AverageMinMax_DayAmps = (np.abs(MinA_Conds_month[MaskDay]) + MaxA_Conds_month[MaskDay])/2.0
+            Mean_DayAverageAmps = AverageMinMax_DayAmps.mean()
+            STD_DayAverageAmps = AverageMinMax_DayAmps.std()
+
+            # night
+            AverageMinMax_NightAmps = (np.abs(MinA_Conds_month[MaskNight]) + MaxA_Conds_month[MaskNight])/2.0
+            Mean_NightAverageAmps = AverageMinMax_NightAmps.mean()
+            STD_NightAverageAmps = AverageMinMax_NightAmps.std()
+
+            MeanAmps_Dict["Day"]["Means"].append( Mean_DayAverageAmps )
+            MeanAmps_Dict["Day"]["STD"].append( STD_DayAverageAmps )
+            MeanAmps_Dict["Night"]["Means"].append( Mean_NightAverageAmps )
+            MeanAmps_Dict["Night"]["STD"].append( STD_NightAverageAmps )
+
+        else:
+            MeanAmps_Dict["Day"]["Means"].append( 0 )
+            MeanAmps_Dict["Day"]["STD"].append( 0 )
+            MeanAmps_Dict["Night"]["Means"].append( 0 )
+            MeanAmps_Dict["Night"]["STD"].append( 0 )
+
+    # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
+    Indexes = list(range(24))
+    for Index in Indexes:
+        MaskTime = np.where((Index <= Time_TIDs) & (Time_TIDs <= Index+1), True, False)
+        AverageMinMax_Amps = (np.abs(MinA[MaskTime]) + MaxA[MaskTime])/2.0
+        AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
+        if AverageMinMax_Amps.size  > 0:
+
+            BoxPlot = Plots[1][3][0].boxplot(AverageMinMax_Amps, sym="x", positions=[Index + 0.5], patch_artist=True,
+                                        widths=0.25)
+            
+            for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
+                for patch in ComponentBoxPlot:
+                    patch.set_color("k")
+                    patch.set_linewidth(2)
+
+            for BoxComponent in BoxPlot["boxes"]:
+                BoxComponent.set_facecolor("None")
+                BoxComponent.set_edgecolor("k")
+
+    Plots[1][3][0].set_xticks([])
+    XTICKS = [i for i in range(0, 25, 4)]
+    Plots[1][3][0].set_xticks(ticks=XTICKS, labels=XTICKS)
+
+
+    Colors_Errobars = ("lime", "purple")
+    N_plot = 0
+    for KeyDict, phaseErrorPlot, Color in zip(MeanAmps_Dict.keys(), (-.2, .2), Colors_Errobars):
+        Dict_By_DayNight = MeanAmps_Dict[KeyDict]
+
+        Dict_By_DayNight["Means"] = np.array(Dict_By_DayNight["Means"])
+        Dict_By_DayNight["STD"] = np.array(Dict_By_DayNight["STD"])
+
+        Y = Dict_By_DayNight["Means"]
+        Yerr = Dict_By_DayNight["STD"]
+        MaskNonZeros = Y != 0
+            
+        Plots[1][3][1].errorbar(x=MonthAxisData[MaskNonZeros] + phaseErrorPlot, y=Y[MaskNonZeros], yerr=Yerr[MaskNonZeros],
+                                capsize=5, capthick=1, elinewidth=1, ecolor=Color, color=Color, 
+                                label=KeyDict, fmt="o")
+                                
+
+    Plots[1][3][1].legend()
+    SavePlot("AmpsAnalysis_", Name, Plots[0][3])

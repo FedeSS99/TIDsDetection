@@ -34,6 +34,8 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         ResultsTimeTID = []
         ResultsPeriodTID = []
         ResultsPowerTID = []
+        ResultsMinAmps = []
+        ResultsMaxAmps = []
         MonthArray = []
 
 
@@ -62,15 +64,17 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                             ResultsTimeTID.append(Results[0])
                             ResultsPeriodTID.append(Results[1])
                             ResultsPowerTID.append(Results[2])
+                            ResultsMinAmps.append(Results[3])
+                            ResultsMaxAmps.append(Results[4])
 
         MonthArray = concatenate(tuple(MonthArray), dtype=int)
         ResultsTimeTID = concatenate(tuple(ResultsTimeTID))
         #Get the timezone given NameOut
         if NameOut == "Center":
             TimeZone = -6.0
-        if NameOut == "North":
+        elif NameOut == "North":
             TimeZone = -8.0
-        if NameOut == "South":
+        elif NameOut == "South":
             TimeZone = -5.0
         #Apply timezone to get correct Local Time Hours
         ResultsTimeTID += TimeZone
@@ -78,12 +82,14 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
         ResultsPeriodTID = concatenate(tuple(ResultsPeriodTID))
         ResultsPowerTID = concatenate(tuple(ResultsPowerTID))
+        ResultsMinAmps = concatenate(tuple(ResultsMinAmps))
+        ResultsMaxAmps = concatenate(tuple(ResultsMaxAmps))
         NumTIDs = ResultsTimeTID.size
 
         #Get 2D histogram of TIDs' ocurrence and save all the data from the respective directory
         #in RESULTS
         HistogramOcurrence = Time_Months_Ocurrence_Analysis(ResultsTimeTID, MonthArray)
-        RESULTS.append([ResultsTimeTID, MonthArray, HistogramOcurrence, ResultsPeriodTID, ResultsPowerTID, NameOut])
+        RESULTS.append([ResultsTimeTID, MonthArray, HistogramOcurrence, ResultsPeriodTID, ResultsPowerTID, ResultsMinAmps, ResultsMaxAmps, NameOut])
 
         print(f"# of TIDs:{NumTIDs}\nActive Days:{ActiveDays} Total Days:{TotalDays}\n")
 
@@ -97,29 +103,31 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             NamePower = "LNIG-MNIG-UCOE"
             ColorPower = "red"
             RegIndex = 0
-        if NamePlot == "North":
+        elif NamePlot == "North":
             NamePower = "PTEX"
             ColorPower = "green"
             RegIndex = 1
-        if NamePlot == "South":
+        elif NamePlot == "South":
             NamePower = "CN24"
             ColorPower = "blue"
             RegIndex = 2
 
         #Start creating Matplotlib plot to visualize the statistics given the data from RESULTS
-        PlotsResults = CreateFiguresResults(NameOut)
-        AddTimeMonthsHistogramToPlot(DataResults[2], MIN, MAX, PlotsResults, NamePlot)
-        AddPeriodHistogramToPlot(DataResults[3], DataResults[0], DataResults[1], PlotsResults, NamePlot)
-        BoxPlotObject = addTimePowerDataResultsToPlot(DataResults[0], DataResults[4], PowerPlot, ColorPower, RegIndex)
+        PlotsResults = CreateFiguresResults(NamePlot)
+        Add_TimeMonthsHistogramToPlot(DataResults[2], MIN, MAX, PlotsResults, NamePlot)
+        Add_PeriodHistogramToPlot(DataResults[3], DataResults[0], DataResults[1], PlotsResults, NamePlot)
+        BoxPlotObject = Add_TimePowerDataResultsToPlot(DataResults[0], DataResults[4], PowerPlot, ColorPower, RegIndex)
         ListBoxPlots.append(BoxPlotObject)
         ListLegendsBoxPlots.append(NamePower)
 
-        BarsFreq_Month(DataResults[0], DataResults[1], PlotsResults, NamePlot)
+        Add_BarsFreq_Month(DataResults[0], DataResults[1], PlotsResults, NamePlot)
+        Add_AmplitudesAnalysis(DataResults[5], DataResults[6], DataResults[0], DataResults[1], PlotsResults, NamePlot)
         for i in range(2,5):
             close(i)
     
     PowerPlot[1].set_yscale("log", subs=None)
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots, loc="upper right")
+    SavePlot("PowerDistributionStations", "", PowerPlot[0])
     PowerPlot[0].savefig(f"./../Resultados/PowerDistributionStations.png")
     close(1)
 #---------------------------------------------------------------------------
