@@ -68,14 +68,19 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
     #Plotting boxplots for each hour interval given the station's index
     Indexes = list(range(Start, 24, 3))
     for Index in Indexes:
+        
+        # Creating mask of Time array given a one hour interval
         MaskTime = np.where((Index <= Time) & (Time <= Index+1), True, False)
         PowerMask = Power[MaskTime]
         PowerMask = PowerMask.reshape(PowerMask.size, 1)
+        
+        # Create a boxplot only if the size of the Power mask array has elements
         if PowerMask.size  > 0:
 
             BoxPlot = Plots[1].boxplot(PowerMask, sym="x", positions=[Index + 0.5], patch_artist=True,
                                         widths=0.25)
             
+            # Change colors of the boxplot given Color input
             for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
                 for patch in ComponentBoxPlot:
                     patch.set_color(Color)
@@ -101,6 +106,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     MonthAxisData = np.linspace(0.5,11.5,12,endpoint=True)
     Plots[1][0].set_yticks(MonthAxisData, MonthTicks)
 
+    # Set the limits for Local Time and indexes for each Month
     extent = (*TimeRange,*MonthRange)
     timeTicks = np.arange(0, 25, 6)
     Plots[1][0].set_xlim(*TimeRange)
@@ -108,17 +114,17 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     Plots[1][0].set_xticks(timeTicks)
 
     # Define the colormap
-    Cmap = get_cmap("jet")
+    Cmap = get_cmap("viridis")
     # Extract all colors from the jet map
     Cmaplist = [Cmap(i) for i in range(Cmap.N)]
-    # Force the first color entry to be black
-    Cmaplist[0] = (0, 0, 0, 1.0)
+    # Force the first color entry to be transparent
+    Cmaplist[0] = (0, 0, 0, 0.0)
 
     # Create the new map
     Cmap = LinearSegmentedColormap.from_list('Ocurrence Map', Cmaplist, Cmap.N)
 
     # define the bins and normalize
-    bounds = np.linspace(absMin, absMax, 11)
+    bounds = np.linspace(absMin, absMax, 7)
     Norm = BoundaryNorm(bounds, Cmap.N)
 
     HistogramaImagen = Plots[1][0].imshow(HistogramMonths, cmap=Cmap, norm=Norm,
@@ -136,8 +142,8 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     RiseHours, SetHours = np.loadtxt(TerminatorsFile, dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     NumMonthTerminator = np.linspace(0.0, 12.0, RiseHours.size)
-    Plots[1][0].plot(RiseHours, NumMonthTerminator, "--w", linewidth=1.0)
-    Plots[1][0].plot(SetHours, NumMonthTerminator, "--w", linewidth=1.0)
+    Plots[1][0].plot(RiseHours, NumMonthTerminator, "--k", linewidth=1.0)
+    Plots[1][0].plot(SetHours, NumMonthTerminator, "--k", linewidth=1.0)
 
     Plots[0][0].tight_layout()
     SavePlot("OcurrenceTIDs_", Name, Plots[0][0])
