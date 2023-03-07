@@ -14,10 +14,6 @@ def CreateResultsFigurePower():
     #Create main figure for each analysis
     FigurePowerTime = figure(1, figsize=(8,6))
     SubPlot_PowerTime = FigurePowerTime.add_subplot(111)
-
-    #Setting titles
-    SubPlot_PowerTime.set_title(f"Temporal distribution of TIDs' power")
-
     #Power-Time labels and background color
     SubPlot_PowerTime.set_xlabel("Local Time (Hours)")
     SubPlot_PowerTime.set_ylabel("TID power")
@@ -40,10 +36,10 @@ def CreateFiguresResults(Coord):
 
     #Setting titles
     Coord_String = f"\n{Coord} Region"
-    SubPlot_TimeHist.set_title(f"Annual Ocurrence of TIDs through LT"+Coord_String)
-    SubPlot_PeriodHist.set_title(f"Distribution of observed periods"+Coord_String)
-    SubPlot_MonthsFreq.set_title(f"Number of TIDs by Day-Night"+Coord_String)
-    Figure_AmpsAnalysis.suptitle(f"Analysis of dTEC amplitudes by LT and Month"+Coord_String)
+    SubPlot_TimeHist.set_title(Coord_String)
+    SubPlot_PeriodHist.set_title(Coord_String)
+    SubPlot_MonthsFreq.set_title(Coord_String)
+    Figure_AmpsAnalysis.suptitle(Coord_String)
 
     #Time Histogram labels
     SubPlot_TimeHist.set_xlabel("Local Time (Hours)")
@@ -122,7 +118,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     Cmap = LinearSegmentedColormap.from_list('Ocurrence Map', Cmaplist, Cmap.N)
 
     # define the bins and normalize
-    bounds = np.linspace(absMin, absMax, 6)
+    bounds = np.linspace(absMin, absMax, 11)
     Norm = BoundaryNorm(bounds, Cmap.N)
 
     HistogramaImagen = Plots[1][0].imshow(HistogramMonths, cmap=Cmap, norm=Norm,
@@ -143,6 +139,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     Plots[1][0].plot(RiseHours, NumMonthTerminator, "--w", linewidth=1.0)
     Plots[1][0].plot(SetHours, NumMonthTerminator, "--w", linewidth=1.0)
 
+    Plots[0][0].tight_layout()
     SavePlot("OcurrenceTIDs_", Name, Plots[0][0])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -214,11 +211,12 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
         labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit,MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit,SigmaError)
 
         Plots[1][1].bar(BarsPeriod, height=Ocurrence, width=Width, align="edge",
-        facecolor=Color, edgecolor=Color, alpha=0.5)
+        facecolor=Color, edgecolor=Color, alpha=0.25)
         Plots[1][1].plot(PeriodRange, Gaussian_Dist(PeriodRange,AmpFit,SigmaFit,MeanFit), linestyle="--", color=Color, linewidth=1.5,
         label=labelFit)
 
     Plots[1][1].legend()
+    Plots[0][1].tight_layout()
     SavePlot("PeriodDistribution_", Name, Plots[0][1])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -264,6 +262,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
     align="edge", edgecolor="k", facecolor="b", label="Night")
 
     Plots[1][2].legend()
+    Plots[0][2].tight_layout()
     SavePlot("DayNightTIDs_", Name, Plots[0][2])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -366,4 +365,5 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
                                 
 
     Plots[1][3][1].legend()
+    Plots[0][3].tight_layout()
     SavePlot("AmpsAnalysis_", Name, Plots[0][3])
