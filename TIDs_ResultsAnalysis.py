@@ -140,6 +140,8 @@ def CreateInputDictionary(SubdirsData, SubDirsResults, DataPath, ResultsPath):
 
     return Dictionary
 
+
+
 if __name__=="__main__":
     # Setting plotting format for all figures
     rcParams["font.family"] = "serif"
@@ -148,7 +150,7 @@ if __name__=="__main__":
     DATA_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/TIDs/Análisis/"
     RESULTS_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/TIDs/Resultados/"
 
-    SUBDIRECTORIES_DATA = [["mnig", "lnig"], ["ptex"]]
+    SUBDIRECTORIES_DATA = [["mnig", "lnig", "ucoe"], ["ptex"]]
     SUBDIRECTORIES_RESULTS = ["Center", "North"]
 
     InputDict = CreateInputDictionary(SUBDIRECTORIES_DATA, SUBDIRECTORIES_RESULTS,
