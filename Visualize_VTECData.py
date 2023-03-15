@@ -7,8 +7,8 @@ import os
 from numpy import array, where
 from collections import Counter
 
-from DataAnalysisRoutines.VTEC_IntervalsSubRoutines import ObtainIntervalsWith_SGFilter
-from PlottingResultsRoutines.VTEC_PlottingSIgnals import CMN_SignalPlots, CreateSignalPlotFigure
+from DataScripts.VTEC_IntervalsSubRoutines import ObtainIntervalsWith_SGFilter
+from PlottingScripts.VTEC_PlottingSignals import CMN_SignalPlots, CreateSignalPlotFigure
 
 use('TkAgg')
 rcParams.update({'font.family':'serif'})
