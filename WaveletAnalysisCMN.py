@@ -31,17 +31,17 @@ def select_file(window):
 
         #------------------------------------------------------------------------------------
         with open(cmn_file_path, "+r") as cmn_file:
-            cmn_file_lines = cmn_file.readlines()[5:]
+            cmn_data_lines = cmn_file.readlines()[5:]
 
             #After reading the whole .cmn file, it is needed to have saved only the
             #data that corresponds to a elevation greater than 30.0 degrees
-            elevation = array([float(line.split()[4]) for line in cmn_file_lines])
+            elevation = array([float(line.split()[4]) for line in cmn_data_lines])
             elevation_filter = where(elevation>=30.0, True, False)
 
-            time_cmn = array([float(line.split()[1]) for line in cmn_file_lines])[elevation_filter]
+            time_cmn = array([float(line.split()[1]) for line in cmn_data_lines])[elevation_filter]
             fixed_time_cmn = where(time_cmn>=0.0, time_cmn, time_cmn+abs(time_cmn))
-            prn_cmn = array([float(line.split()[2]) for line in cmn_file_lines])[elevation_filter]
-            vtec_cmn = array([float(line.split()[8]) for line in cmn_file_lines])[elevation_filter]
+            prn_cmn = array([float(line.split()[2]) for line in cmn_data_lines])[elevation_filter]
+            vtec_cmn = array([float(line.split()[8]) for line in cmn_data_lines])[elevation_filter]
 
         #Then each read line is saved in different arrays on the condition
         #of being from the same prn
