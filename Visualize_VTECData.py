@@ -11,7 +11,8 @@ from DataScripts.VTEC_IntervalsSubRoutines import ObtainIntervalsWith_SGFilter
 from PlottingScripts.VTEC_PlottingSignals import CMN_SignalPlots, CreateSignalPlotFigure
 
 use('TkAgg')
-rcParams.update({'font.family':'serif'})
+rcParams["font.family"] = "serif"
+rcParams["savefig.dpi"] = 400
 
 def select_file(window):
     window.cmn_file = askopenfile(title="Select cmn file to read", filetypes=[("Cmn", "*.Cmn")])
