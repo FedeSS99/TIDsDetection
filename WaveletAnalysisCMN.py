@@ -24,7 +24,7 @@ def select_file(window):
         new_path_name = cmn_file_path.split("/")[-1]
         plot_name = new_path_name.split(".")[0]
         STATION_NAME = plot_name[:4]
-        SAVEFILE_PATH = "../Análisis/"+STATION_NAME
+        SAVEFILE_PATH = "../Analysis/"+STATION_NAME
 
         if not os.path.exists(SAVEFILE_PATH):
             os.mkdir(SAVEFILE_PATH)
@@ -76,7 +76,11 @@ if __name__=="__main__":
     #Change Matplotlib's backend and font family
     use('TkAgg')
     rcParams.update({'font.family':'serif'})
-    rcParams.update({'savefig.dpi': 300})
+    rcParams.update({'savefig.dpi': 400})
+
+    # Check if "Analysis" folder exists:
+    if not os.path.isdir("../Analysis"):
+        os.mkdir("../Analysis") 
 
     #Create and show Tkinter app for user to start the analysis of data
     #in .Cmn file
