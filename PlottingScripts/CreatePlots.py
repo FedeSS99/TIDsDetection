@@ -182,7 +182,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
-    for PeriodData, Color, NamePlot in zip([DayTIDsPeriods, NightTIDsPeriods], ["red", "blue"], ["Day", "Night"]):
+    for PeriodData, Color, NamePlot in zip([DayTIDsPeriods, NightTIDsPeriods], ["tab:orange", "tab:blue"], ["Day", "Night"]):
         #Setting number of bins, period range and also the width of the bars
         Quantiles = quantiles(PeriodData, n=4)
         h = 2.0*(Quantiles[2]-Quantiles[0])*(PeriodData.size**(-1/3))
