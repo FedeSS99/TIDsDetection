@@ -29,6 +29,9 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     ListBoxPlots = []
     ListLegendsBoxPlots = []
     for Region in DICT_REGION_STATIONS.keys():
+        NameOut = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
+        print(f"-- Working on {NameOut} region --")
+        
         ActiveDays = 0
         TotalDays = 0
         ResultsTimeTID = []
@@ -38,34 +41,27 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         ResultsMaxAmps = []
         MonthArray = []
 
-
-        NameOut = DICT_REGION_STATIONS[Region]["Path"].split("/")[-1]
-        print(f"-- Working on {NameOut} region --")
         #Obtain the full path of the files located in the selected directories and
         #the dates and months of these same files
-        for path in DICT_REGION_STATIONS[Region]["Stations"]:
-            if isdir(path):
-                files_full_path = [path+"/"+file for file in listdir(path) if file.endswith("_TIDs.dat")]
-                Dates_TIDs = [fileName.split(".")[0].split("/")[-1][-15:-5] for fileName in files_full_path]
-                MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in files_full_path]
+        TIDs_DataPaths = DICT_REGION_STATIONS[Region]["DataPaths"]
+        
+        Dates_TIDs = [fileName.split(".")[0].split("/")[-1][-15:-5] for fileName in TIDs_DataPaths]
+        MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in TIDs_DataPaths]
 
-                #Get the name for the analysis' plots results
-                print(f"--Obtaining results of {path}--")
-                TotalDays += len(files_full_path)
+        TotalDays += len(TIDs_DataPaths)
+        for fileTID, MonthFile, Date_TID in tqdm(zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs)):
+            if Date_TID not in StormDays:
+                Results = SingleTIDs_Analysis(fileTID)
+                SizeResults = Results[0].size
+                if SizeResults:
+                    ActiveDays += 1
 
-                for fileTID, MonthFile, Date_TID in tqdm(zip(files_full_path, MonthPerFile, Dates_TIDs)):
-                    if Date_TID not in StormDays:
-                        Results = SingleTIDs_Analysis(fileTID)
-                        SizeResults = Results[0].size
-                        if SizeResults:
-                            ActiveDays += 1
-
-                            MonthArray.append(SizeResults*[MonthFile])
-                            ResultsTimeTID.append(Results[0])
-                            ResultsPeriodTID.append(Results[1])
-                            ResultsPowerTID.append(Results[2])
-                            ResultsMinAmps.append(Results[3])
-                            ResultsMaxAmps.append(Results[4])
+                    MonthArray.append(SizeResults*[MonthFile])
+                    ResultsTimeTID.append(Results[0])
+                    ResultsPeriodTID.append(Results[1])
+                    ResultsPowerTID.append(Results[2])
+                    ResultsMinAmps.append(Results[3])
+                    ResultsMaxAmps.append(Results[4])
 
         MonthArray = concatenate(tuple(MonthArray), dtype=int)
         ResultsTimeTID = concatenate(tuple(ResultsTimeTID))
@@ -128,15 +124,35 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     PowerPlot[1].set_yscale("log", subs=None)
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots, loc="upper right")
     SavePlot("PowerDistributionStations", "", PowerPlot[0])
-    PowerPlot[0].savefig(f"./../Resultados/PowerDistributionStations.png")
+    PowerPlot[0].savefig(f"./../Results/PowerDistributionStations.png")
     close(1)
 #---------------------------------------------------------------------------
 
-def CreateInputDictionary(SubdirsData, SubDirsResults, DataPath, ResultsPath):
+def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
     Dictionary = dict()
 
-    for Region, StationsRegion in zip(SubDirsResults, SubdirsData):
-        Dictionary[Region] = dict(Path = ResultsPath + Region, Stations = [DataPath + Station for Station in StationsRegion])
+    for Region in SubdirsResultsData:
+        DataRegionPath = DataPath + Region
+        ResultsRegionPath = ResultsPath + Region
+        
+        DataPaths = []
+        
+        for station in listdir(DataRegionPath):
+            CompleteStationDir = DataRegionPath + "/" + station
+            if not isdir(CompleteStationDir):
+                continue
+            for yearDir in listdir(CompleteStationDir):
+                CompleteYearDir = CompleteStationDir + "/" + yearDir
+                if not isdir(CompleteYearDir) or not yearDir.isnumeric():
+                    continue
+                for monthDir in listdir(CompleteYearDir):
+                    NewAnalysisPath = CompleteYearDir + "/" + monthDir
+                    if not isdir(NewAnalysisPath) or not monthDir.isnumeric():
+                        continue
+                
+                    DataPaths += list(map(lambda x: NewAnalysisPath + "/" + x, listdir(NewAnalysisPath)))
+        
+        Dictionary[Region] = dict(ResultPath = ResultsPath + Region, DataPaths = DataPaths)
 
     return Dictionary
 
@@ -147,12 +163,11 @@ if __name__=="__main__":
     rcParams["font.family"] = "serif"
     rcParams["savefig.dpi"] = 400
 
-    DATA_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/TIDs/Análisis/"
-    RESULTS_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/TIDs/Resultados/"
+    DATA_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/Proyecto TIDs/Analysis/"
+    RESULTS_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/Proyecto TIDs/Results/"
 
-    SUBDIRECTORIES_DATA = [["mnig", "lnig", "ucoe"], ["ptex"]]
-    SUBDIRECTORIES_RESULTS = ["Center", "North"]
+    SUBDIRECTORIES_ResultsData_REGIONS = ["Center", "North", "South"]
 
-    InputDict = CreateInputDictionary(SUBDIRECTORIES_DATA, SUBDIRECTORIES_RESULTS,
-                                        DATA_COMMON_PATH, RESULTS_COMMON_PATH)
-    StarAnnualAnalysis(InputDict)
+    InputRegionsData = CreateInputDictionary(SUBDIRECTORIES_ResultsData_REGIONS, DATA_COMMON_PATH, RESULTS_COMMON_PATH)
+    
+    StarAnnualAnalysis(InputRegionsData)
