@@ -24,7 +24,7 @@ def select_file(window):
         new_path_name = cmn_file_path.split("/")[-1]
         plot_name = new_path_name.split(".")[0]
         STATION_NAME = plot_name[:4]
-        SAVEFILE_PATH = "../Análisis/"+STATION_NAME
+        SAVEFILE_PATH = "../Analysis/"+STATION_NAME
 
         if not os.path.exists(SAVEFILE_PATH):
             os.mkdir(SAVEFILE_PATH)
