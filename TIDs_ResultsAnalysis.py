@@ -152,7 +152,7 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
                 
                     DataPaths += list(map(lambda x: NewAnalysisPath + "/" + x, listdir(NewAnalysisPath)))
         
-        Dictionary[Region] = dict(ResultPath = ResultsPath + Region, DataPaths = DataPaths)
+        Dictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = DataPaths)
 
     return Dictionary
 
