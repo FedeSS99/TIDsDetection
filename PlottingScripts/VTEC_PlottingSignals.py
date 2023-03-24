@@ -15,7 +15,7 @@ def CreateSignalPlotFigure(plot_name):
     SubFigureOrigSignalsCMN.set_xlabel("Universal Time (Hours)")
     SubFigureOrigSignalsCMN.set_xlim(0.0, 24.0)
     SubFigureOrigSignalsCMN.axes.get_xaxis().set_ticks([])
-    
+
     SubFigureFiltSignalsCMN.set_ylabel("dTEC")
     SubFigureFiltSignalsCMN.set_xlabel("Universal Time (Hours)")
     SubFigureFiltSignalsCMN.set_xlim(0.0, 24.0)
@@ -43,7 +43,7 @@ def CMN_SignalPlots(OrigTime,OrigVtec,FiltTime,FiltVtec, SignalsPlot):
 
             SignalsPlot[1][0].plot(timeDataPRN, VTECDataPRN,
             linewidth=1, color=CMN_Filter_colors[prn])
-    
+
     for prn in prnNumbersFilt:
         for plot in range(len(FiltTime[prn])):
             timeDataPRN = FiltTime[prn][plot]
