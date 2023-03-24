@@ -61,7 +61,7 @@ def CreateFiguresResults(Coord):
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def SavePlot(GenName, RegName, PlotFigure):
     for format in ["png", "pdf"]:
-        PlotFigure.savefig(f"./../Resultados/{RegName}/{GenName}{RegName}.{format}")
+        PlotFigure.savefig(f"./../Results/{RegName}/{GenName}{RegName}.{format}")
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
@@ -192,31 +192,30 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
         Width = np.diff(BarsPeriod).mean()
 
         #Obtaining histogram from period data with given bins and range
-        PeriodHistogram, Edges = np.histogram(PeriodData, bins=PeriodBins, range=PeriodRange)
-        #Calculate percentage for each bin
-        Ocurrence = 100.0*PeriodHistogram/PeriodHistogram.sum()
+        PeriodHistogram, Edges = np.histogram(PeriodData, bins=PeriodBins, range=PeriodRange,
+                                              density=True)
 
         #Getting mean, deviation of period data and max value of Ocurrence
         Mean, Deviation = PeriodData.mean(), PeriodData.std()
-        MaxOcurrence = Ocurrence.max()
+        MaxValue = PeriodHistogram.max()
 
         #Declaring an Exponential Gaussian Model as the proposed theorical distribution
         GaussianToFit = GaussianModel()
         #Setting parameters
-        ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxOcurrence,
+        ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue,
         center=Mean, sigma=Deviation)
         #Calculate best fit
-        ExpGaussianFitResult = GaussianToFit.fit(Ocurrence, ParametersExpGaussian, x=Edges[1:])
+        ExpGaussianFitResult = GaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x=Edges[1:])
 
         ParamsResults = ExpGaussianFitResult.params
         AmpFit = ParamsResults["amplitude"].value
         MeanFit, MeanError = ParamsResults["center"].value, ParamsResults["center"].stderr
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
 
-        PeriodRange = np.linspace(0.0, max(PeriodRange), 100)
+        PeriodRange = np.linspace(0.0, max(Edges), 100)
         labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit,MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit,SigmaError)
 
-        Plots[1][1].bar(BarsPeriod, height=Ocurrence, width=Width, align="edge",
+        Plots[1][1].bar(BarsPeriod, height=PeriodHistogram, width=Width, align="edge",
         facecolor=Color, edgecolor=Color, alpha=0.25)
         Plots[1][1].plot(PeriodRange, Gaussian_Dist(PeriodRange,AmpFit,SigmaFit,MeanFit), linestyle="--", color=Color, linewidth=1.5,
         label=labelFit)
