@@ -87,7 +87,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         HistogramOcurrence = Time_Months_Ocurrence_Analysis(ResultsTimeTID, MonthArray)
         RESULTS.append([ResultsTimeTID, MonthArray, HistogramOcurrence, ResultsPeriodTID, ResultsPowerTID, ResultsMinAmps, ResultsMaxAmps, NameOut])
 
-        print(f"# of TIDs:{NumTIDs}\nActive Days:{ActiveDays} Total Days:{TotalDays}\n")
+        print(f"No. of TIDs:{NumTIDs}\nActive Days:{ActiveDays} Total Days:{TotalDays}\n")
 
     #Obtain the globam minimum and maximum of the ocurrence arrays of all the directories' data
     MIN, MAX = min([DataResults[2].min() for DataResults in RESULTS]), max([DataResults[2].max() for DataResults in RESULTS])
@@ -163,8 +163,8 @@ if __name__=="__main__":
     rcParams["font.family"] = "serif"
     rcParams["savefig.dpi"] = 400
 
-    DATA_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/Proyecto TIDs/Analysis/"
-    RESULTS_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/Proyecto TIDs/Results/"
+    DATA_COMMON_PATH = "/home/federicosalinas/Documentos/FCFM/Proyecto TIDs/Analysis/"
+    RESULTS_COMMON_PATH = "/home/federicosalinas/Documentos/FCFM/Proyecto TIDs/Results/"
 
     SUBDIRECTORIES_ResultsData_REGIONS = ["Center", "North", "South"]
 
