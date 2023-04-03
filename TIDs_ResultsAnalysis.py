@@ -87,7 +87,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         HistogramOcurrence = Time_Months_Ocurrence_Analysis(ResultsTimeTID, MonthArray)
         RESULTS.append([ResultsTimeTID, MonthArray, HistogramOcurrence, ResultsPeriodTID, ResultsPowerTID, ResultsMinAmps, ResultsMaxAmps, NameOut])
 
-        print(f"# of TIDs:{NumTIDs}\nActive Days:{ActiveDays} Total Days:{TotalDays}\n")
+        print(f"No. of TIDs:{NumTIDs}\nActive Days:{ActiveDays} Total Days:{TotalDays}\n")
 
     #Obtain the globam minimum and maximum of the ocurrence arrays of all the directories' data
     MIN, MAX = min([DataResults[2].min() for DataResults in RESULTS]), max([DataResults[2].max() for DataResults in RESULTS])
