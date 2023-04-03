@@ -149,9 +149,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     SavePlot("OcurrenceTIDs_", Name, Plots[0][0])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-Gaussian_Dist = lambda x, A, sig, mu: (A/(sig*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sig)**2.0)
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
-    
     Period = 60.0*Period
     #Extract terminator hours
     if "Center" in Name:
@@ -182,7 +180,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
-    for PeriodData, Color, NamePlot in zip([DayTIDsPeriods, NightTIDsPeriods], ["tab:orange", "tab:blue"], ["Day", "Night"]):
+    for PeriodData, Color, NamePlot in zip([DayTIDsPeriods, NightTIDsPeriods], ["yellow", "blue"], ["Day", "Night"]):
         #Setting number of bins, period range and also the width of the bars
         Quantiles = quantiles(PeriodData, n=4)
         h = 2.0*(Quantiles[2]-Quantiles[0])*(PeriodData.size**(-1/3))
@@ -194,6 +192,8 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
         #Obtaining histogram from period data with given bins and range
         PeriodHistogram, Edges = np.histogram(PeriodData, bins=PeriodBins, range=PeriodRange,
                                               density=True)
+        # Stablish the median of each bin as the X value for each density bar
+        MidEdges = Edges[:PeriodBins] + np.diff(Edges)
 
         #Getting mean, deviation of period data and max value of Ocurrence
         Mean, Deviation = PeriodData.mean(), PeriodData.std()
@@ -205,19 +205,17 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
         ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue,
         center=Mean, sigma=Deviation)
         #Calculate best fit
-        ExpGaussianFitResult = GaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x=Edges[1:])
+        ExpGaussianFitResult = GaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x = MidEdges)
 
+        #Extracting optimal parameters for gaussian fit
         ParamsResults = ExpGaussianFitResult.params
-        AmpFit = ParamsResults["amplitude"].value
         MeanFit, MeanError = ParamsResults["center"].value, ParamsResults["center"].stderr
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
-
-        PeriodRange = np.linspace(0.0, max(Edges), 100)
         labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit,MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit,SigmaError)
 
         Plots[1][1].bar(BarsPeriod, height=PeriodHistogram, width=Width, align="edge",
         facecolor=Color, edgecolor=Color, alpha=0.25)
-        Plots[1][1].plot(PeriodRange, Gaussian_Dist(PeriodRange,AmpFit,SigmaFit,MeanFit), linestyle="--", color=Color, linewidth=1.5,
+        Plots[1][1].plot(MidEdges, ExpGaussianFitResult.best_fit, linestyle="--", color=Color, linewidth=1.5,
         label=labelFit)
 
     Plots[1][1].legend()
