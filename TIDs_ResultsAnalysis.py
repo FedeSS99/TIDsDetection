@@ -96,7 +96,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         NamePlot = DataResults[-1]
         
         if NamePlot == "Center":
-            NamePower = "LNIG-MNIG-UCOE"
+            NamePower = "MNIG-UCOE"
             ColorPower = "red"
             RegIndex = 0
         elif NamePlot == "North":
@@ -104,7 +104,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             ColorPower = "green"
             RegIndex = 1
         elif NamePlot == "South":
-            NamePower = "CN24"
+            NamePower = "CN24-UNPM"
             ColorPower = "blue"
             RegIndex = 2
 
@@ -163,11 +163,11 @@ if __name__=="__main__":
     rcParams["font.family"] = "serif"
     rcParams["savefig.dpi"] = 400
 
-    DATA_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/Proyecto TIDs/Analysis/"
-    RESULTS_COMMON_PATH = "/home/fssamaniego/Documentos/FCFM/Proyecto TIDs/Results/"
+    DATA_COMMON_PATH = "../Analysis/"
+    RESULTS_COMMON_PATH = "../Results/"
 
-    SUBDIRECTORIES_ResultsData_REGIONS = ["Center", "North", "South"]
+    SUBDIRECTORIES_REGIONS = ["North", "Center", "South"]
 
-    InputRegionsData = CreateInputDictionary(SUBDIRECTORIES_ResultsData_REGIONS, DATA_COMMON_PATH, RESULTS_COMMON_PATH)
+    InputRegionsData = CreateInputDictionary(SUBDIRECTORIES_REGIONS, DATA_COMMON_PATH, RESULTS_COMMON_PATH)
     
     StarAnnualAnalysis(InputRegionsData)
