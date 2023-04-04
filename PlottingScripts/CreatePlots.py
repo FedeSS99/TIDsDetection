@@ -9,6 +9,13 @@ from lmfit.models import GaussianModel
 
 use("TkAgg")
 
+# Dictionary to extract filename of Terminator data for each region
+TerminatorsDict = dict(
+    North="./TerminatorData/TerminatorHours_North.dat",
+    Center="./TerminatorData/TerminatorHours_North.dat",
+    South="./TerminatorData/TerminatorHours_South.dat"
+    )
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateResultsFigurePower():
     #Create main figure for each analysis
@@ -131,15 +138,8 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     interpolation="spline16", aspect="auto", origin="lower", extent=extent)
     colorbar(HistogramaImagen, ax=Plots[1][0], label="% Ocurrence")
 
-    #Extract terminator hours
-    if "Center" in Name:
-        TerminatorsFile = "TerminatorHours_Center1.dat"
-    elif "North" in Name:
-        TerminatorsFile = "TerminatorHours_North.dat"
-    elif "South" in Name:
-        TerminatorsFile = "TerminatorHours_South.dat"
-
-    RiseHours, SetHours = np.loadtxt(TerminatorsFile, dtype=np.float64,
+    # Extracting rise and set hours for each region
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     NumMonthTerminator = np.linspace(0.0, 12.0, RiseHours.size)
     Plots[1][0].plot(RiseHours, NumMonthTerminator, "--k", linewidth=1.0)
@@ -151,15 +151,9 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
     Period = 60.0*Period
-    #Extract terminator hours
-    if "Center" in Name:
-        TerminatorsFile = "TerminatorHours_Center1.dat"
-    elif "North" in Name:
-        TerminatorsFile = "TerminatorHours_North.dat"
-    elif "South" in Name:
-        TerminatorsFile = "TerminatorHours_South.dat"
 
-    RiseHours, SetHours = np.loadtxt(TerminatorsFile, dtype=np.float64,
+    # Extracting rise and set hours for each region
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
@@ -229,15 +223,8 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
     MonthAxisData = np.linspace(0.5,11.5,12,endpoint=True)
     Plots[1][2].set_xticks(MonthAxisData, MonthTicks)
 
-    #Extract terminator hours
-    if "Center" in Name:
-        TerminatorsFile = "TerminatorHours_Center1.dat"
-    elif "North" in Name:
-        TerminatorsFile = "TerminatorHours_North.dat"
-    elif "South" in Name:
-        TerminatorsFile = "TerminatorHours_South.dat"
-
-    RiseHours, SetHours = np.loadtxt(TerminatorsFile, dtype=np.float64,
+    # Extracting rise and set hours for each region
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
@@ -276,15 +263,8 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
     MonthAxisData = np.linspace(0.5,11.5,12,endpoint=True)
     Plots[1][3][1].set_xticks(MonthAxisData, MonthTicks)
 
-    #Extract terminator hours
-    if "Center" in Name:
-        TerminatorsFile = "TerminatorHours_Center1.dat"
-    elif "North" in Name:
-        TerminatorsFile = "TerminatorHours_North.dat"
-    elif "South" in Name:
-        TerminatorsFile = "TerminatorHours_South.dat"
-
-    RiseHours, SetHours = np.loadtxt(TerminatorsFile, dtype=np.float64,
+    # Extracting rise and set hours for each region
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
