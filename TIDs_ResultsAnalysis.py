@@ -1,4 +1,3 @@
-from tqdm import tqdm
 from os import listdir
 from os.path import isdir
 from numpy import where, concatenate
@@ -13,7 +12,7 @@ from PlottingScripts.CreatePlots import *
 def StarAnnualAnalysis(DICT_REGION_STATIONS):
     #Ignore events that occoured in dates where a geomagnetic
     #storm had a major effect in the Dst value
-    with open("tormentas-2018-2021.txt", "r") as StormDaysData:
+    with open("./StormData/tormentas-2018-2021.txt", "r") as StormDaysData:
         StormDays = []
         Lines = StormDaysData.readlines()
 
@@ -41,27 +40,29 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         ResultsMaxAmps = []
         MonthArray = []
 
-        #Obtain the full path of the files located in the selected directories and
-        #the dates and months of these same files
-        TIDs_DataPaths = DICT_REGION_STATIONS[Region]["DataPaths"]
-        
-        Dates_TIDs = [fileName.split(".")[0].split("/")[-1][-15:-5] for fileName in TIDs_DataPaths]
-        MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in TIDs_DataPaths]
+        #Obtain the full path of the files located in each station given the Region
+        StationsByRegion = DICT_REGION_STATIONS[Region]["DataPaths"].keys()
+        for Station in StationsByRegion:
 
-        TotalDays += len(TIDs_DataPaths)
-        for fileTID, MonthFile, Date_TID in tqdm(zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs)):
-            if Date_TID not in StormDays:
-                Results = SingleTIDs_Analysis(fileTID)
-                SizeResults = Results[0].size
-                if SizeResults:
-                    ActiveDays += 1
+            # Extract DataPaths for each Station and also date and month data
+            TIDs_DataPaths = DICT_REGION_STATIONS[Region]["DataPaths"][Station]
+            Dates_TIDs = [fileName.split(".")[0].split("/")[-1][-15:-5] for fileName in TIDs_DataPaths]
+            MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in TIDs_DataPaths]
 
-                    MonthArray.append(SizeResults*[MonthFile])
-                    ResultsTimeTID.append(Results[0])
-                    ResultsPeriodTID.append(Results[1])
-                    ResultsPowerTID.append(Results[2])
-                    ResultsMinAmps.append(Results[3])
-                    ResultsMaxAmps.append(Results[4])
+            TotalDays += len(TIDs_DataPaths)
+            for fileTID, MonthFile, Date_TID in zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs):
+                if Date_TID not in StormDays:
+                    Results = SingleTIDs_Analysis(fileTID)
+                    SizeResults = Results[0].size
+                    if SizeResults:
+                        ActiveDays += 1
+
+                        MonthArray.append(SizeResults*[MonthFile])
+                        ResultsTimeTID.append(Results[0])
+                        ResultsPeriodTID.append(Results[1])
+                        ResultsPowerTID.append(Results[2])
+                        ResultsMinAmps.append(Results[3])
+                        ResultsMaxAmps.append(Results[4])
 
         MonthArray = concatenate(tuple(MonthArray), dtype=int)
         ResultsTimeTID = concatenate(tuple(ResultsTimeTID))
@@ -100,7 +101,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             ColorPower = "red"
             RegIndex = 0
         elif NamePlot == "North":
-            NamePower = "PTEX"
+            NamePower = "PTEX-PALX"
             ColorPower = "green"
             RegIndex = 1
         elif NamePlot == "South":
@@ -135,24 +136,30 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
         DataRegionPath = DataPath + Region
         ResultsRegionPath = ResultsPath + Region
         
-        DataPaths = []
+        StationsDict = dict()
         
         for station in listdir(DataRegionPath):
+            StationDataPaths = []
+
             CompleteStationDir = DataRegionPath + "/" + station
             if not isdir(CompleteStationDir):
                 continue
+
             for yearDir in listdir(CompleteStationDir):
                 CompleteYearDir = CompleteStationDir + "/" + yearDir
                 if not isdir(CompleteYearDir) or not yearDir.isnumeric():
                     continue
+
                 for monthDir in listdir(CompleteYearDir):
                     NewAnalysisPath = CompleteYearDir + "/" + monthDir
                     if not isdir(NewAnalysisPath) or not monthDir.isnumeric():
                         continue
                 
-                    DataPaths += list(map(lambda x: NewAnalysisPath + "/" + x, listdir(NewAnalysisPath)))
+                    StationDataPaths += list(map(lambda x: NewAnalysisPath + "/" + x, listdir(NewAnalysisPath)))
+            
+            StationsDict[station] = StationDataPaths
         
-        Dictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = DataPaths)
+        Dictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = StationsDict)
 
     return Dictionary
 
