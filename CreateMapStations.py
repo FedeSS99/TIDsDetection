@@ -18,12 +18,12 @@ LinesMeridians = arange(-78, -118, -8)
 Map.drawparallels(LinesParallels, labels = [True, False, False, False])
 Map.drawmeridians(LinesMeridians, labels = [False, False, True, False])
 
-Coords = {"MNIG":(-100.285228, 25.609308), "UCOE":(-101.694, 19.813),
-        "CN24":(-88.054, 19.576), "UNPM":(-86.868, 20.869),
-        "PTEX":(-116.521214, 32.28845)}
+Coords = {"MNIG":(-100.285228, 25.609308), "UCOE":( -101.69442, 19.81318),
+        "CN24":(-88.05391, 19.57556), "UNPM":(-86.86686, 20.86812),
+        "PTEX":(-116.52124, 32.28845), "PALX":(-116.06379, 31.55912)}
 
 N = len(Coords)
-Colors = ["red", "orange", "blue", "cyan", "green"]
+Colors = ["red", "orange", "blue", "cyan", "green", "lime"]
 
 CoordsMap = [Map(*Coord) for Coord in Coords.values()]
 for CoordMap, Station, Color in zip(CoordsMap, Coords.keys(), Colors):
