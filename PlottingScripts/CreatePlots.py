@@ -114,7 +114,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     Plots[1][0].set_xticks(timeTicks)
 
     # Define the colormap
-    Cmap = get_cmap("viridis")
+    Cmap = get_cmap("jet")
     # Extract all colors from the jet map
     Cmaplist = [Cmap(i) for i in range(Cmap.N)]
     # Force the first color entry to be transparent
@@ -214,7 +214,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
         labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit,MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit,SigmaError)
 
         Plots[1][1].bar(BarsPeriod, height=PeriodHistogram, width=Width, align="edge",
-        facecolor=Color, edgecolor=Color, alpha=0.25)
+        facecolor=Color, edgecolor=Color, alpha=0.5)
         Plots[1][1].plot(MidEdges, ExpGaussianFitResult.best_fit, linestyle="--", color=Color, linewidth=1.5,
         label=labelFit)
 
