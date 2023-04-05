@@ -24,7 +24,19 @@ def select_file(window):
         new_path_name = cmn_file_path.split("/")[-1]
         plot_name = new_path_name.split(".")[0]
         STATION_NAME = plot_name[:4]
-        SAVEFILE_PATH = "../Analysis/"+STATION_NAME
+        YEAR, MONTH = plot_name.split("-")[1:3]
+
+        SAVEFILE_PATH = "../Analysis/"+STATION_NAME+"/"
+
+        if not os.path.exists(SAVEFILE_PATH):
+            os.mkdir(SAVEFILE_PATH)
+
+        SAVEFILE_PATH += YEAR+"/"
+
+        if not os.path.exists(SAVEFILE_PATH):
+            os.mkdir(SAVEFILE_PATH)
+
+        SAVEFILE_PATH += MONTH+"/"
 
         if not os.path.exists(SAVEFILE_PATH):
             os.mkdir(SAVEFILE_PATH)
@@ -66,10 +78,13 @@ def select_file(window):
         CMN_SignalPlots(Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn, SignalPlots)
         
         # Start a file to save TIDs data from detrended signals
-        with open(SAVEFILE_PATH+"/"+plot_name+"_TIDs.dat", "w") as OutTIDs: 
+        OutFileName = plot_name+"_TIDs.dat"
+        with open(SAVEFILE_PATH+"/"+OutFileName, "w") as OutTIDs: 
             OutTIDs.write(f"#TIDs data obtained with {plot_name}\n")
             OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)
+
+        print(f"\nSaved file {OutFileName} at {SAVEFILE_PATH}")
 
 
 if __name__=="__main__":
