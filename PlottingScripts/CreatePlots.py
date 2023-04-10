@@ -12,7 +12,7 @@ use("TkAgg")
 # Dictionary to extract filename of Terminator data for each region
 TerminatorsDict = dict(
     North="./TerminatorData/TerminatorHours_North.dat",
-    Center="./TerminatorData/TerminatorHours_North.dat",
+    Center="./TerminatorData/TerminatorHours_Center.dat",
     South="./TerminatorData/TerminatorHours_South.dat"
     )
 
@@ -28,7 +28,7 @@ def CreateResultsFigurePower():
     return (FigurePowerTime, SubPlot_PowerTime)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def CreateFiguresResults(Coord):
+def CreateFiguresResults(Name, Stat_or_Reg):
     #Create main figure for each analysis
     FigureTimeHist = figure(2, figsize=(6,6))
     FigurePeriodsHist = figure(3, figsize=(6,6))
@@ -42,7 +42,11 @@ def CreateFiguresResults(Coord):
     Sub2_AmpsAnalysis = Figure_AmpsAnalysis.add_subplot(212)
 
     #Setting titles
-    Coord_String = f"\n{Coord} Region"
+    if Stat_or_Reg == "Stat":
+        Coord_String = f"\n{Name} Station"
+    elif Stat_or_Reg == "Reg":
+        Coord_String = f"\n{Name} Region"
+
     SubPlot_TimeHist.set_title(Coord_String)
     SubPlot_PeriodHist.set_title(Coord_String)
     SubPlot_MonthsFreq.set_title(Coord_String)
@@ -66,9 +70,13 @@ def CreateFiguresResults(Coord):
             (SubPlot_TimeHist, SubPlot_PeriodHist, SubPlot_MonthsFreq, (Sub1_AmpsAnalysis, Sub2_AmpsAnalysis))]
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def SavePlot(GenName, RegName, PlotFigure):
+def SaveRegionPlot(GenName, RegName, PlotFigure):
     for format in ["png", "pdf"]:
         PlotFigure.savefig(f"./../Results/{RegName}/{GenName}{RegName}.{format}")
+
+def SaveStationPlot(GenName, RegName, StationName, PlotFigure):
+    for format in ["png", "pdf"]:
+        PlotFigure.savefig(f"./../Results/{RegName}/{StationName}/{GenName}{StationName}.{format}")
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
@@ -104,7 +112,7 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
     return BoxPlot["boxes"][0]
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
+def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, RegionName, StationName, Stat_or_Reg):
     #Setting number of bins and time range for histogram
     TimeRange = (0.0, 24.0)
     MonthRange = (0, 12)
@@ -139,21 +147,24 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Name):
     colorbar(HistogramaImagen, ax=Plots[1][0], label="% Ocurrence")
 
     # Extracting rise and set hours for each region
-    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     NumMonthTerminator = np.linspace(0.0, 12.0, RiseHours.size)
     Plots[1][0].plot(RiseHours, NumMonthTerminator, "--k", linewidth=1.0)
     Plots[1][0].plot(SetHours, NumMonthTerminator, "--k", linewidth=1.0)
 
     Plots[0][0].tight_layout()
-    SavePlot("OcurrenceTIDs_", Name, Plots[0][0])
+    if Stat_or_Reg == "Stat":
+        SaveStationPlot("OcurrenceTIDs_", RegionName, StationName, Plots[0][0])
+    elif Stat_or_Reg == "Reg":
+        SaveRegionPlot("OcurrenceTIDs_", RegionName, Plots[0][0])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
+def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     Period = 60.0*Period
 
     # Extracting rise and set hours for each region
-    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
@@ -214,17 +225,20 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Name):
 
     Plots[1][1].legend()
     Plots[0][1].tight_layout()
-    SavePlot("PeriodDistribution_", Name, Plots[0][1])
-
+    if Stat_or_Reg == "Stat":
+        SaveStationPlot("PeriodDistribution_", RegionName, StationName, Plots[0][1])
+    elif Stat_or_Reg == "Reg":
+        SaveRegionPlot("PeriodDistribution_", RegionName, Plots[0][1])
+    
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
+def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     #Setting y ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     MonthAxisData = np.linspace(0.5,11.5,12,endpoint=True)
     Plots[1][2].set_xticks(MonthAxisData, MonthTicks)
 
     # Extracting rise and set hours for each region
-    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
@@ -253,10 +267,13 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Name):
 
     Plots[1][2].legend()
     Plots[0][2].tight_layout()
-    SavePlot("DayNightTIDs_", Name, Plots[0][2])
+    if Stat_or_Reg == "Stat":
+        SaveStationPlot("DayNightTIDs_", RegionName, StationName, Plots[0][2])
+    elif Stat_or_Reg == "Reg":
+        SaveRegionPlot("DayNightTIDs_", RegionName, Plots[0][2])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
+def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     #Setting y ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     #MonthTicks = ["Jan", "Mar", "May", "Jul", "Sep", "Nov"]
@@ -264,7 +281,7 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
     Plots[1][3][1].set_xticks(MonthAxisData, MonthTicks)
 
     # Extracting rise and set hours for each region
-    RiseHours, SetHours = np.loadtxt(TerminatorsDict[Name], dtype=np.float64,
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
     usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
@@ -349,4 +366,7 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Name):
 
     Plots[1][3][1].legend()
     Plots[0][3].tight_layout()
-    SavePlot("AmpsAnalysis_", Name, Plots[0][3])
+    if Stat_or_Reg == "Stat":
+        SaveStationPlot("AmpsAnalysis_", RegionName, StationName, Plots[0][3])
+    elif Stat_or_Reg == "Reg":
+        SaveRegionPlot("AmpsAnalysis_", RegionName, Plots[0][3])
