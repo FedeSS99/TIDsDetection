@@ -27,6 +27,7 @@ def SingleTIDs_Analysis(TID_path):
         MaxAmps = array(MaxAmps, dtype=float64)
 
     if TimeTIDS.size == PeriodTIDS.size == PowerTIDS.size:
-        return TimeTIDS, PeriodTIDS, PowerTIDS, MinAmps, MaxAmps
+        return {"TIME":TimeTIDS, "PERIOD":PeriodTIDS, "POWER":PowerTIDS,
+                 "MIN_AMPS":MinAmps, "MAX_AMPS":MaxAmps}
     else:
         return False
