@@ -1,5 +1,5 @@
 from matplotlib.gridspec import GridSpec
-from matplotlib.pyplot import figure, colorbar
+from matplotlib.pyplot import figure, colorbar, close
 from math import log2, pi, sqrt
 import numpy as np
 import scipy.signal as signal
@@ -117,8 +117,8 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     extent = [time_data_CMN[0], time_data_CMN[-1], Periods.min(), Periods.max()]
     print(f"--Wavelet Spectrum Data of {plot_name}--")
     print(f"{s0=:f}\nInitial Time:{extent[0]:f}  Final Time:{extent[1]:f}")
-    print(f"Minimum Period:{extent[2]:f}  Maximum Period:{extent[3]:f}\n")
-    print(f"Time Interval of Analysis: {extent[1]-extent[0]:.3f}")
+    print(f"Minimum Period:{extent[2]:f}  Maximum Period:{extent[3]:f}")
+    print(f"Time Interval of Analysis: {extent[1]-extent[0]:.3f}\n")
 
     #Plotting VTEC data
     SubFigureSignalCMN.plot(time_data_CMN, vtec_data_CMN, "k-", linewidth=1)
@@ -199,6 +199,9 @@ def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, MainPlotName, fileOutR
                 for event, data in zip(TIDsPRN_Events, DataPRN_Events):
                     TIDsEvents.append(event)
                     DataEvents.append(data)
+    
+    # Closing Wavelet Spectrum figure after the analysis is done
+    close(2)
 
     #Checking if all the events are separeted TIDs, if there's an intersection
     #in the rectangular regions on the Time-Period plane then it will be saved
