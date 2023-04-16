@@ -13,8 +13,11 @@ from PlottingScripts.CreatePlots import *
 def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, MIN_OCC, MAX_OCC):
     if Stat_or_Reg == "Stat":
         PlotsResults = CreateFiguresResults(StationName, Stat_or_Reg)
+        print(f"Working on {StationName} Station...", end="\t")
+
     elif Stat_or_Reg == "Reg":
         PlotsResults = CreateFiguresResults(RegionName, Stat_or_Reg)
+        print(f"Working on {RegionName} Region...", end="\t")
 
     Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], MIN_OCC, MAX_OCC, PlotsResults, 
                                   RegionName, StationName, Stat_or_Reg)
@@ -28,9 +31,10 @@ def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, MIN_OCC,
                             DataDict["TIME"], DataDict["MONTH"], PlotsResults, 
                             RegionName, StationName, Stat_or_Reg)
     
-
     for i in range(2,6):
         close(i)
+    
+    print("finished!")
 
 #---------------------------------------------------------------------------
 def StarAnnualAnalysis(DICT_REGION_STATIONS):
@@ -53,7 +57,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     ListLegendsBoxPlots = []
     for Region in DICT_REGION_STATIONS.keys():
         NameOut = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
-        print(f"-- Working on {NameOut} region --")
+        print(f"-- Extracting data of {NameOut} Region --")
         
         # Declare counter for total days and active days for each region and
         # also the lists to save the data for all stations
@@ -92,7 +96,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                     if SizeResults:
                         ActiveDays += 1
 
-                        Region_MonthArray.append(SizeResults*[MonthFile])
                         Station_MonthArray.append(SizeResults*[MonthFile])
 
                         #Get the timezone given NameOut
@@ -106,22 +109,14 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                         #Apply timezone to get correct Local Time Hours
                         Results["TIME"] += TimeZone
                         Results["TIME"] = where(Results["TIME"] < 0, Results["TIME"] + 24.0, Results["TIME"])
-                        Region_TimeTID.append(Results["TIME"])
                         Station_TimeTID.append(Results["TIME"])
-
-                        Region_PeriodTID.append(Results["PERIOD"])
                         Station_PeriodTID.append(Results["PERIOD"])
-
-                        Region_PowerTID.append(Results["POWER"])
                         Station_PowerTID.append(Results["POWER"])
-                        
-                        Region_MinAmps.append(Results["MIN_AMPS"])
                         Station_MinAmps.append(Results["MIN_AMPS"])
-                        
-                        Region_MaxAmps.append(Results["MAX_AMPS"])
                         Station_MaxAmps.append(Results["MAX_AMPS"])
 
-
+            # Create numpy arrays from the tuple collections of all the TIDs
+            # data for each Station
             Station_MonthArray = concatenate(tuple(Station_MonthArray), dtype=int)
             Station_TimeTID = concatenate(tuple(Station_TimeTID))
             Station_PeriodTID = concatenate(tuple(Station_PeriodTID))
@@ -129,8 +124,10 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             Station_MinAmps = concatenate(tuple(Station_MinAmps))
             Station_MaxAmps = concatenate(tuple(Station_MaxAmps))
 
+            # Obtain the ocurrence map for the TIDs in this same Station
             StationOcurrenceMap = Time_Months_Ocurrence_Analysis(Station_TimeTID, Station_MonthArray)
 
+            # Save all the Station data in one dictionary and...
             StationResultsDict = {
                 "TIME":Station_TimeTID,
                 "MONTH":Station_MonthArray,
@@ -141,15 +138,28 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                 "MAX_AMPS":Station_MaxAmps,
             }
 
+            # and save these numpy arrays in the correspondent list to manage
+            # all the TIDs data for each Region
+            Region_MonthArray.append(StationResultsDict["MONTH"])
+            Region_TimeTID.append(StationResultsDict["TIME"])
+            Region_PeriodTID.append(StationResultsDict["PERIOD"])
+            Region_PowerTID.append(StationResultsDict["POWER"])
+            Region_MinAmps.append(StationResultsDict["MIN_AMPS"])
+            Region_MaxAmps.append(StationResultsDict["MAX_AMPS"])
+
+
+            # Check if the directory for the Station given its' Region exists,
+            # and if not, create it
             StationSavedir = f"./../Results/{Region}/{Station}/"
             if not isdir(StationSavedir):
                 mkdir(StationSavedir)
 
+            # Save minimum and maximum values of local ocurrence of TIDs for each Station
             MIN_OCC, MAX_OCC = StationResultsDict["OCURRENCE"].min(), StationResultsDict["OCURRENCE"].max()
             CreateAnalysisPlots(Region, Station, "Stat", StationResultsDict, MIN_OCC, MAX_OCC)
             
 
-        # Join all stations data from the same region in single arrays
+        # Create numpy arrays for all Stations data from the same Region
         Region_MonthArray = concatenate(tuple(Region_MonthArray), dtype=int)
         Region_TimeTID = concatenate(tuple(Region_TimeTID))
         Region_PeriodTID = concatenate(tuple(Region_PeriodTID))
@@ -158,8 +168,8 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         Region_MaxAmps = concatenate(tuple(Region_MaxAmps))
         NumTIDs = Region_TimeTID.size
 
-        #Get 2D histogram of TIDs' ocurrence and save all the data from the respective directory
-        #in RESULTS
+        #Get ocurrence map for each Region and save all the data from the respective directory
+        #in a dictionary
         HistogramOcurrence = Time_Months_Ocurrence_Analysis(Region_TimeTID, Region_MonthArray)
 
         RegionResultsDict = {
@@ -177,7 +187,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
         print(f"Total Days:{TotalDays}\nNo. of TIDs:{NumTIDs}\nActive Days:{ActiveDays}\n")
 
-    #Obtain the globam minimum and maximum of the ocurrence arrays of all the directories' data
+    #Obtain the globam minimum and maximum of the ocurrence arrays of all the Regions data
     MIN_OCC = min([DataResults["OCURRENCE"].min() for DataResults in RESULTS])
     MAX_OCC = max([DataResults["OCURRENCE"].max() for DataResults in RESULTS])
     for RegionDataResults in RESULTS:
@@ -211,7 +221,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 #---------------------------------------------------------------------------
 
 def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
-    Dictionary = dict()
+    inputDictionary = dict()
 
     for Region in SubdirsResultsData:
         DataRegionPath = DataPath + Region
@@ -240,9 +250,9 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
             
             StationsDict[station] = StationDataPaths
         
-        Dictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = StationsDict)
+        inputDictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = StationsDict)
 
-    return Dictionary
+    return inputDictionary
 
 
 
