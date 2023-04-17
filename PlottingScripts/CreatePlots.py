@@ -208,7 +208,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
         Mean, Deviation = PeriodData.mean(), PeriodData.std()
         MaxValue = PeriodHistogram.max()
 
-        #Declaring an Exponential Gaussian Model as the proposed theorical distribution
+        #Declaring an Exponential Gaussian Model as the proposed theoretical distribution
         GaussianToFit = GaussianModel()
         #Setting parameters
         ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue,
@@ -229,7 +229,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200)
         GaussianFitCurve = GaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit)
 
-        # Adding gaussian curva by using the optimal parameters        
+        # Adding gaussian curve by using the optimal parameters        
         Plots[1][1].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
         label=labelFit)
 
@@ -309,7 +309,7 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
             MaskNight = ~MaskDay
 
-            # Mean and Std of average amplitud from absolut min and max amplitude for...
+            # Mean and Std of average amplitude from absolute min and max amplitude for...
 
             # day and ...
             AverageMinMax_DayAmps = (np.abs(MinA_Conds_month[MaskDay]) + MaxA_Conds_month[MaskDay])/2.0
