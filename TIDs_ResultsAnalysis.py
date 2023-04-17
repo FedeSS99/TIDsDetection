@@ -9,7 +9,7 @@ from DataScripts.HistogramOcurrence import Time_Months_Ocurrence_Analysis
 from PlottingScripts.CreatePlots import *
 
 #Start creating Matplotlib plot to visualize the statistics given the data from DataDict
-def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, MIN_OCC, MAX_OCC):
+def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, CMAP, NORM):
     if Stat_or_Reg == "Stat":
         PlotsResults = CreateFiguresResults(StationName, Stat_or_Reg)
         print(f"Working on {StationName} Station...", end="\t")
@@ -18,7 +18,7 @@ def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, MIN_OCC,
         PlotsResults = CreateFiguresResults(RegionName, Stat_or_Reg)
         print(f"Working on {RegionName} Region...", end="\t")
 
-    Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], MIN_OCC, MAX_OCC, PlotsResults, 
+    Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP, NORM, PlotsResults, 
                                   RegionName, StationName, Stat_or_Reg)
 
     Add_PeriodHistogramToPlot(DataDict["PERIOD"], DataDict["TIME"], DataDict["MONTH"], 
@@ -54,6 +54,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     PowerPlot = CreateResultsFigurePower()
     ListBoxPlots = []
     ListLegendsBoxPlots = []
+    OcurrenceSampling_AllRegions = []
     for Region in DICT_REGION_STATIONS.keys():
         NameOut = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
         print(f"-- Extracting data of {NameOut} Region --")
@@ -153,8 +154,8 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                 mkdir(StationSavedir)
 
             # Save minimum and maximum values of local ocurrence of TIDs for each Station
-            MIN_OCC, MAX_OCC = StationResultsDict["OCURRENCE"].min(), StationResultsDict["OCURRENCE"].max()
-            CreateAnalysisPlots(Region, Station, "Stat", StationResultsDict, MIN_OCC, MAX_OCC)
+            CMAP, NORM = ObtainCMAPandNORM(StationResultsDict["OCURRENCE"].flatten())
+            CreateAnalysisPlots(Region, Station, "Stat", StationResultsDict, CMAP, NORM)
             
         # Create numpy arrays for all Stations data from the same Region
         Region_MonthArray = concatenate(tuple(Region_MonthArray), dtype=int)
@@ -180,15 +181,19 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             "NAME":NameOut
         }
 
+        # Save a flatten version of the ocurrence map of the Region
+        OcurrenceSampling_AllRegions.append( HistogramOcurrence.flatten() )
+
         RESULTS.append(RegionResultsDict)
 
         print(f"Total Days:{TotalDays}\nNo. of TIDs:{NumTIDs}\nActive Days:{ActiveDays}\n")
 
-    #Obtain the globam minimum and maximum of the ocurrence arrays of all the Regions data
-    MIN_OCC = min([DataResults["OCURRENCE"].min() for DataResults in RESULTS])
-    MAX_OCC = max([DataResults["OCURRENCE"].max() for DataResults in RESULTS])
+    # Obtain ColorMap and Norm to use for all the regions
+    OcurrenceSampling_AllRegions = np.concatenate(tuple(OcurrenceSampling_AllRegions))
+    CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions)
+
     for RegionDataResults in RESULTS:
-        #Get a string Coord to use in the analysis' plots results
+        # Get a string Coord to use in the analysis' plots results
         NamePlot = RegionDataResults["NAME"]
         
         if NamePlot == "North":
@@ -204,7 +209,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             ColorPower = "blue"
             RegIndex = 2
 
-        CreateAnalysisPlots(NamePlot, "", "Reg", RegionDataResults, MIN_OCC, MAX_OCC)
+        CreateAnalysisPlots(NamePlot, "", "Reg", RegionDataResults, CMAP, NORM)
 
         BoxPlotObject = Add_TimePowerDataResultsToPlot(RegionDataResults["TIME"], RegionDataResults["POWER"], PowerPlot, ColorPower, RegIndex)
         ListBoxPlots.append(BoxPlotObject)
