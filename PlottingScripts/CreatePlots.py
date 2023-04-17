@@ -190,7 +190,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
-    for PeriodData, Color, NamePlot in zip([DayTIDsPeriods, NightTIDsPeriods], ["yellow", "blue"], ["Day", "Night"]):
+    for PeriodData, Color, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], ["blue", "red"], ["Night", "Day"]):
 
         #Setting number of bins by using the Freedman-Diaconis rule
         Quantiles = quantiles(PeriodData, n=4)
@@ -201,7 +201,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
 
         # Adding density histogram of period data
         PeriodHistogram, Edges, _ = Plots[1][1].hist(PeriodData, bins=PeriodBins, range=PeriodRange, density=True,
-                         facecolor=Color, edgecolor=Color, alpha=0.5)
+                         facecolor=Color, edgecolor="None", alpha=0.5)
 
         # Stablish the median of each bin as the X value for each density bar
         MidEdges = Edges[:PeriodBins] + np.diff(Edges)
