@@ -8,7 +8,6 @@ from DataScripts.GetDataFile import SingleTIDs_Analysis
 from DataScripts.HistogramOcurrence import Time_Months_Ocurrence_Analysis
 from PlottingScripts.CreatePlots import *
 
-
 #Start creating Matplotlib plot to visualize the statistics given the data from DataDict
 def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, MIN_OCC, MAX_OCC):
     if Stat_or_Reg == "Stat":
@@ -147,7 +146,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             Region_MinAmps.append(StationResultsDict["MIN_AMPS"])
             Region_MaxAmps.append(StationResultsDict["MAX_AMPS"])
 
-
             # Check if the directory for the Station given its' Region exists,
             # and if not, create it
             StationSavedir = f"./../Results/{Region}/{Station}/"
@@ -158,7 +156,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             MIN_OCC, MAX_OCC = StationResultsDict["OCURRENCE"].min(), StationResultsDict["OCURRENCE"].max()
             CreateAnalysisPlots(Region, Station, "Stat", StationResultsDict, MIN_OCC, MAX_OCC)
             
-
         # Create numpy arrays for all Stations data from the same Region
         Region_MonthArray = concatenate(tuple(Region_MonthArray), dtype=int)
         Region_TimeTID = concatenate(tuple(Region_TimeTID))
@@ -253,8 +250,6 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
         inputDictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = StationsDict)
 
     return inputDictionary
-
-
 
 if __name__=="__main__":
     # Setting plotting format for all figures

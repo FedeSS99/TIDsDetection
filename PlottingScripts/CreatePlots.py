@@ -65,7 +65,6 @@ def CreateFiguresResults(Name, Stat_or_Reg):
     Sub1_AmpsAnalysis.set_ylabel("Amplitude (dTEC units)")
     Sub2_AmpsAnalysis.set_ylabel("Amplitude (dTEC units)")
 
-
     return [(FigureTimeHist, FigurePeriodsHist, Figure_MonthBars, Figure_AmpsAnalysis), 
             (SubPlot_TimeHist, SubPlot_PeriodHist, SubPlot_MonthsFreq, (Sub1_AmpsAnalysis, Sub2_AmpsAnalysis))]
 
@@ -163,7 +162,6 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Region
 # Same probability density function as used in lmfit module
 # check GaussianModdel in https://lmfit.github.io/lmfit-py/builtin_models.html
 GaussianDist = lambda x, A, mu, sigma: (A/(sigma*(2.0*np.pi)**0.5))*np.exp( -0.5*((x-mu)/sigma)**2.0)
-
 
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     Period = 60.0*Period
@@ -358,7 +356,6 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
     XTICKS = [i for i in range(0, 25, 4)]
     Plots[1][3][0].set_xticks(ticks=XTICKS, labels=XTICKS)
 
-
     Colors_Errobars = ("lime", "purple")
     N_plot = 0
     for KeyDict, phaseErrorPlot, Color in zip(MeanAmps_Dict.keys(), (-.2, .2), Colors_Errobars):
@@ -375,7 +372,6 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
                                 capsize=5, capthick=1, elinewidth=1, ecolor=Color, color=Color, 
                                 label=KeyDict, fmt="o")
                                 
-
     Plots[1][3][1].legend()
     Plots[0][3].tight_layout()
     if Stat_or_Reg == "Stat":
