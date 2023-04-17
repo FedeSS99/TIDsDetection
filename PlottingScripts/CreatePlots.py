@@ -160,6 +160,11 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, absMin, absMax, Plots, Region
         SaveRegionPlot("OcurrenceTIDs_", RegionName, Plots[0][0])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
+# Same probability density function as used in lmfit module
+# check GaussianModdel in https://lmfit.github.io/lmfit-py/builtin_models.html
+GaussianDist = lambda x, A, mu, sigma: (A/(sigma*(2.0*np.pi)**0.5))*np.exp( -0.5*((x-mu)/sigma)**2.0)
+
+
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     Period = 60.0*Period
 
@@ -186,17 +191,18 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
     for PeriodData, Color, NamePlot in zip([DayTIDsPeriods, NightTIDsPeriods], ["yellow", "blue"], ["Day", "Night"]):
-        #Setting number of bins, period range and also the width of the bars
+
+        #Setting number of bins by using the Freedman-Diaconis rule
         Quantiles = quantiles(PeriodData, n=4)
-        h = 2.0*(Quantiles[2]-Quantiles[0])*(PeriodData.size**(-1/3))
+        IQR = Quantiles[2]-Quantiles[0]
+        h = 2.0*IQR*(PeriodData.size**(-1/3))
         PeriodRange = (PeriodData.min(), PeriodData.max())
         PeriodBins = int((PeriodRange[1]-PeriodRange[0])/h)
-        BarsPeriod = np.linspace(PeriodRange[0], PeriodRange[1], PeriodBins)
-        Width = np.diff(BarsPeriod).mean()
 
-        #Obtaining histogram from period data with given bins and range
-        PeriodHistogram, Edges = np.histogram(PeriodData, bins=PeriodBins, range=PeriodRange,
-                                              density=True)
+        # Adding density histogram of period data
+        PeriodHistogram, Edges, _ = Plots[1][1].hist(PeriodData, bins=PeriodBins, range=PeriodRange, density=True,
+                         facecolor=Color, edgecolor=Color, alpha=0.5)
+
         # Stablish the median of each bin as the X value for each density bar
         MidEdges = Edges[:PeriodBins] + np.diff(Edges)
 
@@ -214,13 +220,19 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
 
         #Extracting optimal parameters for gaussian fit
         ParamsResults = ExpGaussianFitResult.params
+        AmpFit = ParamsResults["amplitude"].value
         MeanFit, MeanError = ParamsResults["center"].value, ParamsResults["center"].stderr
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
+
+        # Create string sequence to show optimal mean and deviation values for the input data
         labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit,MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit,SigmaError)
 
-        Plots[1][1].bar(BarsPeriod, height=PeriodHistogram, width=Width, align="edge",
-        facecolor=Color, edgecolor=Color, alpha=0.5)
-        Plots[1][1].plot(MidEdges, ExpGaussianFitResult.best_fit, linestyle="--", color=Color, linewidth=1.5,
+        # Create theoretical distribution given these optimal values
+        PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200)
+        GaussianFitCurve = GaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit)
+
+        # Adding gaussian curva by using the optimal parameters        
+        Plots[1][1].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
         label=labelFit)
 
     Plots[1][1].legend()
