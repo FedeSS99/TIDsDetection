@@ -5,7 +5,7 @@ from matplotlib.colors import LinearSegmentedColormap, BoundaryNorm
 
 from scipy.stats.mstats import mquantiles
 import numpy as np
-from lmfit.models import GaussianModel
+from lmfit.models import GaussianModel, PowerLawModel
 
 use("TkAgg")
 
@@ -17,23 +17,34 @@ TerminatorsDict = dict(
     )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-def CreateResultsFigurePower():
-    #Create main figure for each analysis
+def CreateFigureTimePower():
+    #Create main figure
     FigurePowerTime = figure(1, figsize=(8,6))
     SubPlot_PowerTime = FigurePowerTime.add_subplot(111)
-    #Power-Time labels and background color
+    #Power-Time labels
     SubPlot_PowerTime.set_xlabel("Local Time (Hours)")
     SubPlot_PowerTime.set_ylabel("TID power")
 
     return (FigurePowerTime, SubPlot_PowerTime)
 
+
+def CreateFigureAmplitudePower():
+    #Create main figure
+    FigureAmplitudePower = figure(2, figsize=(6,6))
+    SubPlot_AmplitudePower = FigureAmplitudePower.add_subplot(111)
+    # Amplitude-Power labels
+    SubPlot_AmplitudePower.set_xlabel("Average absolute amplitude (dTEC)")
+    SubPlot_AmplitudePower.set_ylabel("TID power")
+
+    return (FigureAmplitudePower, SubPlot_AmplitudePower)
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateFiguresResults(Name, Stat_or_Reg):
     #Create main figure for each analysis
-    FigureTimeHist = figure(2, figsize=(6,6))
-    FigurePeriodsHist = figure(3, figsize=(6,6))
-    Figure_MonthBars = figure(4, figsize=(6,6))
-    Figure_AmpsAnalysis = figure(5, figsize=(6,6))
+    FigureTimeHist = figure(3, figsize=(6,6))
+    FigurePeriodsHist = figure(4, figsize=(6,6))
+    Figure_MonthBars = figure(5, figsize=(6,6))
+    Figure_AmpsAnalysis = figure(6, figsize=(6,6))
 
     SubPlot_TimeHist = FigureTimeHist.add_subplot(111)
     SubPlot_PeriodHist = FigurePeriodsHist.add_subplot(111)
@@ -111,6 +122,39 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
     return BoxPlot["boxes"][0]
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
+# Same power law function as used in lmfit module
+# check PowerLawModel in https://lmfit.github.io/lmfit-py/builtin_models.html
+PowerFunction = lambda x, A, k: A*(x**k)
+
+def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Plots, Color, Marker, RegionName):
+    # Obtain average absolute amplitude
+    AverageAmplitude = 0.5*(np.abs(MinA) + MaxA)
+
+    # Start a PowerLaw object
+    PowerModel = PowerLawModel()
+    # Define initial guessing values
+    Params = PowerModel.guess(Power, x=AverageAmplitude)
+    # Input average absoluted amplitude and TIDs'power as independent and dependent variables
+    PowerModelFit = PowerModel.fit(Power, Params, x=AverageAmplitude)
+
+    # Extract amplitude and power of best fit
+    BestPowerFitParams = PowerModelFit.params
+    Best_A = BestPowerFitParams["amplitude"].value
+    Best_k = BestPowerFitParams["exponent"].value
+    
+    # Get R2 score of the best fit
+    R2_Score = PowerModelFit.rsquared
+    print(f"--Power Law Model for Amplitude-Power model--\nAmplitude = {Best_A:.3f}\nExponent={Best_k:.3f}\nR2-Score={R2_Score:.3f}\n")
+
+    # Add scatter plot of average amplitudes and power
+    Plots[1].scatter(AverageAmplitude, Power, alpha=0.2,
+                     c=Color, marker=Marker, label=RegionName)
+    
+    # Add best fit of power law model for average amplitudes and power data
+    AverageAmplitude.sort()
+    Plots[1].plot(AverageAmplitude, PowerFunction(AverageAmplitude, Best_A, Best_k), color=Color)
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 def ObtainCMAPandNORM(OcurrenceArray):
     # Define the colormap
     CMAP = get_cmap("jet")
@@ -121,10 +165,8 @@ def ObtainCMAPandNORM(OcurrenceArray):
 
     # Create the new CMAP
     CMAP = LinearSegmentedColormap.from_list('Ocurrence Map', CMAPlist, CMAP.N)
-
     # Define Bounds array
     BOUNDS = np.linspace(OcurrenceArray.min(), OcurrenceArray.max(), 7, endpoint=True)
-
     # Create NORM array
     NORM = BoundaryNorm(BOUNDS, CMAP.N)
 
@@ -147,7 +189,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, RegionName
     Plots[1][0].set_xticks(timeTicks)
 
     HistogramaImagen = Plots[1][0].imshow(HistogramMonths, cmap=CMAP, norm=NORM,
-    interpolation="spline36", aspect="auto", origin="lower", extent=extent)
+    interpolation="None", aspect="auto", origin="lower", extent=extent)
     colorbar(HistogramaImagen, ax=Plots[1][0], label="% Ocurrence")
 
     # Extracting rise and set hours for each region
@@ -288,6 +330,21 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, RegionName, StationName, S
         SaveRegionPlot("DayNightTIDs_", RegionName, Plots[0][2])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
+def AddBoxPlot(Plots, Num, Center, Width, dx, InputData, Color):
+    if InputData.size  > 0:
+        BoxPlot = Plots[1][3][Num].boxplot(InputData, sym="x", positions=[Center + dx], patch_artist=True,
+                                            widths=Width)
+                
+        for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
+            for patch in ComponentBoxPlot:
+                patch.set_color(Color)
+                patch.set_linewidth(2)
+
+        for BoxComponent in BoxPlot["boxes"]:
+            BoxComponent.set_facecolor("None")
+            BoxComponent.set_edgecolor(Color)
+
+
 def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
@@ -295,6 +352,16 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
+
+    # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
+    Indexes = list(range(0,24,2))
+    for Index in Indexes:
+        MaskTime = np.where((Index <= Time_TIDs) & (Time_TIDs <= Index+2), True, False)
+        AverageMinMax_Amps = (np.abs(MinA[MaskTime]) + MaxA[MaskTime])/2.0
+        AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
+
+        AddBoxPlot(Plots, 0, Index, 0.5, 1.0, AverageMinMax_Amps, "k")
+
 
     # START ANALYSIS BY MONTHS DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1,13,1):
@@ -314,62 +381,17 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
             # night
             AverageMinMax_NightAmps = (np.abs(MinA_Conds_month[MaskNight]) + MaxA_Conds_month[MaskNight])/2.0
 
-            if AverageMinMax_DayAmps.size  > 0:
-
-                BoxPlot = Plots[1][3][1].boxplot(AverageMinMax_DayAmps, sym="x", positions=[month - 0.25], patch_artist=True,
-                                            widths=0.25)
-                
-                for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
-                    for patch in ComponentBoxPlot:
-                        patch.set_color("r")
-                        patch.set_linewidth(2)
-
-                for BoxComponent in BoxPlot["boxes"]:
-                    BoxComponent.set_facecolor("None")
-                    BoxComponent.set_edgecolor("r")
+            AddBoxPlot(Plots, 1, month, 0.25, 0.25, AverageMinMax_DayAmps, "r")
+            AddBoxPlot(Plots, 1, month, 0.25, 0.75, AverageMinMax_NightAmps, "b")
 
 
-            if AverageMinMax_NightAmps.size  > 0:
-
-                BoxPlot = Plots[1][3][1].boxplot(AverageMinMax_NightAmps, sym="x", positions=[month + 0.25], patch_artist=True,
-                                            widths=0.25)
-                
-                for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
-                    for patch in ComponentBoxPlot:
-                        patch.set_color("b")
-                        patch.set_linewidth(2)
-
-                for BoxComponent in BoxPlot["boxes"]:
-                    BoxComponent.set_facecolor("None")
-                    BoxComponent.set_edgecolor("b")
-
-    #Setting y ticks with months names
+    # Setting x ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     MonthAxisData = np.linspace(1.0,12.0,12,endpoint=True)
     Plots[1][3][1].set_xticks([])
     Plots[1][3][1].set_xticks(MonthAxisData, MonthTicks)
 
-
-    # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
-    Indexes = list(range(0,24,2))
-    for Index in Indexes:
-        MaskTime = np.where((Index <= Time_TIDs) & (Time_TIDs <= Index+2), True, False)
-        AverageMinMax_Amps = (np.abs(MinA[MaskTime]) + MaxA[MaskTime])/2.0
-        AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
-        if AverageMinMax_Amps.size  > 0:
-
-            BoxPlot = Plots[1][3][0].boxplot(AverageMinMax_Amps, sym="x", positions=[Index + 1.0], patch_artist=True,
-                                        widths=0.5)
-            
-            for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
-                for patch in ComponentBoxPlot:
-                    patch.set_color("k")
-                    patch.set_linewidth(2)
-
-            for BoxComponent in BoxPlot["boxes"]:
-                BoxComponent.set_facecolor("None")
-                BoxComponent.set_edgecolor("k")
-
+    # Setting x ticks within 24 hours 
     Plots[1][3][0].set_xticks([])
     XTICKS = [i for i in range(0, 25, 4)]
     Plots[1][3][0].set_xticks(ticks=XTICKS, labels=XTICKS)
