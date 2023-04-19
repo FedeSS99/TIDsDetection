@@ -30,15 +30,15 @@ def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, CMAP, NO
                             DataDict["TIME"], DataDict["MONTH"], PlotsResults, 
                             RegionName, StationName, Stat_or_Reg)
     
-    for i in range(2,6):
+    for i in range(3,7):
         close(i)
     
     print("finished!")
 
 #---------------------------------------------------------------------------
 def StarAnnualAnalysis(DICT_REGION_STATIONS):
-    #Ignore events that occoured in dates where a geomagnetic
-    #storm had a major effect in the Dst value
+    # Ignore events that occoured in dates where a geomagnetic
+    # storm had a major effect in the Dst value
     with open("./StormData/tormentas-2018-2021.txt", "r") as StormDaysData:
         StormDays = []
         Lines = StormDaysData.readlines()
@@ -48,10 +48,19 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             if Date not in StormDays:
                 StormDays.append(Line.split()[0])
 
-    #Create RESULTS list to save data of time, period and power from TIDs
-    #saved with VTEC_MainRoutine_IndividualCMN.py
+    # Create dictionary for atributes to use as input information for each Region
+    # plot
+    RegionsInfo = {
+        "North":["PTEX-PALX", "blue", "^", 0],
+        "Center":["MNIG-UCOE", "green", "*", 1],
+        "South":["CN24-UNPM", "red", "s", 2]
+    }
+
+    # Create RESULTS list to save data of time, period and power from TIDs
+    # saved with VTEC_MainRoutine_IndividualCMN.py
     RESULTS = []
-    PowerPlot = CreateResultsFigurePower()
+    PowerPlot = CreateFigureTimePower()
+    AmplitudePowerPlot = CreateFigureAmplitudePower()
     ListBoxPlots = []
     ListLegendsBoxPlots = []
     OcurrenceSampling_AllRegions = []
@@ -70,7 +79,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         Region_MaxAmps = []
         Region_MonthArray = []
 
-        #Obtain the full path of the files located in each station given the Region
+        # Obtain the full path of the files located in each station given the Region
         StationsByRegion = DICT_REGION_STATIONS[Region]["DataPaths"].keys()
         for Station in StationsByRegion:
 
@@ -98,7 +107,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
                         Station_MonthArray.append(SizeResults*[MonthFile])
 
-                        #Get the timezone given NameOut
+                        # Get the timezone given NameOut
                         if NameOut == "North":
                             TimeZone = -8.0
                         elif NameOut == "Center":
@@ -195,31 +204,33 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     for RegionDataResults in RESULTS:
         # Get a string Coord to use in the analysis' plots results
         NamePlot = RegionDataResults["NAME"]
-        
-        if NamePlot == "North":
-            NamePower = "PTEX-PALX"
-            ColorPower = "green"
-            RegIndex = 0
-        elif NamePlot == "Center":
-            NamePower = "MNIG-UCOE"
-            ColorPower = "red"
-            RegIndex = 1
-        elif NamePlot == "South":
-            NamePower = "CN24-UNPM"
-            ColorPower = "blue"
-            RegIndex = 2
 
+        RegionInfoData = RegionsInfo[NamePlot]
+
+        # Generate graphics for each region
         CreateAnalysisPlots(NamePlot, "", "Reg", RegionDataResults, CMAP, NORM)
 
-        BoxPlotObject = Add_TimePowerDataResultsToPlot(RegionDataResults["TIME"], RegionDataResults["POWER"], PowerPlot, ColorPower, RegIndex)
+        # Add boxplots into a general figure for all regions and save them
+        BoxPlotObject = Add_TimePowerDataResultsToPlot(RegionDataResults["TIME"], RegionDataResults["POWER"], 
+                                                       PowerPlot, RegionInfoData[1], RegionInfoData[3])
         ListBoxPlots.append(BoxPlotObject)
-        ListLegendsBoxPlots.append(NamePower)
+        ListLegendsBoxPlots.append(RegionInfoData[0])
+
+        # Add scatter plots into a general figure for all regions
+        Add_AmplitudePowerScatterPlot(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"], RegionDataResults["POWER"], 
+                                      AmplitudePowerPlot, RegionInfoData[1], RegionInfoData[2], RegionInfoData[0])
     
     PowerPlot[1].set_yscale("log", subs=None)
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots, loc="upper right")
     SaveRegionPlot("PowerDistributionStations", "", PowerPlot[0])
-    PowerPlot[0].savefig(f"./../Results/PowerDistributionStations.png")
-    close(1)
+    
+    AmplitudePowerPlot[1].set_xscale("log", subs=None)
+    AmplitudePowerPlot[1].set_yscale("log", subs=None)
+    AmplitudePowerPlot[0].legend()
+    SaveRegionPlot("AmplitudePowerRegions", "", AmplitudePowerPlot[0])
+
+    for s in range(1,3):
+        close(s)
 #---------------------------------------------------------------------------
 
 def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
