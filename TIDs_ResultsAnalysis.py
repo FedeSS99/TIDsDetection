@@ -60,7 +60,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     # saved with VTEC_MainRoutine_IndividualCMN.py
     RESULTS = []
     PowerPlot = CreateFigureTimePower()
-    AmplitudePowerPlot = CreateFigureAmplitudePower()
+    AmplitudePowerPlot = CreateFigureAmplitudePower(len(RegionsInfo))
     ListBoxPlots = []
     ListLegendsBoxPlots = []
     OcurrenceSampling_AllRegions = []
@@ -218,14 +218,13 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
         # Add scatter plots into a general figure for all regions
         Add_AmplitudePowerScatterPlot(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"], RegionDataResults["POWER"], 
-                                      AmplitudePowerPlot, RegionInfoData[1], RegionInfoData[2], RegionInfoData[0])
+                                      AmplitudePowerPlot, RegionInfoData[1], RegionInfoData[2], RegionInfoData[3], RegionInfoData[0])
     
     PowerPlot[1].set_yscale("log", subs=None)
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots, loc="upper right")
     SaveRegionPlot("PowerDistributionStations", "", PowerPlot[0])
     
-    AmplitudePowerPlot[1].set_xscale("log", subs=None)
-    AmplitudePowerPlot[1].set_yscale("log", subs=None)
+    AmplitudePowerPlot[1][-1].set_xscale("log", subs=None)
     AmplitudePowerPlot[0].legend()
     SaveRegionPlot("AmplitudePowerRegions", "", AmplitudePowerPlot[0])
 
