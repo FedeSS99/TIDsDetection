@@ -1,5 +1,5 @@
 from matplotlib import use
-from matplotlib.pyplot import figure, colorbar
+from matplotlib.pyplot import figure, subplots, colorbar
 from matplotlib.cm import get_cmap
 from matplotlib.colors import LinearSegmentedColormap, BoundaryNorm
 
@@ -28,15 +28,17 @@ def CreateFigureTimePower():
     return (FigurePowerTime, SubPlot_PowerTime)
 
 
-def CreateFigureAmplitudePower():
+def CreateFigureAmplitudePower(Nplots):
     #Create main figure
-    FigureAmplitudePower = figure(2, figsize=(6,6))
-    SubPlot_AmplitudePower = FigureAmplitudePower.add_subplot(111)
-    # Amplitude-Power labels
-    SubPlot_AmplitudePower.set_xlabel("Average absolute amplitude (dTEC)")
-    SubPlot_AmplitudePower.set_ylabel("TID power")
+    FigureAmplitudePower, Subplots = subplots(num=2, nrows=Nplots, ncols=1, sharex=True, figsize=(6,6))
+    for i in range(Nplots):
+        # Amplitude-Power labels
+        Subplots[i].set_ylabel("TID power")
 
-    return (FigureAmplitudePower, SubPlot_AmplitudePower)
+    Subplots[Nplots-1].set_xlabel("Average absolute amplitude (dTEC)")
+    FigureAmplitudePower.subplots_adjust(hspace=0.0)
+
+    return (FigureAmplitudePower, Subplots)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateFiguresResults(Name, Stat_or_Reg):
@@ -126,7 +128,7 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
 # check PowerLawModel in https://lmfit.github.io/lmfit-py/builtin_models.html
 PowerFunction = lambda x, A, k: A*(x**k)
 
-def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Plots, Color, Marker, RegionName):
+def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Plots, Color, Marker, Index, RegionName):
     # Obtain average absolute amplitude
     AverageAmplitude = 0.5*(np.abs(MinA) + MaxA)
 
@@ -144,15 +146,19 @@ def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Plots, Color, Marker, Regio
     
     # Get R2 score of the best fit
     R2_Score = PowerModelFit.rsquared
-    print(f"--Power Law Model for Amplitude-Power model--\nAmplitude = {Best_A:.3f}\nExponent={Best_k:.3f}\nR2-Score={R2_Score:.3f}\n")
+    print(f"--Power Law Model for Amplitude-Power plot--\nAmplitude = {Best_A:.3f}\nExponent = {Best_k:.3f}\nR2-Score = {R2_Score:.3f}\n")
 
     # Add scatter plot of average amplitudes and power
-    Plots[1].scatter(AverageAmplitude, Power, alpha=0.2,
+    Plots[1][Index].scatter(AverageAmplitude, Power, alpha=0.15,
                      c=Color, marker=Marker, label=RegionName)
+    Plots[1][Index].set_yscale("log", subs=None)
     
     # Add best fit of power law model for average amplitudes and power data
     AverageAmplitude.sort()
-    Plots[1].plot(AverageAmplitude, PowerFunction(AverageAmplitude, Best_A, Best_k), color=Color)
+    Plots[1][Index].plot(AverageAmplitude, PowerFunction(AverageAmplitude, Best_A, Best_k), "--k")
+    Plots[1][Index].text(0.05, 0.95, f"Amplitude = {Best_A:.3f}\nExponent = {Best_k:.3f}\n"+r"$R^{{2}}$ = {0:.3f}".format(R2_Score),
+                         horizontalalignment = "left", verticalalignment = "top", fontsize = 10, 
+                         transform = Plots[1][Index].transAxes)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def ObtainCMAPandNORM(OcurrenceArray):
@@ -161,10 +167,10 @@ def ObtainCMAPandNORM(OcurrenceArray):
     # Extract all colors from the jet map
     CMAPlist = [CMAP(i) for i in range(CMAP.N)]
     # Force the first color entry to be transparent
-    CMAPlist[0] = (0, 0, 0, 0.0)
+    CMAPlist[0] = (0.0, 0.0, 0.0, 0.0)
 
     # Create the new CMAP
-    CMAP = LinearSegmentedColormap.from_list('Ocurrence Map', CMAPlist, CMAP.N)
+    CMAP = LinearSegmentedColormap.from_list("Ocurrence Map", CMAPlist, CMAP.N)
     # Define Bounds array
     BOUNDS = np.linspace(OcurrenceArray.min(), OcurrenceArray.max(), 7, endpoint=True)
     # Create NORM array
