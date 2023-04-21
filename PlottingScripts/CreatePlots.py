@@ -16,6 +16,13 @@ TerminatorsDict = dict(
     South="./TerminatorData/TerminatorHours_South.dat"
     )
 
+# Dictionary to extract colors to use as day-night filter for amplitude-power data
+AmpPower_COLORS = dict(
+    North = ("#1100FF", "#EEFF00"),
+    Center = ("#00FF07", "#FF00F8"),
+    South = ("#FF0001", "#00FFFE")
+)
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateFigureTimePower():
     #Create main figure
@@ -127,9 +134,14 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
 # check PowerLawModel in https://lmfit.github.io/lmfit-py/builtin_models.html
 PowerFunction = lambda x, A, k: A*(x**k)
 
-def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Plots, Color, Marker, Index, RegionName):
+def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Time, Months, Plots, Marker, Index, RegionName):
     # Obtain average absolute amplitude
     AverageAmplitude = 0.5*(np.abs(MinA) + MaxA)
+    Arg_AveAmpSort = np.argsort(AverageAmplitude)
+    AverageAmplitude = AverageAmplitude[Arg_AveAmpSort]
+    Power = Power[Arg_AveAmpSort]
+    Time = Time[Arg_AveAmpSort]
+    Months = Months[Arg_AveAmpSort]
 
     # Start a PowerLaw object
     PowerModel = PowerLawModel()
@@ -145,18 +157,69 @@ def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Plots, Color, Marker, Index
     
     # Get R2 score of the best fit
     R2_Score = PowerModelFit.rsquared
+
+    # Get best fit of the amplitude-power model
+    Best_AmpPowerFit = PowerModelFit.best_fit
+
     print(f"--Power Law Model for Amplitude-Power plot--\nAmplitude = {Best_A:.3f}\nExponent = {Best_k:.3f}\nR2-Score = {R2_Score:.3f}\n")
 
-    # Add scatter plot of average amplitudes and power
-    Plots[1][Index].scatter(AverageAmplitude, Power, alpha=0.15,
-                     c=Color, marker=Marker, label=RegionName)
-    Plots[1][Index].set_yscale("log", subs=None)
+    # Extracting rise and set hours for each region
+    RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
+    usecols=(1, 2), unpack=True, skiprows=1)
+    SizeData = RiseHours.size
+    DivH_12 = SizeData//12
+    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
+
+    # Apply day-night filter for amplitude-power data
+    DayNightAmplitude = dict(DAY=[], NIGHT=[])
+    DayNightPower = dict(DAY=[], NIGHT=[])
+    NumDay, NumNight = 0, 0
+    for month in range(1,13):
+        # Separate data by given month
+        Conds_month = Months==month
+
+        # Check if there is any data point within this month
+        if Conds_month.any():
+
+            # Create arrays given the month and the time to separate in day and night
+            Time_Conds_month = Time[Conds_month]
+            AveAmplitude_Conds_month = AverageAmplitude[Conds_month]
+            Power_Conds_month = Power[Conds_month]
+
+
+            # Day and night masks and count the total of
+            MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
+            MaskNight = ~MaskDay
+
+            NumDay += MaskDay.sum()
+            NumNight += MaskNight.sum()
+
+            DayNightAmplitude["DAY"].append(AveAmplitude_Conds_month[MaskDay])
+            DayNightAmplitude["NIGHT"].append(AveAmplitude_Conds_month[MaskNight])
+            DayNightPower["DAY"].append(Power_Conds_month[MaskDay])
+            DayNightPower["NIGHT"].append(Power_Conds_month[MaskNight])
+
+    DayNightAmplitude["DAY"] = np.concatenate(tuple(DayNightAmplitude["DAY"]))
+    DayNightAmplitude["NIGHT"] = np.concatenate(tuple(DayNightAmplitude["NIGHT"]))
+    DayNightPower["DAY"] = np.concatenate(tuple(DayNightPower["DAY"]))
+    DayNightPower["NIGHT"] = np.concatenate(tuple(DayNightPower["NIGHT"]))
+
+    # Add scatter plot of average amplitudes and power by day-night filter
+    for moment, color in zip(["DAY", "NIGHT"], AmpPower_COLORS[RegionName]):
+
+        Plots[1][Index].scatter(DayNightAmplitude[moment], DayNightPower[moment], alpha=0.25,
+                         c=color, marker=Marker, label= RegionName + "-" + moment)
+        Plots[1][Index].set_yscale("log", subs=None)
     
     # Add best fit of power law model for average amplitudes and power data
-    AverageAmplitude.sort()
-    Plots[1][Index].plot(AverageAmplitude, PowerFunction(AverageAmplitude, Best_A, Best_k), "--k")
+    Plots[1][Index].plot(AverageAmplitude, Best_AmpPowerFit, "--k")
     Plots[1][Index].text(0.05, 0.95, f"Amplitude = {Best_A:.3f}\nExponent = {Best_k:.3f}\n"+r"$R^{{2}}$ = {0:.3f}".format(R2_Score),
                          horizontalalignment = "left", verticalalignment = "top", fontsize = 10, 
+                         transform = Plots[1][Index].transAxes)
+
+    # And finally, add number of day and night events
+    Plots[1][Index].text(0.95, 0.05, f"Day = {NumDay} Night = {NumNight}",
+                         horizontalalignment = "right", verticalalignment = "bottom", fontsize = 8, 
                          transform = Plots[1][Index].transAxes)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
