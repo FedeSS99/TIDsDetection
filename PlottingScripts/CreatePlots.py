@@ -27,7 +27,6 @@ def CreateFigureTimePower():
 
     return (FigurePowerTime, SubPlot_PowerTime)
 
-
 def CreateFigureAmplitudePower(Nplots):
     #Create main figure
     FigureAmplitudePower, Subplots = subplots(num=2, nrows=Nplots, ncols=1, sharex=True, figsize=(6,6))
@@ -350,7 +349,6 @@ def AddBoxPlot(Plots, Num, Center, Width, dx, InputData, Color):
             BoxComponent.set_facecolor("None")
             BoxComponent.set_edgecolor(Color)
 
-
 def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName, StationName, Stat_or_Reg):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
@@ -367,7 +365,6 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
         AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
 
         AddBoxPlot(Plots, 0, Index, 0.5, 1.0, AverageMinMax_Amps, "k")
-
 
     # START ANALYSIS BY MONTHS DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1,13,1):
@@ -390,7 +387,6 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
             AddBoxPlot(Plots, 1, month, 0.25, 0.25, AverageMinMax_DayAmps, "r")
             AddBoxPlot(Plots, 1, month, 0.25, 0.75, AverageMinMax_NightAmps, "b")
 
-
     # Setting x ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     MonthAxisData = np.linspace(1.0,12.0,12,endpoint=True)
@@ -401,6 +397,10 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
     Plots[1][3][0].set_xticks([])
     XTICKS = [i for i in range(0, 25, 4)]
     Plots[1][3][0].set_xticks(ticks=XTICKS, labels=XTICKS)
+
+    # Setting log scale for y axis in both plots
+    for num in range(2):
+        Plots[1][3][num].set_yscale("log", subs=None)
        
     Plots[0][3].tight_layout()
     if Stat_or_Reg == "Stat":
