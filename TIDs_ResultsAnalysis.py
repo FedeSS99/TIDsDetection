@@ -217,8 +217,9 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         ListLegendsBoxPlots.append(RegionInfoData[0])
 
         # Add scatter plots into a general figure for all regions
-        Add_AmplitudePowerScatterPlot(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"], RegionDataResults["POWER"], 
-                                      AmplitudePowerPlot, RegionInfoData[1], RegionInfoData[2], RegionInfoData[3], RegionInfoData[0])
+        Add_AmplitudePowerScatterPlot(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"], RegionDataResults["POWER"],
+                                      RegionDataResults["TIME"], RegionDataResults["MONTH"], AmplitudePowerPlot, 
+                                      RegionInfoData[2], RegionInfoData[3], RegionDataResults["NAME"])
     
     PowerPlot[1].set_yscale("log", subs=None)
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots, loc="upper right")
