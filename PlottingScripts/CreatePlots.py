@@ -25,7 +25,7 @@ AmpPower_COLORS = dict(
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateFigureTimePower():
-    #Create main figure
+    # Create main figure
     FigurePowerTime = figure(1, figsize=(8,6))
     SubPlot_PowerTime = FigurePowerTime.add_subplot(111)
     #Power-Time labels
@@ -35,7 +35,7 @@ def CreateFigureTimePower():
     return (FigurePowerTime, SubPlot_PowerTime)
 
 def CreateFigureAmplitudePower(Nplots):
-    #Create main figure
+    # Create main figure
     FigureAmplitudePower, Subplots = subplots(num=2, nrows=Nplots, ncols=1, sharex=True, figsize=(6,6))
     for i in range(Nplots):
         # Amplitude-Power labels
@@ -46,19 +46,37 @@ def CreateFigureAmplitudePower(Nplots):
 
     return (FigureAmplitudePower, Subplots)
 
+def CreateFigureAmplitudeVar(Nplots):
+    # Create main figure
+    FigureAmplitudeVar, Subplots = subplots(num=3, nrows=Nplots, ncols=2, sharex=True, figsize=(6,8))
+    for i in range(Nplots):
+        # Amplitude variance labels
+        Subplots[i,0].set_ylabel("Amplitude (dTEC)")
+
+    # Setting x ticks with months names
+    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    MonthAxisData = np.linspace(1.0,12.0,12,endpoint=True)
+    Subplots[Nplots-1, 0].set_xticks([])
+    Subplots[Nplots-1, 0].set_xticks(MonthAxisData, MonthTicks)
+
+    # Setting x ticks within 24 hours 
+    Subplots[Nplots-1, 1].set_xticks([])
+    XTICKS = [i for i in range(0, 25, 4)]
+    Subplots[Nplots-1, 1].set_xticks(ticks=XTICKS, labels=XTICKS)
+
+    return (FigureAmplitudeVar, Subplots)
+    
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def CreateFiguresResults(Name, Stat_or_Reg):
     #Create main figure for each analysis
-    FigureTimeHist = figure(3, figsize=(6,6))
-    FigurePeriodsHist = figure(4, figsize=(6,6))
-    Figure_MonthBars = figure(5, figsize=(6,6))
-    Figure_AmpsAnalysis = figure(6, figsize=(6,6))
+    FigureTimeHist = figure(4, figsize=(6,6))
+    FigurePeriodsHist = figure(5, figsize=(6,6))
+    Figure_MonthBars = figure(6, figsize=(6,6))
 
     SubPlot_TimeHist = FigureTimeHist.add_subplot(111)
     SubPlot_PeriodHist = FigurePeriodsHist.add_subplot(111)
     SubPlot_MonthsFreq = Figure_MonthBars.add_subplot(111)
-    Sub1_AmpsAnalysis = Figure_AmpsAnalysis.add_subplot(211)
-    Sub2_AmpsAnalysis = Figure_AmpsAnalysis.add_subplot(212)
 
     #Setting titles
     if Stat_or_Reg == "Stat":
@@ -69,7 +87,6 @@ def CreateFiguresResults(Name, Stat_or_Reg):
     SubPlot_TimeHist.set_title(Coord_String)
     SubPlot_PeriodHist.set_title(Coord_String)
     SubPlot_MonthsFreq.set_title(Coord_String)
-    Figure_AmpsAnalysis.suptitle(Coord_String)
 
     #Time Histogram labels
     SubPlot_TimeHist.set_xlabel("Local Time (Hours)")
@@ -79,13 +96,9 @@ def CreateFiguresResults(Name, Stat_or_Reg):
     SubPlot_PeriodHist.set_ylabel("Probability Density")
     #Month frequencies labels
     SubPlot_MonthsFreq.set_ylabel("Number of events")
-    #Amplitudes analysis labels
-    Sub1_AmpsAnalysis.set_xlabel("Local Time (Hours)")
-    Sub1_AmpsAnalysis.set_ylabel("Amplitude (dTEC units)")
-    Sub2_AmpsAnalysis.set_ylabel("Amplitude (dTEC units)")
 
-    return [(FigureTimeHist, FigurePeriodsHist, Figure_MonthBars, Figure_AmpsAnalysis), 
-            (SubPlot_TimeHist, SubPlot_PeriodHist, SubPlot_MonthsFreq, (Sub1_AmpsAnalysis, Sub2_AmpsAnalysis))]
+    return [(FigureTimeHist, FigurePeriodsHist, Figure_MonthBars), 
+            (SubPlot_TimeHist, SubPlot_PeriodHist, SubPlot_MonthsFreq)]
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def SaveRegionPlot(GenName, RegName, PlotFigure):
@@ -185,7 +198,6 @@ def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Time, Months, Plots, Marker
             Time_Conds_month = Time[Conds_month]
             AveAmplitude_Conds_month = AverageAmplitude[Conds_month]
             Power_Conds_month = Power[Conds_month]
-
 
             # Day and night masks and count the total of
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
@@ -369,6 +381,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, RegionName, StationName, S
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
 
+    # Count number of events per month given the rise and set hours of the sun
     NumEventerPerMonth = []
     for month in range(1,13):
         Conds_month = Months_TIDs==month
@@ -382,7 +395,9 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, RegionName, StationName, S
         else:
             NumEventerPerMonth.append((month, 0, 0))
 
+    # Sort the array given the month number
     NumEventerPerMonth.sort(key = lambda e: e[0])
+    # Unzip the lists for number of events in day and night in this Station/Region
     _, NumEvents_Day, NumEvents_Night = zip(*NumEventerPerMonth)
 
     Plots[1][2].bar(x=MonthAxisData - 0.25, height=NumEvents_Day, width=0.25,
@@ -449,17 +464,6 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, RegionName
 
             AddBoxPlot(Plots, 1, month, 0.25, 0.25, AverageMinMax_DayAmps, "r")
             AddBoxPlot(Plots, 1, month, 0.25, 0.75, AverageMinMax_NightAmps, "b")
-
-    # Setting x ticks with months names
-    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    MonthAxisData = np.linspace(1.0,12.0,12,endpoint=True)
-    Plots[1][3][1].set_xticks([])
-    Plots[1][3][1].set_xticks(MonthAxisData, MonthTicks)
-
-    # Setting x ticks within 24 hours 
-    Plots[1][3][0].set_xticks([])
-    XTICKS = [i for i in range(0, 25, 4)]
-    Plots[1][3][0].set_xticks(ticks=XTICKS, labels=XTICKS)
 
     # Setting log scale for y axis in both plots
     for num in range(2):
