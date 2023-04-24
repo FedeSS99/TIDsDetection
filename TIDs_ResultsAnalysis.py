@@ -8,7 +8,9 @@ from DataScripts.GetDataFile import SingleTIDs_Analysis
 from DataScripts.HistogramOcurrence import Time_Months_Ocurrence_Analysis
 from PlottingScripts.CreatePlots import *
 
-#Start creating Matplotlib plot to visualize the statistics given the data from DataDict
+# Start creating plots for either Region and Station to visualize the statistics given the data from DataDict
+
+
 def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, CMAP, NORM):
     if Stat_or_Reg == "Stat":
         PlotsResults = CreateFiguresResults(StationName, Stat_or_Reg)
@@ -18,24 +20,24 @@ def CreateAnalysisPlots(RegionName, StationName, Stat_or_Reg, DataDict, CMAP, NO
         PlotsResults = CreateFiguresResults(RegionName, Stat_or_Reg)
         print(f"Working on {RegionName} Region...", end="\t")
 
-    Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP, NORM, PlotsResults, 
+    Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP, NORM, PlotsResults,
                                   RegionName, StationName, Stat_or_Reg)
 
-    Add_PeriodHistogramToPlot(DataDict["PERIOD"], DataDict["TIME"], DataDict["MONTH"], 
+    Add_PeriodHistogramToPlot(DataDict["PERIOD"], DataDict["TIME"], DataDict["MONTH"],
                               PlotsResults, RegionName, StationName, Stat_or_Reg)
-    
-    Add_BarsFreq_Month(DataDict["TIME"], DataDict["MONTH"], PlotsResults, RegionName, StationName, Stat_or_Reg)
 
-    Add_AmplitudesAnalysis(DataDict["MIN_AMPS"], DataDict["MAX_AMPS"],
-                            DataDict["TIME"], DataDict["MONTH"], PlotsResults, 
-                            RegionName, StationName, Stat_or_Reg)
-    
-    for i in range(3,7):
+    Add_BarsFreq_Month(DataDict["TIME"], DataDict["MONTH"],
+                       PlotsResults, RegionName, StationName, Stat_or_Reg)
+
+    for i in range(4, 7):
+        PlotsResults[0][i-4].tight_layout()
         close(i)
-    
+
     print("finished!")
 
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
+
 def StarAnnualAnalysis(DICT_REGION_STATIONS):
     # Ignore events that occoured in dates where a geomagnetic
     # storm had a major effect in the Dst value
@@ -51,23 +53,26 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     # Create dictionary for atributes to use as input information for each Region
     # plot
     RegionsInfo = {
-        "North":["PTEX-PALX", "blue", "^", 0],
-        "Center":["MNIG-UCOE", "green", "*", 1],
-        "South":["CN24-UNPM", "red", "s", 2]
+        "North": ["blue", "^", 0],
+        "Center": ["green", "*", 1],
+        "South": ["red", "s", 2]
     }
 
     # Create RESULTS list to save data of time, period and power from TIDs
     # saved with VTEC_MainRoutine_IndividualCMN.py
     RESULTS = []
+    Nplots = len(RegionsInfo)
     PowerPlot = CreateFigureTimePower()
-    AmplitudePowerPlot = CreateFigureAmplitudePower(len(RegionsInfo))
+    AmplitudePowerPlot = CreateFigureAmplitudePower(Nplots)
+    AmplitudeVarPlot = CreateFigureAmplitudeVar(Nplots)
+
     ListBoxPlots = []
     ListLegendsBoxPlots = []
     OcurrenceSampling_AllRegions = []
     for Region in DICT_REGION_STATIONS.keys():
         NameOut = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
         print(f"-- Extracting data of {NameOut} Region --")
-        
+
         # Declare counter for total days and active days for each region and
         # also the lists to save the data for all stations
         ActiveDays = 0
@@ -94,8 +99,10 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
             # Extract DataPaths for each Station and also date and month data
             TIDs_DataPaths = DICT_REGION_STATIONS[Region]["DataPaths"][Station]
-            Dates_TIDs = [fileName.split(".")[0].split("/")[-1][-15:-5] for fileName in TIDs_DataPaths]
-            MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in TIDs_DataPaths]
+            Dates_TIDs = [fileName.split(".")[0].split(
+                "/")[-1][-15:-5] for fileName in TIDs_DataPaths]
+            MonthPerFile = [int(fileName.split("/")[-1].split("-")[2])
+                            for fileName in TIDs_DataPaths]
 
             TotalDays += len(TIDs_DataPaths)
             for fileTID, MonthFile, Date_TID in zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs):
@@ -115,9 +122,10 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                         elif NameOut == "South":
                             TimeZone = -5.0
 
-                        #Apply timezone to get correct Local Time Hours
+                        # Apply timezone to get correct Local Time Hours
                         Results["TIME"] += TimeZone
-                        Results["TIME"] = where(Results["TIME"] < 0, Results["TIME"] + 24.0, Results["TIME"])
+                        Results["TIME"] = where(
+                            Results["TIME"] < 0, Results["TIME"] + 24.0, Results["TIME"])
                         Station_TimeTID.append(Results["TIME"])
                         Station_PeriodTID.append(Results["PERIOD"])
                         Station_PowerTID.append(Results["POWER"])
@@ -126,7 +134,8 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
             # Create numpy arrays from the tuple collections of all the TIDs
             # data for each Station
-            Station_MonthArray = concatenate(tuple(Station_MonthArray), dtype=int)
+            Station_MonthArray = concatenate(
+                tuple(Station_MonthArray), dtype=int)
             Station_TimeTID = concatenate(tuple(Station_TimeTID))
             Station_PeriodTID = concatenate(tuple(Station_PeriodTID))
             Station_PowerTID = concatenate(tuple(Station_PowerTID))
@@ -134,17 +143,18 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             Station_MaxAmps = concatenate(tuple(Station_MaxAmps))
 
             # Obtain the ocurrence map for the TIDs in this same Station
-            StationOcurrenceMap = Time_Months_Ocurrence_Analysis(Station_TimeTID, Station_MonthArray)
+            StationOcurrenceMap = Time_Months_Ocurrence_Analysis(
+                Station_TimeTID, Station_MonthArray)
 
             # Save all the Station data in one dictionary and...
             StationResultsDict = {
-                "TIME":Station_TimeTID,
-                "MONTH":Station_MonthArray,
-                "OCURRENCE":StationOcurrenceMap,
-                "PERIOD":Station_PeriodTID,
-                "POWER":Station_PowerTID,
-                "MIN_AMPS":Station_MinAmps,
-                "MAX_AMPS":Station_MaxAmps,
+                "TIME": Station_TimeTID,
+                "MONTH": Station_MonthArray,
+                "OCURRENCE": StationOcurrenceMap,
+                "PERIOD": Station_PeriodTID,
+                "POWER": Station_PowerTID,
+                "MIN_AMPS": Station_MinAmps,
+                "MAX_AMPS": Station_MaxAmps,
             }
 
             # and save these numpy arrays in the correspondent list to manage
@@ -163,9 +173,11 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                 mkdir(StationSavedir)
 
             # Save minimum and maximum values of local ocurrence of TIDs for each Station
-            CMAP, NORM = ObtainCMAPandNORM(StationResultsDict["OCURRENCE"].flatten())
-            CreateAnalysisPlots(Region, Station, "Stat", StationResultsDict, CMAP, NORM)
-            
+            CMAP, NORM = ObtainCMAPandNORM(
+                StationResultsDict["OCURRENCE"].flatten())
+            CreateAnalysisPlots(Region, Station, "Stat",
+                                StationResultsDict, CMAP, NORM)
+
         # Create numpy arrays for all Stations data from the same Region
         Region_MonthArray = concatenate(tuple(Region_MonthArray), dtype=int)
         Region_TimeTID = concatenate(tuple(Region_TimeTID))
@@ -175,30 +187,33 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         Region_MaxAmps = concatenate(tuple(Region_MaxAmps))
         NumTIDs = Region_TimeTID.size
 
-        #Get ocurrence map for each Region and save all the data from the respective directory
-        #in a dictionary
-        HistogramOcurrence = Time_Months_Ocurrence_Analysis(Region_TimeTID, Region_MonthArray)
+        # Get ocurrence map for each Region and save all the data from the respective directory
+        # in a dictionary
+        HistogramOcurrence = Time_Months_Ocurrence_Analysis(
+            Region_TimeTID, Region_MonthArray)
 
         RegionResultsDict = {
-            "TIME":Region_TimeTID,
-            "MONTH":Region_MonthArray,
-            "OCURRENCE":HistogramOcurrence,
-            "PERIOD":Region_PeriodTID,
-            "POWER":Region_PowerTID,
-            "MIN_AMPS":Region_MinAmps,
-            "MAX_AMPS":Region_MaxAmps,
-            "NAME":NameOut
+            "TIME": Region_TimeTID,
+            "MONTH": Region_MonthArray,
+            "OCURRENCE": HistogramOcurrence,
+            "PERIOD": Region_PeriodTID,
+            "POWER": Region_PowerTID,
+            "MIN_AMPS": Region_MinAmps,
+            "MAX_AMPS": Region_MaxAmps,
+            "NAME": NameOut
         }
 
         # Save a flatten version of the ocurrence map of the Region
-        OcurrenceSampling_AllRegions.append( HistogramOcurrence.flatten() )
+        OcurrenceSampling_AllRegions.append(HistogramOcurrence.flatten())
 
         RESULTS.append(RegionResultsDict)
 
-        print(f"Total Days:{TotalDays}\nNo. of TIDs:{NumTIDs}\nActive Days:{ActiveDays}\n")
+        print(
+            f"Total Days:{TotalDays}\nNo. of TIDs:{NumTIDs}\nActive Days:{ActiveDays}\n")
 
     # Obtain ColorMap and Norm to use for all the regions
-    OcurrenceSampling_AllRegions = np.concatenate(tuple(OcurrenceSampling_AllRegions))
+    OcurrenceSampling_AllRegions = np.concatenate(
+        tuple(OcurrenceSampling_AllRegions))
     CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions)
 
     for RegionDataResults in RESULTS:
@@ -210,28 +225,69 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         # Generate graphics for each region
         CreateAnalysisPlots(NamePlot, "", "Reg", RegionDataResults, CMAP, NORM)
 
-        # Add boxplots into a general figure for all regions and save them
-        BoxPlotObject = Add_TimePowerDataResultsToPlot(RegionDataResults["TIME"], RegionDataResults["POWER"], 
-                                                       PowerPlot, RegionInfoData[1], RegionInfoData[3])
-        ListBoxPlots.append(BoxPlotObject)
-        ListLegendsBoxPlots.append(RegionInfoData[0])
+        # Add boxplots for time-power data in a figure for all regions
+        BoxPlotObject = Add_TimePowerDataResultsToPlot(RegionDataResults["TIME"], RegionDataResults["POWER"],
+                                                       PowerPlot, RegionInfoData[0], RegionInfoData[2])
 
-        # Add scatter plots into a general figure for all regions
+        ListBoxPlots.append(BoxPlotObject)
+        ListLegendsBoxPlots.append(NamePlot)
+
+        # Add boxplots for time-amplitude data in a figure for all regions
+        Add_AmplitudesAnalysis(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"],
+                               RegionDataResults["TIME"], RegionDataResults["MONTH"], AmplitudeVarPlot,
+                               RegionInfoData[2], NamePlot)
+
+        # Add scatter plots of amplitude-power data in a figure for all regions
         Add_AmplitudePowerScatterPlot(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"], RegionDataResults["POWER"],
-                                      RegionDataResults["TIME"], RegionDataResults["MONTH"], AmplitudePowerPlot, 
-                                      RegionInfoData[2], RegionInfoData[3], RegionDataResults["NAME"])
-    
-    PowerPlot[1].set_yscale("log", subs=None)
-    PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots, loc="upper right")
+                                      RegionDataResults["TIME"], RegionDataResults["MONTH"], AmplitudePowerPlot,
+                                      RegionInfoData[1], RegionInfoData[2], NamePlot)
+
+    # Apply logaritmic scale to Power variance plot and save the figure
+    PowerPlot[1].set_yscale("log")
+    PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots,
+                        loc="upper right", fancybox=True, shadow=True)
+    PowerPlot[0].tight_layout()
     SaveRegionPlot("PowerDistributionStations", "", PowerPlot[0])
-    
-    AmplitudePowerPlot[1][-1].set_xscale("log", subs=None)
-    AmplitudePowerPlot[0].legend()
+
+    # Create Hours and Months ticks to use change the labels in Amplitude variance
+    # plots and save the figure
+    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May",
+                  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    HOUR_TICKS = [i for i in range(0, 25, 4)]
+    MonthAxisData = np.linspace(1.0, 12.0, 12, endpoint=True)
+    for p in range(Nplots):
+        if p < Nplots - 1:
+            AmplitudeVarPlot[1][p][0].set_xticks(ticks=[], labels=[])
+            AmplitudeVarPlot[1][p][1].set_xticks(ticks=[], labels=[])
+
+        if p == Nplots - 1:
+            # Setting x ticks within 24 hours
+            AmplitudeVarPlot[1][p][0].set_xticks(
+                ticks=HOUR_TICKS, labels=HOUR_TICKS)
+            # Setting x ticks with months names
+            AmplitudeVarPlot[1][p][1].set_xticks(
+                ticks=MonthAxisData, labels=MonthTicks)
+
+            # Align to the right and rotate the x-axis labels of the bottom 2nd column
+            for label in AmplitudeVarPlot[1][p][1].get_xticklabels():
+                label.set_horizontalalignment('left')
+            AmplitudeVarPlot[1][p][1].set_xticklabels(
+                MonthTicks, rotation=-45)
+    AmplitudeVarPlot[0].tight_layout()
+    SaveRegionPlot("AmplitudeVariations", "", AmplitudeVarPlot[0])
+
+    # Apply logaritmic scale to x-axis and y-axis in Amplitude-Power plot
+    for p in range(Nplots):
+        AmplitudePowerPlot[1][p].set_yscale("log", subs=None)
+    AmplitudePowerPlot[1][Nplots-1].set_xscale("log", subs=None)
+    AmplitudePowerPlot[0].legend(fancybox=True, shadow=True)
+    AmplitudePowerPlot[0].tight_layout()
     SaveRegionPlot("AmplitudePowerRegions", "", AmplitudePowerPlot[0])
 
-    for s in range(1,3):
+    for s in range(1, 3):
         close(s)
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 
 def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
     inputDictionary = dict()
@@ -239,9 +295,9 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
     for Region in SubdirsResultsData:
         DataRegionPath = DataPath + Region
         ResultsRegionPath = ResultsPath + Region
-        
+
         StationsDict = dict()
-        
+
         for station in listdir(DataRegionPath):
             StationDataPaths = []
 
@@ -258,16 +314,19 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
                     NewAnalysisPath = CompleteYearDir + "/" + monthDir
                     if not isdir(NewAnalysisPath) or not monthDir.isnumeric():
                         continue
-                
-                    StationDataPaths += list(map(lambda x: NewAnalysisPath + "/" + x, listdir(NewAnalysisPath)))
-            
+
+                    StationDataPaths += list(map(lambda x: NewAnalysisPath +
+                                             "/" + x, listdir(NewAnalysisPath)))
+
             StationsDict[station] = StationDataPaths
-        
-        inputDictionary[Region] = dict(ResultPath = ResultsRegionPath, DataPaths = StationsDict)
+
+        inputDictionary[Region] = dict(
+            ResultPath=ResultsRegionPath, DataPaths=StationsDict)
 
     return inputDictionary
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # Setting plotting format for all figures
     rcParams["font.family"] = "serif"
     rcParams["savefig.dpi"] = 400
@@ -277,6 +336,7 @@ if __name__=="__main__":
 
     SUBDIRECTORIES_REGIONS = ["North", "Center", "South"]
 
-    InputRegionsData = CreateInputDictionary(SUBDIRECTORIES_REGIONS, DATA_COMMON_PATH, RESULTS_COMMON_PATH)
-    
+    InputRegionsData = CreateInputDictionary(
+        SUBDIRECTORIES_REGIONS, DATA_COMMON_PATH, RESULTS_COMMON_PATH)
+
     StarAnnualAnalysis(InputRegionsData)
