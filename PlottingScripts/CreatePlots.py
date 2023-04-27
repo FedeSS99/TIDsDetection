@@ -18,8 +18,8 @@ TerminatorsDict = dict(
     South="./TerminatorData/TerminatorHours_South.dat"
 )
 
-# Dictionary to extract colors to use as day-night filter for amplitude-power data
-AmplitudeCOLORS = dict(
+# Dictionary to extract colors to use in day-night filter for amplitude-power data
+DayNightColors = dict(
     North=("#1100FF", "#EEFF00"),
     Center=("#FF00F8", "#00FF07"),
     South=("#00FFFE", "#FF0001")
@@ -59,14 +59,15 @@ def CreateFigureAmplitudePower(Nplots):
 def CreateFigureAmplitudeVar(Nplots):
     # Create main figure
     FigureAmplitudeVar = figure(num=3, figsize=(8, 6))
-    GS = GridSpec(nrows=3, ncols=2, width_ratios=[1, 2])
+    GS = GridSpec(nrows=3, ncols=4)
 
     # Create subplots for amplitude variance in local time [0] and per month [1]
     Subplots = []
     for i in range(Nplots):
         Fila = []
-        for p in range(2):
-            Fila.append(FigureAmplitudeVar.add_subplot(GS[p+i*(Nplots-1)]))
+        
+        Fila.append(FigureAmplitudeVar.add_subplot(GS[i,:2]))
+        Fila.append(FigureAmplitudeVar.add_subplot(GS[i,2:]))
 
         Subplots.append(Fila)
         # Amplitude variance labels
@@ -77,9 +78,9 @@ def CreateFigureAmplitudeVar(Nplots):
             # Share X axis of the top plot of each column with the rest
             Subplots[i][p].get_shared_x_axes().join(
                 Subplots[0][p], Subplots[i][p])
+    Subplots[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
-    FigureAmplitudeVar.subplots_adjust(hspace=0.05, wspace=0.150)
-
+    FigureAmplitudeVar.subplots_adjust(hspace=0.05, wspace=0.05)
     return (FigureAmplitudeVar, Subplots)
 
 
@@ -172,9 +173,9 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
 def PowerFunction(x, A, k): return A*(x**k)
 
 
-def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Time, Months, Plots, Marker, Index, RegionName):
-    # Obtain average absolute amplitude
-    AverageAmplitude = 0.5*(np.abs(MinA) + MaxA)
+def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, Marker, Index, RegionName):
+    # Obtain AmplitudeAverage sorting array to sort
+    # Power, Time and Months array for future use (filtering and fitting)
     Arg_AveAmpSort = np.argsort(AverageAmplitude)
     AverageAmplitude = AverageAmplitude[Arg_AveAmpSort]
     Power = Power[Arg_AveAmpSort]
@@ -211,8 +212,8 @@ def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Time, Months, Plots, Marker
                                     DivH_12], SetHours[0:SizeData:DivH_12]
 
     # Apply day-night filter for amplitude-power data
-    DayNightAmplitude = dict(DAY=[], NIGHT=[])
-    DayNightPower = dict(DAY=[], NIGHT=[])
+    DayNightAmplitude = dict(Day=[], Night=[])
+    DayNightPower = dict(Day=[], Night=[])
 
     NumDay, NumNight = 0, 0
     for month in range(1, 13):
@@ -235,20 +236,20 @@ def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Time, Months, Plots, Marker
             NumDay += MaskDay.sum()
             NumNight += MaskNight.sum()
 
-            DayNightAmplitude["DAY"].append(AveAmplitude_Conds_month[MaskDay])
-            DayNightAmplitude["NIGHT"].append(
+            DayNightAmplitude["Day"].append(AveAmplitude_Conds_month[MaskDay])
+            DayNightAmplitude["Night"].append(
                 AveAmplitude_Conds_month[MaskNight])
-            DayNightPower["DAY"].append(Power_Conds_month[MaskDay])
-            DayNightPower["NIGHT"].append(Power_Conds_month[MaskNight])
+            DayNightPower["Day"].append(Power_Conds_month[MaskDay])
+            DayNightPower["Night"].append(Power_Conds_month[MaskNight])
 
-    DayNightAmplitude["DAY"] = np.concatenate(tuple(DayNightAmplitude["DAY"]))
-    DayNightAmplitude["NIGHT"] = np.concatenate(
-        tuple(DayNightAmplitude["NIGHT"]))
-    DayNightPower["DAY"] = np.concatenate(tuple(DayNightPower["DAY"]))
-    DayNightPower["NIGHT"] = np.concatenate(tuple(DayNightPower["NIGHT"]))
+    DayNightAmplitude["Day"] = np.concatenate(tuple(DayNightAmplitude["Day"]))
+    DayNightAmplitude["Night"] = np.concatenate(
+        tuple(DayNightAmplitude["Night"]))
+    DayNightPower["Day"] = np.concatenate(tuple(DayNightPower["Day"]))
+    DayNightPower["Night"] = np.concatenate(tuple(DayNightPower["Night"]))
 
-    # Add scatter plot of average amplitudes and power by day-night filter
-    for moment, color in zip(["NIGHT", "DAY"], AmplitudeCOLORS[RegionName]):
+    # Add scatter plot of average amplitudes and power by Day-Night filter
+    for moment, color in zip(["Night", "Day"], DayNightColors[RegionName]):
         Plots[1][Index].scatter(DayNightAmplitude[moment], DayNightPower[moment], alpha=0.25,
                                 c=color, marker=Marker, label=RegionName + "-" + moment)
 
@@ -258,7 +259,7 @@ def Add_AmplitudePowerScatterPlot(MinA, MaxA, Power, Time, Months, Plots, Marker
                          horizontalalignment="left", verticalalignment="top", fontsize=10,
                          transform=Plots[1][Index].transAxes)
 
-    # And finally, add number of day and night events
+    # And finally, add number of Day and Night events
     Plots[1][Index].text(0.95, 0.05, f"Day = {NumDay} Night = {NumNight}",
                          horizontalalignment="right", verticalalignment="bottom", fontsize=8,
                          transform=Plots[1][Index].transAxes)
@@ -281,7 +282,7 @@ def AddBoxPlot(Plots, Num, Col, Center, Width, dx, InputData, Color):
             BoxComponent.set_edgecolor(Color)
 
 
-def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
+def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
                                      usecols=(1, 2), unpack=True, skiprows=1)
@@ -295,7 +296,7 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Index, Reg
     for Hour in Hours:
         MaskTime = np.where((Hour <= Time_TIDs) & (
             Time_TIDs <= Hour+2), True, False)
-        AverageMinMax_Amps = (np.abs(MinA[MaskTime]) + MaxA[MaskTime])/2.0
+        AverageMinMax_Amps = AverageAmplitude[MaskTime]
         AverageMinMax_Amps = AverageMinMax_Amps.reshape(
             AverageMinMax_Amps.size, 1)
 
@@ -306,8 +307,7 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Index, Reg
         Conds_month = Months_TIDs == month
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
-            MinA_Conds_month = MinA[Conds_month]
-            MaxA_Conds_month = MaxA[Conds_month]
+            AveAmp_Conds_month = AverageAmplitude[Conds_month]
 
             MaskDay = (
                 RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
@@ -315,18 +315,16 @@ def Add_AmplitudesAnalysis(MinA, MaxA, Time_TIDs, Months_TIDs, Plots, Index, Reg
 
             # Mean and Std of average amplitude from absolute min and max amplitude for...
             # day and ...
-            AverageMinMax_DayAmps = (
-                np.abs(MinA_Conds_month[MaskDay]) + MaxA_Conds_month[MaskDay])/2.0
+            AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
 
             # night
-            AverageMinMax_NightAmps = (
-                np.abs(MinA_Conds_month[MaskNight]) + MaxA_Conds_month[MaskNight])/2.0
+            AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
 
-            DayNightCOLORS = AmplitudeCOLORS[RegionName]
+            COLORS = DayNightColors[RegionName]
             AddBoxPlot(Plots, Index, 1, month, 0.25,
-                       0.25, AverageMinMax_DayAmps, DayNightCOLORS[0])
+                       0.25, AverageMinMax_NightAmps, COLORS[0])
             AddBoxPlot(Plots, Index, 1, month, 0.25,
-                       0.75, AverageMinMax_NightAmps, DayNightCOLORS[1])
+                       0.75, AverageMinMax_DayAmps, COLORS[1])
 
     for k in range(2):
         # Apply logaritmic scale to the y-axis in each column
@@ -351,7 +349,7 @@ def ObtainCMAPandNORM(OcurrenceArray):
     CMAP = LinearSegmentedColormap.from_list("Ocurrence Map", CMAPlist, CMAP.N)
     # Define Bounds array
     BOUNDS = np.linspace(OcurrenceArray.min(),
-                         OcurrenceArray.max(), 7, endpoint=True)
+                         OcurrenceArray.max(), 9, endpoint=True)
     # Create NORM array
     NORM = BoundaryNorm(BOUNDS, CMAP.N)
 
@@ -376,7 +374,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, RegionName
     Plots[1][0].set_xticks(timeTicks)
 
     HistogramaImagen = Plots[1][0].imshow(HistogramMonths, cmap=CMAP, norm=NORM,
-                                          interpolation="None", aspect="auto", origin="lower", extent=extent)
+                                          interpolation="spline36", aspect="auto", origin="lower", extent=extent)
     colorbar(HistogramaImagen, ax=Plots[1][0], label="% Ocurrence")
 
     # Extracting rise and set hours for each region
@@ -427,7 +425,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
-    for PeriodData, Color, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], ["blue", "red"], ["Night", "Day"]):
+    for PeriodData, Color, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], DayNightColors[RegionName], ["Night", "Day"]):
 
         # Setting number of bins by using the Freedman-Diaconis rule
         Quantiles = mquantiles(PeriodData)
