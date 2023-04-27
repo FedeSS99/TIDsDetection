@@ -187,10 +187,13 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         Region_MaxAmps = concatenate(tuple(Region_MaxAmps))
         NumTIDs = Region_TimeTID.size
 
-        # Get ocurrence map for each Region and save all the data from the respective directory
-        # in a dictionary
+        # Get ocurrence map for each Region
         HistogramOcurrence = Time_Months_Ocurrence_Analysis(
             Region_TimeTID, Region_MonthArray)
+        
+        # Get average absolute amplitude for each region and all the correspond data in the directory
+        # in a dictionary
+        AveAbsAmplitude = (np.abs(Region_MinAmps) + Region_MaxAmps)/2.0
 
         RegionResultsDict = {
             "TIME": Region_TimeTID,
@@ -198,8 +201,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             "OCURRENCE": HistogramOcurrence,
             "PERIOD": Region_PeriodTID,
             "POWER": Region_PowerTID,
-            "MIN_AMPS": Region_MinAmps,
-            "MAX_AMPS": Region_MaxAmps,
+            "AVE_AMP": AveAbsAmplitude,
             "NAME": NameOut
         }
 
@@ -209,7 +211,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         RESULTS.append(RegionResultsDict)
 
         print(
-            f"Total Days:{TotalDays}\nNo. of TIDs:{NumTIDs}\nActive Days:{ActiveDays}\n")
+            f"Total Days:{TotalDays}\nNo. of TIDs:{NumTIDs}\nActive Days:{ActiveDays}\nTIDs-Active Day ratio: {NumTIDs/ActiveDays:.3f}\n")
 
     # Obtain ColorMap and Norm to use for all the regions
     OcurrenceSampling_AllRegions = np.concatenate(
@@ -233,12 +235,11 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         ListLegendsBoxPlots.append(NamePlot)
 
         # Add boxplots for time-amplitude data in a figure for all regions
-        Add_AmplitudesAnalysis(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"],
-                               RegionDataResults["TIME"], RegionDataResults["MONTH"], AmplitudeVarPlot,
-                               RegionInfoData[2], NamePlot)
+        Add_AmplitudesAnalysis(RegionDataResults["AVE_AMP"], RegionDataResults["TIME"], 
+                               RegionDataResults["MONTH"], AmplitudeVarPlot, RegionInfoData[2], NamePlot)
 
         # Add scatter plots of amplitude-power data in a figure for all regions
-        Add_AmplitudePowerScatterPlot(RegionDataResults["MIN_AMPS"], RegionDataResults["MAX_AMPS"], RegionDataResults["POWER"],
+        Add_AmplitudePowerScatterPlot(RegionDataResults["AVE_AMP"], RegionDataResults["POWER"],
                                       RegionDataResults["TIME"], RegionDataResults["MONTH"], AmplitudePowerPlot,
                                       RegionInfoData[1], RegionInfoData[2], NamePlot)
 
@@ -246,7 +247,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     PowerPlot[1].set_yscale("log")
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots,
                         loc="upper right", fancybox=True, shadow=True)
-    PowerPlot[0].tight_layout()
     SaveRegionPlot("PowerDistributionStations", "", PowerPlot[0])
 
     # Create Hours and Months ticks to use change the labels in Amplitude variance
@@ -255,6 +255,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                   "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     HOUR_TICKS = [i for i in range(0, 25, 4)]
     MonthAxisData = np.linspace(1.0, 12.0, 12, endpoint=True)
+    MinAmps_Plots, MaxAmps_Plots = [], []
     for p in range(Nplots):
         if p < Nplots - 1:
             AmplitudeVarPlot[1][p][0].set_xticks(ticks=[], labels=[])
@@ -273,15 +274,31 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
                 label.set_horizontalalignment('left')
             AmplitudeVarPlot[1][p][1].set_xticklabels(
                 MonthTicks, rotation=-45)
-    AmplitudeVarPlot[0].tight_layout()
+
+        Y_MIN, Y_MAX = AmplitudeVarPlot[1][p][0].get_ylim()
+        MinAmps_Plots.append(Y_MIN)
+        MaxAmps_Plots.append(Y_MAX)
+
+    # Set the same min and max value for all Amplitude variance plots
+    Y_MIN, Y_MAX = min(MinAmps_Plots), max(MaxAmps_Plots)
+    for p in range(Nplots):
+        for l in range(2):
+            AmplitudeVarPlot[1][p][l].set_ylim(Y_MIN, Y_MAX)
+        AmplitudeVarPlot[1][p][1].set_yticks(ticks=[], labels=[])
+
     SaveRegionPlot("AmplitudeVariations", "", AmplitudeVarPlot[0])
 
     # Apply logaritmic scale to x-axis and y-axis in Amplitude-Power plot
     for p in range(Nplots):
         AmplitudePowerPlot[1][p].set_yscale("log", subs=None)
+        # Reduce length size of each subplot by 20%
+        SubplotBox = AmplitudePowerPlot[1][p].get_position()
+        AmplitudePowerPlot[1][p].set_position([SubplotBox.x0, SubplotBox.y0,
+                                               SubplotBox.width*0.8, SubplotBox.height])
     AmplitudePowerPlot[1][Nplots-1].set_xscale("log", subs=None)
-    AmplitudePowerPlot[0].legend(fancybox=True, shadow=True)
-    AmplitudePowerPlot[0].tight_layout()
+
+    # Fixing position of legends box outside the subplots
+    AmplitudePowerPlot[0].legend(fancybox=True, shadow=True, bbox_to_anchor=(1.0, 0.625))
     SaveRegionPlot("AmplitudePowerRegions", "", AmplitudePowerPlot[0])
 
     for s in range(1, 3):
