@@ -245,8 +245,11 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
     # Apply logaritmic scale to Power variance plot and save the figure
     PowerPlot[1].set_yscale("log")
+    SubplotBox = PowerPlot[1].get_position()
+    PowerPlot[1].set_position([SubplotBox.x0, SubplotBox.y0,
+                               SubplotBox.width*0.95, SubplotBox.height])
     PowerPlot[0].legend(ListBoxPlots, ListLegendsBoxPlots,
-                        loc="upper right", fancybox=True, shadow=True)
+                        loc="upper right", fancybox=True, shadow=True, bbox_to_anchor=(1.0, 0.5))
     SaveRegionPlot("PowerDistributionStations", "", PowerPlot[0])
 
     # Create Hours and Months ticks to use change the labels in Amplitude variance

@@ -19,11 +19,7 @@ TerminatorsDict = dict(
 )
 
 # Dictionary to extract colors to use in day-night filter for amplitude-power data
-DayNightColors = dict(
-    North=("#1100FF", "#EEFF00"),
-    Center=("#FF00F8", "#00FF07"),
-    South=("#00FFFE", "#FF0001")
-)
+DayNightColors = dict(Day="red", Night="blue")
 
 # Logaritmic format to use in Amplitude variance plots
 LogFmt = LogFormatterSciNotation(base=10.0, labelOnlyBase=True)
@@ -249,9 +245,10 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
     DayNightPower["Night"] = np.concatenate(tuple(DayNightPower["Night"]))
 
     # Add scatter plot of average amplitudes and power by Day-Night filter
-    for moment, color in zip(["Night", "Day"], DayNightColors[RegionName]):
-        Plots[1][Index].scatter(DayNightAmplitude[moment], DayNightPower[moment], alpha=0.25,
-                                c=color, marker=Marker, label=RegionName + "-" + moment)
+    for momentDay in ["Night", "Day"]:
+        COLOR = DayNightColors[momentDay]
+        Plots[1][Index].scatter(DayNightAmplitude[momentDay], DayNightPower[momentDay], alpha=0.25,
+                                c=COLOR, marker=Marker, label=RegionName + "-" + momentDay)
 
     # Add best fit of power law model for average amplitudes and power data
     Plots[1][Index].plot(AverageAmplitude, Best_AmpPowerFit, "--k")
@@ -320,11 +317,10 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
             # night
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
 
-            COLORS = DayNightColors[RegionName]
             AddBoxPlot(Plots, Index, 1, month, 0.25,
-                       0.25, AverageMinMax_NightAmps, COLORS[0])
+                       0.25, AverageMinMax_NightAmps, DayNightColors["Night"])
             AddBoxPlot(Plots, Index, 1, month, 0.25,
-                       0.75, AverageMinMax_DayAmps, COLORS[1])
+                       0.75, AverageMinMax_DayAmps, DayNightColors["Day"])
 
     for k in range(2):
         # Apply logaritmic scale to the y-axis in each column
@@ -425,7 +421,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
-    for PeriodData, Color, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], DayNightColors[RegionName], ["Night", "Day"]):
+    for PeriodData, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], ["Night", "Day"]):
 
         # Setting number of bins by using the Freedman-Diaconis rule
         Quantiles = mquantiles(PeriodData)
@@ -433,6 +429,9 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
         h = 2.0*IQR*(PeriodData.size**(-1/3))
         PeriodRange = (PeriodData.min(), PeriodData.max())
         PeriodBins = int((PeriodRange[1]-PeriodRange[0])/h)
+
+        # Extract color
+        Color = DayNightColors[NamePlot]
 
         # Adding density histogram of period data
         PeriodHistogram, Edges, _ = Plots[1][1].hist(PeriodData, bins=PeriodBins, range=PeriodRange, density=True,

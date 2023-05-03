@@ -1,5 +1,5 @@
 from matplotlib.pyplot import figure, plot, show
-from matplotlib import rcParams
+from atplotlib import rcParams
 from mpl_toolkits.basemap import Basemap
 from numpy import arange
 
