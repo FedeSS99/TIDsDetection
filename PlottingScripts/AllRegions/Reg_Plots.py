@@ -1,5 +1,5 @@
 from matplotlib import use
-from matplotlib.pyplot import figure, subplots, colorbar
+from matplotlib.pyplot import figure, subplots, colorbar, text
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import LogFormatterSciNotation
 
@@ -15,13 +15,13 @@ TerminatorsDict = dict(
     North="./TerminatorData/TerminatorHours_North.dat",
     Center="./TerminatorData/TerminatorHours_Center.dat",
     South="./TerminatorData/TerminatorHours_South.dat"
-)
+    )
 
 IndexName = {
     0: "A) North",
     1: "B) Center",
     2: "C) South"
-}
+    }
 
 # Dictionary to extract colors to use in day-night filter for amplitude-power data
 DayNightColors = dict(Day="red", Night="blue")
@@ -48,33 +48,17 @@ def CreateFiguresForAllRegions(Nplots):
     AmpPowSub[Nplots-1].set_xlabel("Average absolute amplitude (dTEC)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE VARIABILITY PLOT ----
-    FigureAmplitudeVar = figure(num=3, figsize=(8, 6))
-    GS_AmpVar = GridSpec(nrows=3, ncols=4)
+    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=2, sharex="col", figsize=(8, 6))
 
-    # Create subplots for amplitude variance in local time [0] and per month [1]
-    AmpVarSub = []
+    # Add Amplitude Variability x-label and y-labels
     for i in range(Nplots):
-        Fila = []
-        
-        Fila.append(FigureAmplitudeVar.add_subplot(GS_AmpVar[i,:2]))
-        Fila.append(FigureAmplitudeVar.add_subplot(GS_AmpVar[i,2:]))
- 
-        AmpVarSub.append(Fila)
-        # Add Amplitude variability labels
         AmpVarSub[i][0].set_ylabel("Amplitude (dTEC)")
-
-    for p in range(2):
-        for i in range(1, Nplots):
-            # Share X axis of the top plot of each column with the rest
-            AmpVarSub[i][p].get_shared_x_axes().join(
-                AmpVarSub[0][p], AmpVarSub[i][p])
-
     AmpVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR OCURRENCE PLOT ----
     FigureOcurrHist, OcurrHistSub = subplots(num=4, nrows=Nplots, ncols=1, 
                                              sharex=True, 
-                                             figsize=(6, 6))
+                                             figsize=(7, 7))
     # Add Ocurrence x-label
     OcurrHistSub[Nplots-1].set_xlabel("Local Time (Hours)")
 
@@ -234,8 +218,6 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
                          horizontalalignment="right", verticalalignment="bottom", fontsize=8,
                          transform=Plots[1][Index].transAxes)
     
-    Plots[0].tight_layout()
-
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -302,37 +284,21 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
         Plots[1][Index][k].set_yscale("log")
         Plots[1][Index][k].yaxis.set_major_formatter(LogFmt)
 
-    Plots[0].tight_layout()
-
-    #text(0.5, 1.0 - 0.25*(Index+1), IndexName[Index], fontsize=10,
-    #     ha="center", va="center", figure=Plots[0], transform=Plots[0].transFigure)
+    Plots[0].text(0.535, 0.985 - 0.305*Index, IndexName[Index], fontsize=12,
+         ha="center", va="center", transform=Plots[0].transFigure)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Nplots, RegionName):
-    # Setting number of bins and time range for histogram
     TimeRange = (0.0, 24.0)
     MonthRange = (0, 12)
-    # Setting y ticks with months names
-    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May",
-                  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    MonthAxisData = np.linspace(0.5, 11.5, 12, endpoint=True)
-    Plots[1][Index].set_yticks(MonthAxisData, MonthTicks)
-    Plots[1][Index].set_yticklabels(MonthTicks, rotation=45)
-
-    # Set the limits for Local Time and indexes for each Month
     extent = (*TimeRange, *MonthRange)
-    timeTicks = np.arange(0, 25, 3)
-    Plots[1][Index].set_xlim(*TimeRange)
-    Plots[1][Index].set_ylim(*MonthRange)
-    Plots[1][Index].set_xticks(timeTicks)
-
-    HistogramaImagen = Plots[1][Index].imshow(HistogramMonths, cmap=CMAP, norm=NORM,
-                                          interpolation="spline36", aspect="auto", origin="lower", extent=extent)
+    
+    HistogramaImagen = Plots[1][Index].imshow(HistogramMonths, cmap=CMAP, norm=NORM, extent=extent,
+                                          interpolation="spline36", aspect="auto", origin="lower")
     
     if Index == Nplots - 1:
-        colorbar(HistogramaImagen, ax=Plots[1].ravel().tolist(), label="% Ocurrence")
+        ColorBar_Ax = Plots[0].add_axes([0.85, 0.15, 0.05, 0.7])
+        colorbar(HistogramaImagen, cax=ColorBar_Ax, label="% Ocurrence")
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
@@ -342,8 +308,6 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
     Plots[1][Index].plot(SetHours, NumMonthTerminator, "--k", linewidth=1.0)
 
     Plots[1][Index].set_title(IndexName[Index])
-
-    Plots[0].tight_layout()
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 # Same probability density function as used in lmfit module
@@ -431,7 +395,6 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
     Plots[1][Index].set_title(IndexName[Index])
     Plots[1][Index].legend()
-    Plots[0].tight_layout()
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -477,4 +440,3 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, RegionName):
                     align="edge", edgecolor="k", facecolor="b", label="Night")
 
     Plots[1][Index].set_title(IndexName[Index])
-    Plots[0].tight_layout()
