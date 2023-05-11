@@ -1,21 +1,45 @@
 # TIDs Detection
 
 ## Description
-This project is divided in different scripts for multiple purposes with one common objetive: identify and analize TIDs (Travelling Ionospheric Disturbances) properties and related data such as local time and month ocurrence by different statistical procedures.
+
+This project is divided in different scripts for multiple purposes with one common objetive: identify and analize TIDs (Travelling Ionospheric Disturbances) properties and related data such as local time and month ocurrence using different statistical procedures.
+
+## Data adquisition
+
+The data was adquired from GNSS receivers located over Mexico, which are also part of the National Seismological Service and Transboundary, Land and Atmosphere Long-Term Observational and Collaborative Network (SSN-TLALOCNet).
+
+More specific, the numerical data used in this project consists in universal, PRN per satellite and vertical TEV (vTEC); all this read from multiple Cmn files.
+
+## Software and package versions
 
 Python was chosen for this project for the sake of "simplicity" to develop the mathematical routines using Numpy and Scipy, software provided by the Python community for scientific computing.
 
-## Data adquisition
-The data was adquired from GNSS receivers located over Mexico, which are also part of the National Seismological Service and Transboundary, Land and Atmosphere Long-Term Observational and Collaborative Network (SSN-TLALOCNet). 
-
-
-## Software and package versions
 The Python version in which the project was made is 3.11.3.
 
-Numpy, Scipy, lmfit and Matplotlib are the packages that were used in the elaboration of this project; to install the specific versions execute either of the following commands in a CMD/Powershell terminal in Windows or a GNOME terminal in Linux:
+Numpy, Scipy, lmfit and Matplotlib are the packages that were used in the elaboration of this project; to install the specific versions execute either of the following commands in a CMD/Powershell terminal in Windows or a Bash terminal in Linux:
 
 ```pip install -r requirements.txt```
 
 In the case you use Python with Anaconda Software, use the following command:
 
 ```conda install --file requirements.txt```
+
+## Content
+
+The project, as already told, is divided in three different programs with different purposes:
+
+- **Visualize_vTEC_Data.py**: This script let us choose any Cmn file, read the correspond data and visualize the original vTEC and detrended vTEC plotted against the universal time.
+
+- **WaveletAnalaysisCMN.py**: This script was made to apply wavelet analysis to each time series of each satellite present in the input Cmn file. 
+
+  The user will be able to select a region in the power spectrum defined with 4 points by the following procedure:
+
+  1. Using the right click with a mouse, mark a point in the spectrum. You will need 4 points to define a region of interest that could be a TID.
+
+  2. If you want to delete the previous point, use the left click in the mouse.
+
+  3. If there is no more regions to select, just click the mousewheel to jump to the next satellite.
+
+  The scrip will notify you in the terminal if there is no more data to show.
+
+- **TIDs_StatsAnalysis.py**: This script is the final step in the project since it implements different types of statistical procedures like boxplots, probability density functions and fitting models.
