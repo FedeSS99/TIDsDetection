@@ -30,16 +30,16 @@ The project, as already told, is divided in three different programs with differ
 
 - **Visualize_vTEC_Data.py**: This script let us choose any Cmn file, read the correspond data and visualize the original vTEC and detrended vTEC plotted against the universal time.
 
-- **WaveletAnalaysisCMN.py**: This script was made to apply wavelet analysis to each time series of each satellite present in the input Cmn file. 
+- **WaveletAnalaysisCMN.py**: This script was made to apply wavelet analysis to each time series of each satellite present in the input Cmn file.
 
   The user will be able to select a region in the power spectrum defined with 4 points by the following procedure:
 
-  1. Using the right click with a mouse, mark a point in the spectrum. You will need 4 points to define a region of interest that could be a TID.
+  1. Using the left click with a mouse, mark a point in the spectrum. You will need 4 points to define a region of interest that could be a TID.
 
-  2. If you want to delete the previous point, use the left click in the mouse.
+  2. If you want to delete the previous point, use the right click in the mouse.
 
   3. If there is no more regions to select, just click the mousewheel to jump to the next satellite.
 
   The scrip will notify you in the terminal if there is no more data to show.
 
-- **TIDs_StatsAnalysis.py**: This script is the final step in the project since it implements different types of statistical procedures like boxplots, probability density functions and fitting models.
+- **TIDs_StatsAnalysis.py**: This script is the final step in the project since it implements different types of statistical procedures like boxplots, probability density functions and fitting models. To do so, the script receives the paths for all "Regions" which have "Stations" folders with TIDs' output data generated with **WaveletAnalaysisCMN.py**; it will create statistical analysis for each region, station and general figures that includes all the regions.
