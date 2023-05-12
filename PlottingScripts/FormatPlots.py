@@ -33,7 +33,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     PLOTS["PERIOD"][0].tight_layout()
     SaveAllRegionPlot("PeriodDistribution", PLOTS["PERIOD"][0])
 
-    # ------ APPLY FORMAT TO POWER VARIABILITY FIGURE ------
+    # ------ APPLY FORMAT TO DAY-NIGHT BARS FIGURE ------
     PLOTS["DAY-NIGHT_BARS"][0].tight_layout()
     SaveAllRegionPlot("DayNightTIDs", PLOTS["DAY-NIGHT_BARS"][0])
 
@@ -90,12 +90,18 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
 
 
     # ------ APPLY FORMAT TO AMPLITUDE VS POWER FIGURE ------
-    # Apply logaritmic scale to x-axis and y-axis in Amplitude-Power plot
-    for p in range(Nplots):
-        PLOTS["AMP_POWER"][1][p].set_yscale("log", subs=None)
-    PLOTS["AMP_POWER"][1][Nplots-1].set_xscale("log", subs=None)
-
     PLOTS["AMP_POWER"][0].tight_layout()
 
+    # Apply logaritmic scale to x-axis and y-axis in Amplitude-Power plot
+    for p in range(Nplots):
+        SubplotBox = PLOTS["AMP_POWER"][1][p].get_position()
+        PLOTS["AMP_POWER"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
+                                               0.7*SubplotBox.width, SubplotBox.height])
+        PLOTS["AMP_POWER"][1][p].set_yscale("log", subs=None)
+    PLOTS["AMP_POWER"][1][Nplots-1].set_xscale("log", subs=None)
+    
     # Fixing position of legends box outside the subplots
+    PLOTS["AMP_POWER"][0].legend(loc="center right", bbox_to_anchor=(1, 0.5),
+                                 fancybox=True, shadow=True)
+    
     SaveAllRegionPlot("AmplitudePowerRegions", PLOTS["AMP_POWER"][0])
