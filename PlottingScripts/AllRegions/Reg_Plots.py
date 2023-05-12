@@ -323,8 +323,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
                                      usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
-    RiseHours, SetHours = RiseHours[0:SizeData:
-                                    DivH_12], SetHours[0:SizeData:DivH_12]
+    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
 
     DayTIDsPeriods = []
     NightTIDsPeriods = []
@@ -333,8 +332,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
             Period_Conds_month = Period[Conds_month]
-            MaskDay = (
-                RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
+            MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
             MaskNight = ~MaskDay
 
             DayTIDsPeriods.append(Period_Conds_month[MaskDay])
