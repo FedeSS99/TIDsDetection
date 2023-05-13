@@ -105,7 +105,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     SubFigureMeanWaveletCMN = MainFigure.add_subplot(gs[1,1])
 
     #Set super title of figure, text for labels and ticks parameters
-    MainFigure.suptitle(f"Wavelet Analysis of .Cmn data of {plot_name}\n")
+    MainFigure.suptitle(f"Wavelet Analysis of {plot_name}\n")
     SubFigureSignalCMN.set_ylabel("dTEC")
     SubFigureSignalCMN.tick_params(axis="x",which="both",bottom=False, top=False, labelbottom=False)
     SubFigureWaveletCMN.set_xlabel("Universal Time (U.T.)")
@@ -164,7 +164,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     return TIDsRegions, DataRegions
 
 
-def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, MainPlotName, fileOutResults):
+def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, StationDate, fileOutResults):
     #Fourier Factor for Morlet
     fourier_factor_Complex = (4.0*pi)/(6 + sqrt(2 + 6**2))
     coi_Complex = fourier_factor_Complex/sqrt(2)
@@ -176,7 +176,7 @@ def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, MainPlotName, fileOutR
     maxValueFordTEC = 0.1
     for prn in prnNumbers:
         for interval in range(len(time_data_CMN[prn])):
-            plot_name = MainPlotName + f" PRN-{prn[:-2]} Interval-{interval+1}"
+            plot_name = StationDate + f" PRN-{prn[:-2]}-{interval+1}"
             timeData, VTECdata = time_data_CMN[prn][interval], vtec_data_CMN[prn][interval]
             if VTECdata.min() <= -maxValueFordTEC or VTECdata.max() >= maxValueFordTEC:
                 dt = np.diff(timeData).mean()

@@ -22,9 +22,10 @@ def select_file(window):
         os.system('cls' if os.name == 'nt' else 'clear')
         cmn_file_path = window.cmn_file.name
         new_path_name = cmn_file_path.split("/")[-1]
-        plot_name = new_path_name.split(".")[0]
-        STATION_NAME = plot_name[:4]
-        YEAR, MONTH = plot_name.split("-")[1:3]
+        OutputName = new_path_name.split(".")[0]
+        STATION_NAME = OutputName[:4].upper()
+        YEAR, MONTH, DAY = OutputName.split("-")[1:4]
+        plot_name = STATION_NAME + " " + YEAR + "-" + MONTH + "-" + DAY
 
         SAVEFILE_PATH = "../Analysis/"+STATION_NAME+"/"
 
@@ -74,13 +75,13 @@ def select_file(window):
         Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn = ObtainIntervalsWith_SGFilter(cmn_time_vtec_readings, time_window)
 
         # Create and show original and detrended signals on plots
-        SignalPlots = CreateSignalPlotFigure(plot_name)
+        SignalPlots = CreateSignalPlotFigure()
         CMN_SignalPlots(Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn, SignalPlots)
-        
+
         # Start a file to save TIDs data from detrended signals
-        OutFileName = plot_name+"_TIDs.dat"
+        OutFileName = OutputName+"_TIDs.dat"
         with open(SAVEFILE_PATH+"/"+OutFileName, "w") as OutTIDs: 
-            OutTIDs.write(f"#TIDs data obtained with {plot_name}\n")
+            OutTIDs.write(f"#TIDs data obtained with {OutputName}.Cmn\n")
             OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)
 
@@ -91,6 +92,7 @@ if __name__=="__main__":
     #Change Matplotlib's backend and font family
     use('TkAgg')
     rcParams.update({'font.family':'serif'})
+    rcParams.update({'font.size': 12})
     rcParams.update({'savefig.dpi': 400})
 
     # Check if "Analysis" folder exists:
