@@ -1,7 +1,7 @@
 from matplotlib.pyplot import figure, show, cm
 from numpy import linspace, arange
 
-def CreateSignalPlotFigure(plot_name):
+def CreateSignalPlotFigure():
     timeTicks = arange(0, 25, 6)
 
     #Create main plotting figure to use for every prn number
