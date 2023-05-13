@@ -58,7 +58,7 @@ def CreateFiguresForAllRegions(Nplots):
     # ---- CREATE MAIN FIGURE FOR OCURRENCE PLOT ----
     FigureOcurrHist, OcurrHistSub = subplots(num=4, nrows=Nplots, ncols=1, 
                                              sharex=True, 
-                                             figsize=(7, 7))
+                                             figsize=(6, 8))
     # Add Ocurrence x-label
     OcurrHistSub[Nplots-1].set_xlabel("Local Time (Hours)")
 
@@ -159,8 +159,7 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
                                      usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
-    RiseHours, SetHours = RiseHours[0:SizeData:
-                                    DivH_12], SetHours[0:SizeData:DivH_12]
+    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
 
     # Apply day-night filter for amplitude-power data
     DayNightAmplitude = dict(Day=[], Night=[])
@@ -207,15 +206,15 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
 
     # Add best fit of power law model for average amplitudes and power data
     Plots[1][Index].plot(AverageAmplitude, Best_AmpPowerFit, "--k")
-    Plots[1][Index].text(0.05, 0.95, f"Amplitude = {Best_A:.3f}\nExponent = {Best_k:.3f}\n"+r"$R^{{2}}$ = {0:.3f}".format(R2_Score),
-                         horizontalalignment="left", verticalalignment="top", fontsize=10,
+    Plots[1][Index].text(0.05, 0.95, f"A = {Best_A:.3f}\nExponent = {Best_k:.3f}\n"+r"$R^{{2}}$ = {0:.3f}".format(R2_Score),
+                         horizontalalignment="left", verticalalignment="top", fontsize=9,
                          transform=Plots[1][Index].transAxes)
     
     Plots[1][Index].set_title(IndexName[Index])
 
     # And finally, add number of Day and Night events
     Plots[1][Index].text(0.95, 0.05, f"Day = {NumDay} Night = {NumNight}",
-                         horizontalalignment="right", verticalalignment="bottom", fontsize=8,
+                         horizontalalignment="right", verticalalignment="bottom", fontsize=9,
                          transform=Plots[1][Index].transAxes)
     
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -397,7 +396,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, RegionName):
+def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName):
     # Setting y ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May",
                   "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -409,8 +408,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, RegionName):
                                      usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
-    RiseHours, SetHours = RiseHours[0:SizeData:
-                                    DivH_12], SetHours[0:SizeData:DivH_12]
+    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
 
     # Count number of events per month given the rise and set hours of the sun
     NumEventerPerMonth = []
@@ -432,9 +430,15 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Unzip the lists for number of events in day and night in this Station/Region
     _, NumEvents_Day, NumEvents_Night = zip(*NumEventerPerMonth)
 
-    Plots[1][Index].bar(x=MonthAxisData - 0.25, height=NumEvents_Day, width=0.25,
-                    align="edge", edgecolor="k", facecolor="r", label="Day")
-    Plots[1][Index].bar(x=MonthAxisData, height=NumEvents_Night, width=0.25,
-                    align="edge", edgecolor="k", facecolor="b", label="Night")
+    DayBars = Plots[1][Index].bar(x=MonthAxisData - 0.25, height=NumEvents_Day, width=0.25,
+                        align="edge", edgecolor="k", facecolor="r")
+    NightBars = Plots[1][Index].bar(x=MonthAxisData, height=NumEvents_Night, width=0.25,
+                        align="edge", edgecolor="k", facecolor="b")
+
+    if Index == Nplots - 1:
+        # Fixing position of legends box outside the subplots after FormatPlots.py is called
+        Plots[0].legend([DayBars, NightBars], ["Day", "Night"], 
+                                          loc="center right", bbox_to_anchor=(1, 0.5),
+                                          fancybox=True, shadow=True)
 
     Plots[1][Index].set_title(IndexName[Index])

@@ -44,7 +44,7 @@ def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS,
                                       PLOTS["PERIOD"], RegionsInfo[Region][2], Region)
 
     RegPlot.Add_BarsFreq_Month(DataDict["TIME"], DataDict["MONTH"], PLOTS["DAY-NIGHT_BARS"], 
-                               RegionsInfo[Region][2], Region)
+                               RegionsInfo[Region][2], len(RegionsInfo), Region)
     
     # Add boxplots for time-power data in a figure for all regions
     BoxPlotObject = RegPlot.Add_TimePowerDataResultsToPlot(DataDict["TIME"], DataDict["POWER"],

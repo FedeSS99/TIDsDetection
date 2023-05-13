@@ -7,18 +7,14 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     TimeRange = (0.0, 24.0)
     MonthRange = (0, 12)
     # Setting y ticks with months names
-    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May",
-                  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     MonthAxisData = linspace(0.5, 11.5, 12, endpoint=True)
-
     # Set the limits for Local Time and indexes for each Month
-    
     timeTicks = arange(0, 25, 3)
-
     PLOTS["OCURR"][0].tight_layout()
     for p in range(Nplots):
         PLOTS["OCURR"][1][p].set_yticks(MonthAxisData, MonthTicks)
-        PLOTS["OCURR"][1][p].set_yticklabels(MonthTicks, rotation=45)
 
         PLOTS["OCURR"][1][p].set_xlim(*TimeRange)
         PLOTS["OCURR"][1][p].set_ylim(*MonthRange)
@@ -35,6 +31,11 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
 
     # ------ APPLY FORMAT TO DAY-NIGHT BARS FIGURE ------
     PLOTS["DAY-NIGHT_BARS"][0].tight_layout()
+    for p in range(Nplots):
+        SubplotBox = PLOTS["DAY-NIGHT_BARS"][1][p].get_position()
+        PLOTS["DAY-NIGHT_BARS"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
+                                                    0.8*SubplotBox.width, SubplotBox.height])
+    
     SaveAllRegionPlot("DayNightTIDs", PLOTS["DAY-NIGHT_BARS"][0])
 
     # ------ APPLY FORMAT TO POWER VARIABILITY FIGURE ------
@@ -42,17 +43,17 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     PLOTS["POWER_VAR"][1].set_yscale("log")
     SubplotBox = PLOTS["POWER_VAR"][1].get_position()
     PLOTS["POWER_VAR"][1].set_position([SubplotBox.x0, SubplotBox.y0,
-                               SubplotBox.width*0.9, SubplotBox.height])
+                                        0.925*SubplotBox.width, SubplotBox.height])
     PLOTS["POWER_VAR"][0].legend(ListBoxPlots, ListLegendsBoxPlots,
-                        loc="upper right", fancybox=True, shadow=True, bbox_to_anchor=(1.0, 0.5))
+                                 loc="upper right", fancybox=True, shadow=True, bbox_to_anchor=(1.0, 0.5))
     SaveAllRegionPlot("PowerDistributionStations", PLOTS["POWER_VAR"][0])
 
 
     # ------ APPLY FORMAT TO AMPLITUDE VARIABILITY FIGURE ------
     # Create Hours and Months ticks to use change the labels in Amplitude variance
     # plots and save the figure
-    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May",
-                  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     HOUR_TICKS = [i for i in range(0, 25, 4)]
     HOUR_STR_TICKS = [str(num) for num in HOUR_TICKS]
     MonthAxisData = linspace(1.0, 12.0, 12, endpoint=True)
