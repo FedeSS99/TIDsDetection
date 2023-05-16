@@ -6,8 +6,8 @@ from matplotlib.pyplot import close
 
 # Numerical and data routines
 from DataScripts.Input_TID_Data import CreateInputDictionary
-from DataScripts.GetDataFile import SingleTIDs_Analysis
-from DataScripts.HistogramOcurrence import Time_Months_Ocurrence_Analysis
+from DataScripts.GetDataFile import GetSingleTID_Data
+from DataScripts.HistogramOcurrence import GetOcurrenceArray
 
 # CMAP and NORM routines
 from DataScripts.CMAP_NORM import ObtainCMAPandNORM
@@ -90,7 +90,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             TotalDays += len(TIDs_DataPaths)
             for fileTID, MonthFile, Date_TID in zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs):
                 if Date_TID not in StormDays:
-                    Results = SingleTIDs_Analysis(fileTID)
+                    Results = GetSingleTID_Data(fileTID)
                     SizeResults = Results["TIME"].size
                     if SizeResults:
                         ActiveDays += 1
@@ -126,8 +126,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             Station_MaxAmps = np.concatenate(tuple(Station_MaxAmps))
 
             # Obtain the ocurrence map for the TIDs in this same Station
-            StationOcurrenceMap = Time_Months_Ocurrence_Analysis(
-                Station_TimeTID, Station_MonthArray)
+            StationOcurrenceMap = GetOcurrenceArray(Station_TimeTID, Station_MonthArray)
 
             # Save all the Station data in one dictionary and...
             StationResultsDict = {
@@ -171,8 +170,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
         NumTIDs = Region_TimeTID.size
 
         # Get ocurrence map for each Region
-        HistogramOcurrence = Time_Months_Ocurrence_Analysis(
-            Region_TimeTID, Region_MonthArray)
+        HistogramOcurrence = GetOcurrenceArray(Region_TimeTID, Region_MonthArray)
         
         # Get average absolute amplitude for each region and all the correspond data in the directory
         # in a dictionary

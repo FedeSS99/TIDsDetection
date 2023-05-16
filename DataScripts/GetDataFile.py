@@ -1,6 +1,13 @@
 from numpy import float64, array
 
-def SingleTIDs_Analysis(TID_path):
+"""
+Function that read and returns all the TIDs' data from the given
+input file name (TID_path); at first everything is saved in a list
+but later turned into a numpy array for easier use in the main file
+(TIDs_StatsAnalysis.py).
+"""
+
+def GetSingleTID_Data(TID_path):
     #------------------------------------------------------------------------------------
     #Reading TIDs events from TID_path
     with open(TID_path, "+r") as tid_file:

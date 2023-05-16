@@ -3,6 +3,11 @@ from matplotlib.colors import LinearSegmentedColormap, BoundaryNorm
 from numpy import linspace
 
 def ObtainCMAPandNORM(OcurrenceArray):
+    """
+    Obtain colormap and normalization for TIDs' ocurrence array to show
+    with discrete colors
+    """
+    
     # Define the colormap
     CMAP = get_cmap("jet")
     # Extract all colors from the jet map

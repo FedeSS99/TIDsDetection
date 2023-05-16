@@ -1,12 +1,19 @@
 from pandas import ExcelFile
 
+"""
+Python script to read and save solar terminators' time
+for all the 365 days of the year. The data is separated in
+columns in the following format:
+Time    Sunrise Time    Sunset Time
+"""
+
 # Reading NOAA calculations data
 file = "NOAA_Solar_Calculations_year.xlsx"
 data = ExcelFile(file)
 
 # Only parsin data related to solar terminators
 df = data.parse("Calculations")
-strSunset, strSunrise = "Sunset Time (LST)", "Sunrise Time (LST)"
+strSunrise, strSunset = "Sunrise Time (LST)", "Sunset Time (LST)"
 
 # Getting lists for terminators data
 SunriseTime = df[strSunrise].tolist()
