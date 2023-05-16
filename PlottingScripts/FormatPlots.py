@@ -31,10 +31,19 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
 
     # ------ APPLY FORMAT TO DAY-NIGHT BARS FIGURE ------
     PLOTS["DAY-NIGHT_BARS"][0].tight_layout()
+    MinBar_Plots, MaxBar_Plots = [], []
     for p in range(Nplots):
         SubplotBox = PLOTS["DAY-NIGHT_BARS"][1][p].get_position()
         PLOTS["DAY-NIGHT_BARS"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
                                                     0.8*SubplotBox.width, SubplotBox.height])
+        
+        Y_MIN, Y_MAX = PLOTS["DAY-NIGHT_BARS"][1][p].get_ylim()
+        MinBar_Plots.append(Y_MIN)
+        MaxBar_Plots.append(Y_MAX)
+
+    Y_MIN, Y_MAX = min(MinBar_Plots), max(MaxBar_Plots)
+    for p in range(Nplots):
+        PLOTS["DAY-NIGHT_BARS"][1][p].set_ylim(Y_MIN, Y_MAX)
     
     SaveAllRegionPlot("DayNightTIDs", PLOTS["DAY-NIGHT_BARS"][0])
 
@@ -62,6 +71,10 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         PLOTS["AMP_VAR"][1][p][0].set_xticks(ticks=[], labels=[])
         PLOTS["AMP_VAR"][1][p][1].set_xticks(ticks=[], labels=[])
 
+        Y_MIN, Y_MAX = PLOTS["AMP_VAR"][1][p][0].get_ylim()
+        MinAmps_Plots.append(Y_MIN)
+        MaxAmps_Plots.append(Y_MAX)
+
     # Setting x ticks within 24 hours
     PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xticks(ticks=HOUR_TICKS, labels=HOUR_STR_TICKS)
     PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
@@ -74,10 +87,6 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     for label in PLOTS["AMP_VAR"][1][Nplots - 1][1].get_xticklabels():
         label.set_horizontalalignment('left')
     PLOTS["AMP_VAR"][1][Nplots - 1][1].set_xticklabels(MonthTicks, rotation=-45)
-
-    Y_MIN, Y_MAX = PLOTS["AMP_VAR"][1][p][0].get_ylim()
-    MinAmps_Plots.append(Y_MIN)
-    MaxAmps_Plots.append(Y_MAX)
 
     # Set the same min and max value for all Amplitude variance plots
     Y_MIN, Y_MAX = min(MinAmps_Plots), max(MaxAmps_Plots)
@@ -93,13 +102,24 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     # ------ APPLY FORMAT TO AMPLITUDE VS POWER FIGURE ------
     PLOTS["AMP_POWER"][0].tight_layout()
 
-    # Apply logaritmic scale to x-axis and y-axis in Amplitude-Power plot
+    # Apply logaritmic scale to x-axis and y-axis in each Amplitude-Power plot
+    # and also set the same y-axis limits in all Amplitude-Power plots
+    MinAmpPow_Plots, MaxAmpPow_Plots = [], []
     for p in range(Nplots):
         SubplotBox = PLOTS["AMP_POWER"][1][p].get_position()
         PLOTS["AMP_POWER"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
                                                0.7*SubplotBox.width, SubplotBox.height])
+        
+        Y_MIN, Y_MAX = PLOTS["AMP_POWER"][1][p].get_ylim()
+        MinAmpPow_Plots.append(Y_MIN)
+        MaxAmpPow_Plots.append(Y_MAX)
         PLOTS["AMP_POWER"][1][p].set_yscale("log", subs=None)
+
     PLOTS["AMP_POWER"][1][Nplots-1].set_xscale("log", subs=None)
+
+    Y_MIN, Y_MAX = min(MinAmpPow_Plots), max(MaxAmpPow_Plots)
+    for p in range(Nplots):
+        PLOTS["AMP_POWER"][1][p].set_ylim(Y_MIN, Y_MAX)
     
     # Fixing position of legends box outside the subplots
     PLOTS["AMP_POWER"][0].legend(loc="center right", bbox_to_anchor=(1, 0.5),
