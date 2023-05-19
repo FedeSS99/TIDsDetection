@@ -1,6 +1,8 @@
 from PlottingScripts.SaveFunctions import SaveAllRegionPlot
 from numpy import linspace, arange
 
+import warnings
+
 def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlots):
     # ------ APPLY FORMAT TO OCURRENCE FIGURE ------
     # Setting number of bins and time range for histogram
@@ -12,7 +14,11 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     MonthAxisData = linspace(0.5, 11.5, 12, endpoint=True)
     # Set the limits for Local Time and indexes for each Month
     timeTicks = arange(0, 25, 3)
-    PLOTS["OCURR"][0].tight_layout()
+
+    # Desactivate UserWarning, expected output
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        PLOTS["OCURR"][0].tight_layout()
     for p in range(Nplots):
         PLOTS["OCURR"][1][p].set_yticks(MonthAxisData, MonthTicks)
 
@@ -27,6 +33,16 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
 
     # ------ APPLY FORMAT TO PERIOD DISTRIBUTION FIGURE ------
     PLOTS["PERIOD"][0].tight_layout()
+    MinDistPer_Plots, MaxDistPer_Plots = [], []
+    for p in range(Nplots):      
+        Y_MIN, Y_MAX = PLOTS["PERIOD"][1][p].get_ylim()
+        MinDistPer_Plots.append(Y_MIN)
+        MaxDistPer_Plots.append(Y_MAX)
+
+    Y_MIN, Y_MAX = min(MinDistPer_Plots), max(MaxDistPer_Plots)
+    for p in range(Nplots):
+        PLOTS["PERIOD"][1][p].set_ylim(Y_MIN, Y_MAX)
+
     SaveAllRegionPlot("PeriodDistribution", PLOTS["PERIOD"][0])
 
     # ------ APPLY FORMAT TO DAY-NIGHT BARS FIGURE ------
@@ -93,9 +109,23 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     for p in range(Nplots):
         for l in range(2):
             PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_MIN, Y_MAX)
+
         PLOTS["AMP_VAR"][1][p][1].set_yticks(ticks=[], labels=[])
 
+    # Modify the fixed positions and dimensiones of the subplots for
+    # better visualization
     PLOTS["AMP_VAR"][0].tight_layout()
+    for p in range(Nplots):
+        SubplotBoxCol1 = PLOTS["AMP_VAR"][1][p][0].get_position()
+        SubplotBoxCol2 = PLOTS["AMP_VAR"][1][p][1].get_position()
+
+        DifXBoxesAmpVar = SubplotBoxCol2.x0 - (SubplotBoxCol1.x0 + SubplotBoxCol1.width)
+
+        PLOTS["AMP_VAR"][1][p][0].set_position([SubplotBoxCol1.x0, SubplotBoxCol1.y0,
+                                                SubplotBoxCol1.width - 2.0*DifXBoxesAmpVar, SubplotBoxCol1.height])
+        PLOTS["AMP_VAR"][1][p][1].set_position([SubplotBoxCol1.x0 + SubplotBoxCol1.width - DifXBoxesAmpVar, SubplotBoxCol2.y0,
+                                                SubplotBoxCol2.width + 2.0*DifXBoxesAmpVar, SubplotBoxCol2.height])
+
     SaveAllRegionPlot("AmplitudeVariations", PLOTS["AMP_VAR"][0]) 
 
 
@@ -119,7 +149,10 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
 
     Y_MIN, Y_MAX = min(MinAmpPow_Plots), max(MaxAmpPow_Plots)
     for p in range(Nplots):
-        PLOTS["AMP_POWER"][1][p].set_ylim(Y_MIN, Y_MAX)
+        # Desactivate UserWarning, expected output
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            PLOTS["AMP_POWER"][1][p].set_ylim(Y_MIN, Y_MAX)
     
     # Fixing position of legends box outside the subplots
     PLOTS["AMP_POWER"][0].legend(loc="center right", bbox_to_anchor=(1, 0.5),
