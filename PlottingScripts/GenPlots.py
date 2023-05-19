@@ -37,14 +37,16 @@ def StartAnalysisForStationsAndRegions(RegionName, StationName, Stat_or_Reg, Dat
 
 def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS, ListBoxPlots, ListLegendsBoxPlots):
 
+    Nplots = len(RegionsInfo)
+
     RegPlot.Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP, NORM, PLOTS["OCURR"],
-                                          RegionsInfo[Region][2], len(RegionsInfo), Region)
+                                          RegionsInfo[Region][2], Nplots, Region)
 
     RegPlot.Add_PeriodHistogramToPlot(DataDict["PERIOD"], DataDict["TIME"], DataDict["MONTH"],
                                       PLOTS["PERIOD"], RegionsInfo[Region][2], Region)
 
     RegPlot.Add_BarsFreq_Month(DataDict["TIME"], DataDict["MONTH"], PLOTS["DAY-NIGHT_BARS"], 
-                               RegionsInfo[Region][2], len(RegionsInfo), Region)
+                               RegionsInfo[Region][2], Nplots, Region)
     
     # Add boxplots for time-power data in a figure for all regions
     BoxPlotObject = RegPlot.Add_TimePowerDataResultsToPlot(DataDict["TIME"], DataDict["POWER"],
@@ -61,6 +63,3 @@ def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS,
     RegPlot.Add_AmplitudePowerScatterPlot(DataDict["AVE_AMP"], DataDict["POWER"],
                                   DataDict["TIME"], DataDict["MONTH"], PLOTS["AMP_POWER"],
                                   RegionsInfo[Region][1], RegionsInfo[Region][2], Region)
-
-
-
