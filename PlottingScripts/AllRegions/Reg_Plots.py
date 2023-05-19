@@ -152,7 +152,7 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
     # Get best fit of the amplitude-power model
     Best_AmpPowerFit = PowerModelFit.best_fit
 
-    print(f"--Power Law Model for Amplitude-Power plot--\nAmplitude = {Best_A:.3f}\nExponent = {Best_k:.3f}\nR2-Score = {R2_Score:.3f}\n")
+    print(f"--Power Law Model for Amplitude-Power plot--\nA = {Best_A:.3f}\nExponent = {Best_k:.3f}\nR2-Score = {R2_Score:.3f}\n")
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
@@ -234,6 +234,8 @@ def AddBoxPlot(Plots, Num, Col, Center, Width, dx, InputData, Color):
             BoxComponent.set_facecolor("None")
             BoxComponent.set_edgecolor(Color)
 
+    return BoxPlot
+
 
 def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
@@ -253,7 +255,7 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
         AverageMinMax_Amps = AverageMinMax_Amps.reshape(
             AverageMinMax_Amps.size, 1)
 
-        AddBoxPlot(Plots, Index, 0, Hour, 0.5, 1.0, AverageMinMax_Amps, "k")
+        HourBox =AddBoxPlot(Plots, Index, 0, Hour, 0.5, 1.0, AverageMinMax_Amps, "k")
 
     # START ANALYSIS BY MONTHS DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1, 13):
@@ -273,9 +275,9 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
             # night
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
 
-            AddBoxPlot(Plots, Index, 1, month, 0.25,
+            NightBox = AddBoxPlot(Plots, Index, 1, month, 0.25,
                        0.25, AverageMinMax_NightAmps, DayNightColors["Night"])
-            AddBoxPlot(Plots, Index, 1, month, 0.25,
+            DayBox = AddBoxPlot(Plots, Index, 1, month, 0.25,
                        0.75, AverageMinMax_DayAmps, DayNightColors["Day"])
 
     for k in range(2):
