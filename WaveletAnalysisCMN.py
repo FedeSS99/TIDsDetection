@@ -15,29 +15,26 @@ def select_file(window):
     window.cmn_file = askopenfile(title="Select cmn file to read", filetypes=[("Cmn", "*.Cmn")])
     #If the status of window.cmn_file
     #doesn´t change, dont do anything
-    if window.cmn_file is None:
-        pass
-
-    else:
+    if window.cmn_file is not None:
         os.system('cls' if os.name == 'nt' else 'clear')
         cmn_file_path = window.cmn_file.name
         new_path_name = cmn_file_path.split("/")[-1]
         OutputName = new_path_name.split(".")[0]
         STATION_NAME = OutputName[:4].upper()
         YEAR, MONTH, DAY = OutputName.split("-")[1:4]
-        plot_name = STATION_NAME + " " + YEAR + "-" + MONTH + "-" + DAY
+        plot_name = f"{STATION_NAME} {YEAR}-{MONTH}-{DAY}"
 
-        SAVEFILE_PATH = "../Analysis/"+STATION_NAME+"/"
-
-        if not os.path.exists(SAVEFILE_PATH):
-            os.mkdir(SAVEFILE_PATH)
-
-        SAVEFILE_PATH += YEAR+"/"
+        SAVEFILE_PATH = f"../Analysis/{STATION_NAME}/"
 
         if not os.path.exists(SAVEFILE_PATH):
             os.mkdir(SAVEFILE_PATH)
 
-        SAVEFILE_PATH += MONTH+"/"
+        SAVEFILE_PATH += f"{YEAR}/"
+
+        if not os.path.exists(SAVEFILE_PATH):
+            os.mkdir(SAVEFILE_PATH)
+
+        SAVEFILE_PATH += f"{MONTH}/"
 
         if not os.path.exists(SAVEFILE_PATH):
             os.mkdir(SAVEFILE_PATH)
@@ -59,7 +56,7 @@ def select_file(window):
         #Then each read line is saved in different arrays on the condition
         #of being from the same prn
         prn_values = [prn_value for prn_value, count in Counter(prn_cmn).items() if count>1]
-        cmn_time_vtec_readings = dict()
+        cmn_time_vtec_readings = {}
         for prn_value in prn_values:
             prn_filter = where( prn_cmn==prn_value, True, False)
             cmn_time_vtec_readings[str(prn_value)] = [fixed_time_cmn[prn_filter],vtec_cmn[prn_filter]]
@@ -79,8 +76,8 @@ def select_file(window):
         CMN_SignalPlots(Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn, SignalPlots)
 
         # Start a file to save TIDs data from detrended signals
-        OutFileName = OutputName+"_TIDs.dat"
-        with open(SAVEFILE_PATH+"/"+OutFileName, "w") as OutTIDs: 
+        OutFileName = f"{OutputName}_TIDs.dat"
+        with open(f"{SAVEFILE_PATH}/{OutFileName}", "w") as OutTIDs: 
             OutTIDs.write(f"#TIDs data obtained with {OutputName}.Cmn\n")
             OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)

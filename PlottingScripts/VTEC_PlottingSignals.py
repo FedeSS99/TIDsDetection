@@ -30,7 +30,7 @@ def CMN_SignalPlots(OrigTime,OrigVtec,FiltTime,FiltVtec, SignalsPlot):
     prnNumbersFilt = FiltTime.keys()
 
     #Create CMN_colors dictionary to save rgb colors for each prn Number plot
-    CMN_Orig_colors, CMN_Filter_colors = dict(), dict()
+    CMN_Orig_colors, CMN_Filter_colors = {}, {}
     for prn,rgb in zip(prnNumbersOrig,cm.jet(linspace(0, 1, len(prnNumbersOrig)))):
         CMN_Orig_colors[prn] = rgb
     for prn,rgb in zip(prnNumbersFilt,cm.jet(linspace(0, 1, len(prnNumbersFilt)))):
@@ -57,5 +57,4 @@ def CMN_SignalPlots(OrigTime,OrigVtec,FiltTime,FiltVtec, SignalsPlot):
 
     SignalsPlot[0].legend(loc="upper center",  mode="expand",
     fontsize=8, ncol=len(prnNumbersFilt)//2, borderaxespad = 0)
-    #SignalsPlot[0].tight_layout()
     show()

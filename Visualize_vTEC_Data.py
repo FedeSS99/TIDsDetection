@@ -18,10 +18,7 @@ def select_file(window):
     window.cmn_file = askopenfile(title="Select cmn file to read", filetypes=[("Cmn", "*.Cmn")])
     #If the status of window.cmn_file
     #doesn´t change, dont do anything
-    if window.cmn_file is None:
-        pass
-
-    else:
+    if window.cmn_file is not None:
         os.system('cls' if os.name == 'nt' else 'clear')
         cmn_file_path = window.cmn_file.name
         new_path_name = cmn_file_path.split("/")[-1]
@@ -44,7 +41,7 @@ def select_file(window):
         #Then each read line is saved in different arrays on the condition
         #of being from the same prn
         prn_values = [prn_value for prn_value, count in Counter(prn_cmn).items() if count>1]
-        cmn_time_vtec_readings = dict()
+        cmn_time_vtec_readings = {}
         for prn_value in prn_values:
             prn_filter = where( prn_cmn==prn_value, True, False)
             cmn_time_vtec_readings[str(prn_value)] = [fixed_time_cmn[prn_filter],vtec_cmn[prn_filter]]

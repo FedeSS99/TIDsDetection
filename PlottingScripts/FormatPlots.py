@@ -52,7 +52,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         SubplotBox = PLOTS["DAY-NIGHT_BARS"][1][p].get_position()
         PLOTS["DAY-NIGHT_BARS"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
                                                     0.8*SubplotBox.width, SubplotBox.height])
-        
+
         Y_MIN, Y_MAX = PLOTS["DAY-NIGHT_BARS"][1][p].get_ylim()
         MinBar_Plots.append(Y_MIN)
         MaxBar_Plots.append(Y_MAX)
@@ -60,7 +60,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     Y_MIN, Y_MAX = min(MinBar_Plots), max(MaxBar_Plots)
     for p in range(Nplots):
         PLOTS["DAY-NIGHT_BARS"][1][p].set_ylim(Y_MIN, Y_MAX)
-    
+
     SaveAllRegionPlot("DayNightTIDs", PLOTS["DAY-NIGHT_BARS"][0])
 
     # ------ APPLY FORMAT TO POWER VARIABILITY FIGURE ------
@@ -79,7 +79,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     # plots and save the figure
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    HOUR_TICKS = [i for i in range(0, 25, 4)]
+    HOUR_TICKS = list(range(0, 25, 4))
     HOUR_STR_TICKS = [str(num) for num in HOUR_TICKS]
     MonthAxisData = linspace(1.0, 12.0, 12, endpoint=True)
     MinAmps_Plots, MaxAmps_Plots = [], []
@@ -139,7 +139,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         SubplotBox = PLOTS["AMP_POWER"][1][p].get_position()
         PLOTS["AMP_POWER"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
                                                0.7*SubplotBox.width, SubplotBox.height])
-        
+
         Y_MIN, Y_MAX = PLOTS["AMP_POWER"][1][p].get_ylim()
         MinAmpPow_Plots.append(Y_MIN)
         MaxAmpPow_Plots.append(Y_MAX)
@@ -153,9 +153,9 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             PLOTS["AMP_POWER"][1][p].set_ylim(Y_MIN, Y_MAX)
-    
+
     # Fixing position of legends box outside the subplots
     PLOTS["AMP_POWER"][0].legend(loc="center right", bbox_to_anchor=(1, 0.5),
                                  fancybox=True, shadow=True)
-    
+
     SaveAllRegionPlot("AmplitudePowerRegions", PLOTS["AMP_POWER"][0])

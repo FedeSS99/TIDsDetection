@@ -91,8 +91,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
             for fileTID, MonthFile, Date_TID in zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs):
                 if Date_TID not in StormDays:
                     Results = GetSingleTID_Data(fileTID)
-                    SizeResults = Results["TIME"].size
-                    if SizeResults:
+                    if SizeResults := Results["TIME"].size:
                         ActiveDays += 1
 
                         Station_MonthArray.append(SizeResults*[MonthFile])
@@ -171,7 +170,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
 
         # Get ocurrence map for each Region
         HistogramOcurrence = GetOcurrenceArray(Region_TimeTID, Region_MonthArray)
-        
+
         # Get average absolute amplitude for each region and all the correspond data in the directory
         # in a dictionary
         AveAbsAmplitude = (np.abs(Region_MinAmps) + Region_MaxAmps)/2.0
@@ -199,7 +198,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS):
     # Obtain ColorMap and Norm to use for all the regions
     OcurrenceSampling_AllRegions = np.concatenate(
         tuple(OcurrenceSampling_AllRegions))
-    
+
     ListBoxPlots, ListLegendsBoxPlots = [], []
     CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions)
     PlotsResults = CreateFiguresForAllRegions(Nplots)

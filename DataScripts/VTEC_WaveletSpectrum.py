@@ -67,10 +67,7 @@ def CheckIntersection(Region1, Region2):
     CondY1 = Region1[0][1] + Region1Height >= Region2[0][1]
     CondY2 = Region1[0][1] <= Region2[0][1] + Region2Height
 
-    if CondX1 and CondX2 and CondY1 and CondY2:
-        return True
-    else:
-        return False
+    return CondX1 and CondX2 and CondY1 and CondY2
 
 def ObtainMaxMinValuesForMSTIDs(Spectrum, Periods):
     #Function to filter the total power spectrum to only watch
@@ -176,7 +173,7 @@ def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, StationDate, fileOutRe
     maxValueFordTEC = 0.1
     for prn in prnNumbers:
         for interval in range(len(time_data_CMN[prn])):
-            plot_name = StationDate + f" PRN-{prn[:-2]}-{interval+1}"
+            plot_name = f"{StationDate} PRN-{prn[:-2]}-{interval + 1}"
             timeData, VTECdata = time_data_CMN[prn][interval], vtec_data_CMN[prn][interval]
             if VTECdata.min() <= -maxValueFordTEC or VTECdata.max() >= maxValueFordTEC:
                 dt = np.diff(timeData).mean()
@@ -199,7 +196,7 @@ def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, StationDate, fileOutRe
                 for event, data in zip(TIDsPRN_Events, DataPRN_Events):
                     TIDsEvents.append(event)
                     DataEvents.append(data)
-    
+
     # Closing Wavelet Spectrum figure after the analysis is done
     close(2)
 

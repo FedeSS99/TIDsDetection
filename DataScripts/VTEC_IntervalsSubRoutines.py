@@ -29,17 +29,17 @@ def FindOptimalOrder_SGF(DataInterval, WindowSize_PRN_P, PRN, NumInt):
 def ObtainIntervalsWith_SGFilter(time_vtec_readings, time_window):
     #Save all the future obtained intervals on the whole data set in all_intervals
     #and saved the corresponding window size for each one of these
-    all_intervals = dict()
-    all_windows_sizes = dict()
+    all_intervals = {}
+    all_windows_sizes = {}
 
     #The values of time of each subinterval of each satellite data set is saved in
     #time_no_tendency and the given VTEC values of these same subintervals in
     #vtec_no_tendency
-    time_no_tendency = dict()
-    vtec_no_tendency = dict()
+    time_no_tendency = {}
+    vtec_no_tendency = {}
     #Also, save original time-vtec data
-    timeOriginal = dict()
-    vtecOriginal = dict()
+    timeOriginal = {}
+    vtecOriginal = {}
 
     prnNumbers =time_vtec_readings.keys()
     #A for cycle that will split and save each satellite data set in the previous

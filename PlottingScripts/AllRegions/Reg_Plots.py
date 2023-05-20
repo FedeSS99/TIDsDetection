@@ -113,7 +113,7 @@ def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
                 BoxComponent.set_edgecolor(Color)
 
     Plots[1].set_xticks([])
-    XTICKS = [i for i in range(0, 25, 4)]
+    XTICKS = list(range(0, 25, 4))
     Plots[1].set_xticks(ticks=XTICKS, labels=XTICKS)
 
     return BoxPlot["boxes"][0]
@@ -201,15 +201,21 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
     # Add scatter plot of average amplitudes and power by Day-Night filter
     for momentDay in ["Night", "Day"]:
         COLOR = DayNightColors[momentDay]
-        Plots[1][Index].scatter(DayNightAmplitude[momentDay], DayNightPower[momentDay], alpha=0.25,
-                                c=COLOR, marker=Marker, label=RegionName + "-" + momentDay)
+        Plots[1][Index].scatter(
+            DayNightAmplitude[momentDay],
+            DayNightPower[momentDay],
+            alpha=0.25,
+            c=COLOR,
+            marker=Marker,
+            label=f"{RegionName}-{momentDay}",
+        )
 
     # Add best fit of power law model for average amplitudes and power data
     Plots[1][Index].plot(AverageAmplitude, Best_AmpPowerFit, "--k")
     Plots[1][Index].text(0.05, 0.95, f"A = {Best_A:.3f}\nExponent = {Best_k:.3f}\n"+r"$R^{{2}}$ = {0:.3f}".format(R2_Score),
                          horizontalalignment="left", verticalalignment="top", fontsize=9,
                          transform=Plots[1][Index].transAxes)
-    
+
     Plots[1][Index].set_title(IndexName[Index])
 
     # And finally, add number of Day and Night events
