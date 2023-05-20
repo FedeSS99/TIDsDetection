@@ -161,6 +161,38 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     return TIDsRegions, DataRegions
 
 
+def ExtractRepeatedRegions(TIDsEvents):
+        #Checking if all the events are separeted TIDs, if there's an intersection
+    #in the rectangular regions on the Time-Period plane then it will be saved
+    #as Repeated Event
+    NumEvents = len(TIDsEvents)
+    RepeatedEvents = []
+    for i in range(NumEvents-1):
+        for j in range(i+1, NumEvents):
+            Region1 = TIDsEvents[i]
+            Region2 = TIDsEvents[j]
+            if CheckIntersection(Region1, Region2):
+                print(f"Regions {i} and {j} intersect!")
+                print(f"Region{i}: ({Region1[0][0]},{Region1[1][0]}), ({Region1[0][1]},{Region1[1][1]})")
+                print(f"Region{j}: ({Region2[0][0]},{Region2[1][0]}), ({Region2[0][1]},{Region2[1][1]})")
+
+                RepeatedEvents.append(j)
+
+    return RepeatedEvents, NumEvents
+
+
+def WriteNonRepeatedTIDs(DataEvents, RepeatedEvents, NumEvents, OutFILE):
+    RepeatedEvents = set(RepeatedEvents)
+    for i in range(NumEvents):
+        if i not in RepeatedEvents:
+            TimeTID, PeriodTID, maxPowerTID = DataEvents[i][:3]
+            minTime, maxTime = DataEvents[i][3:5]
+            minPeriod, maxPeriod = DataEvents[i][5:7]
+            minSig, maxSig = DataEvents[i][7:] 
+            dataString = f"{TimeTID:.6f} {PeriodTID:.6f} {maxPowerTID:.6f} {minTime:.6f} {maxTime:.6f} {minPeriod:.6f} {maxPeriod:.6f} {minSig:.6f} {maxSig:.6f}\n"
+            OutFILE.write(dataString)
+
+
 def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, StationDate, fileOutResults):
     #Fourier Factor for Morlet
     fourier_factor_Complex = (4.0*pi)/(6 + sqrt(2 + 6**2))
@@ -200,28 +232,9 @@ def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, StationDate, fileOutRe
     # Closing Wavelet Spectrum figure after the analysis is done
     close(2)
 
-    #Checking if all the events are separeted TIDs, if there's an intersection
-    #in the rectangular regions on the Time-Period plane then it will be saved
-    #as Repeated Event
-    NumEvents = len(TIDsEvents)
-    RepeatedEvents = []
-    for i in range(NumEvents-1):
-        for j in range(i+1, NumEvents):
-            Region1 = TIDsEvents[i]
-            Region2 = TIDsEvents[j]
-            if CheckIntersection(Region1, Region2):
-                print(f"Regions {i} and {j} intersect!")
-                print(f"Region{i}: ({Region1[0][0]},{Region1[1][0]}), ({Region1[0][1]},{Region1[1][1]})")
-                print(f"Region{j}: ({Region2[0][0]},{Region2[1][0]}), ({Region2[0][1]},{Region2[1][1]})")
+    # Find the number of total selected events and extract the
+    # non repeated TIDs
+    RepeatedEvents, NumEvents = ExtractRepeatedRegions(TIDsEvents)
 
-                RepeatedEvents.append(j)
-
-    RepeatedEvents = set(RepeatedEvents)
-    for i in range(NumEvents):
-        if i not in RepeatedEvents:
-            TimeTID, PeriodTID, maxPowerTID = DataEvents[i][:3]
-            minTime, maxTime = DataEvents[i][3:5]
-            minPeriod, maxPeriod = DataEvents[i][5:7]
-            minSig, maxSig = DataEvents[i][7:] 
-            dataString = f"{TimeTID:.6f} {PeriodTID:.6f} {maxPowerTID:.6f} {minTime:.6f} {maxTime:.6f} {minPeriod:.6f} {maxPeriod:.6f} {minSig:.6f} {maxSig:.6f}\n"
-            fileOutResults.write(dataString)
+    # Write all the non repeated TIDs in the output file
+    WriteNonRepeatedTIDs(DataEvents, RepeatedEvents, NumEvents, fileOutResults)
