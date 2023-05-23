@@ -240,10 +240,8 @@ def AddBoxPlot(Plots, Num, Col, Center, Width, dx, InputData, Color):
             BoxComponent.set_facecolor("None")
             BoxComponent.set_edgecolor(Color)
 
-    return BoxPlot
 
-
-def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
+def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Date_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
                                      usecols=(1, 2), unpack=True, skiprows=1)
@@ -258,40 +256,41 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
         MaskTime = np.where((Hour <= Time_TIDs) & (
             Time_TIDs <= Hour+2), True, False)
         AverageMinMax_Amps = AverageAmplitude[MaskTime]
-        AverageMinMax_Amps = AverageMinMax_Amps.reshape(
-            AverageMinMax_Amps.size, 1)
+        AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
 
-        HourBox =AddBoxPlot(Plots, Index, 0, Hour, 0.5, 1.0, AverageMinMax_Amps, "k")
+        AddBoxPlot(Plots, Index, 0, Hour, 0.5, 1.0, AverageMinMax_Amps, "k")
 
-    # START ANALYSIS BY MONTHS DIVIDED IN DAY AND NIGHT ACTIVITY
+    # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1, 13):
         Conds_month = Months_TIDs == month
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
+            Date_Conds_month = Date_TIDs[Conds_month]
             AveAmp_Conds_month = AverageAmplitude[Conds_month]
 
-            MaskDay = (
-                RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
+            MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
             MaskNight = ~MaskDay
 
             # Mean and Std of average amplitude from absolute min and max amplitude for...
             # day and ...
             AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
+            MeanDay, DevDay = AverageMinMax_DayAmps.mean(), AverageMinMax_DayAmps.std()
 
             # night
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
+            MeanNight, DevNight = AverageMinMax_NightAmps.mean(), AverageMinMax_NightAmps.std()
 
-            NightBox = AddBoxPlot(Plots, Index, 1, month, 0.25,
-                       0.25, AverageMinMax_NightAmps, DayNightColors["Night"])
-            DayBox = AddBoxPlot(Plots, Index, 1, month, 0.25,
-                       0.75, AverageMinMax_DayAmps, DayNightColors["Day"])
+            Plots[1][Index][1].scatter(Date_Conds_month[MaskNight], AverageMinMax_NightAmps, 
+                                       c=DayNightColors["Night"], alpha=0.5)
+            Plots[1][Index][1].scatter(Date_Conds_month[MaskDay], AverageMinMax_DayAmps, 
+                                       c=DayNightColors["Day"], alpha=0.5)
 
-    for k in range(2):
-        # Apply logaritmic scale to the y-axis in each column
-        Plots[1][Index][k].set_yscale("log")
-        Plots[1][Index][k].yaxis.set_major_formatter(LogFmt)
+    # Apply logaritmic scale to the y-axis in first column
+    for n in range(2):
+        Plots[1][Index][n].set_yscale("log")
+        Plots[1][Index][n].yaxis.set_major_formatter(LogFmt)
 
-    Plots[0].text(0.535, 0.985 - 0.305*Index, IndexName[Index], fontsize=12,
+    Plots[0].text(0.5, 0.975 - 0.3*Index, IndexName[Index], fontsize=12,
          ha="center", va="center", transform=Plots[0].transFigure)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
