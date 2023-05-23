@@ -99,7 +99,7 @@ if __name__=="__main__":
     #Create and show Tkinter app for user to start the analysis of data
     #in .Cmn file
     window = Tk()
-    window.geometry('360x100')
+    window.geometry('420x100')
     window.resizable(width=False, height=False)
     window.title("Analyze .Cmn file's VTEC data")
 
