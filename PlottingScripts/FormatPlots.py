@@ -77,16 +77,10 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     # ------ APPLY FORMAT TO AMPLITUDE VARIABILITY FIGURE ------
     # Create Hours and Months ticks to use change the labels in Amplitude variance
     # plots and save the figure
-    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     HOUR_TICKS = list(range(0, 25, 4))
     HOUR_STR_TICKS = [str(num) for num in HOUR_TICKS]
-    MonthAxisData = linspace(1.0, 12.0, 12, endpoint=True)
     MinAmps_Plots, MaxAmps_Plots = [], []
     for p in range(Nplots-1):
-        PLOTS["AMP_VAR"][1][p][0].set_xticks(ticks=[], labels=[])
-        PLOTS["AMP_VAR"][1][p][1].set_xticks(ticks=[], labels=[])
-
         Y_MIN, Y_MAX = PLOTS["AMP_VAR"][1][p][0].get_ylim()
         MinAmps_Plots.append(Y_MIN)
         MaxAmps_Plots.append(Y_MAX)
@@ -94,15 +88,6 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     # Setting x ticks within 24 hours
     PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xticks(ticks=HOUR_TICKS, labels=HOUR_STR_TICKS)
     PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
-
-    # Setting x ticks with months names
-    PLOTS["AMP_VAR"][1][Nplots - 1][1].set_xticks(ticks=MonthAxisData, labels=MonthTicks)
-    PLOTS["AMP_VAR"][1][Nplots - 1][1].set_xlim(1.0, 13.0)
-
-    # Align to the right and rotate the x-axis labels of the bottom 2nd column
-    for label in PLOTS["AMP_VAR"][1][Nplots - 1][1].get_xticklabels():
-        label.set_horizontalalignment('left')
-    PLOTS["AMP_VAR"][1][Nplots - 1][1].set_xticklabels(MonthTicks, rotation=-45)
 
     # Set the same min and max value for all Amplitude variance plots
     Y_MIN, Y_MAX = min(MinAmps_Plots), max(MaxAmps_Plots)
@@ -113,7 +98,8 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         PLOTS["AMP_VAR"][1][p][1].set_yticks(ticks=[], labels=[])
 
     # Modify the fixed positions and dimensiones of the subplots for
-    # better visualization
+    # better visualizationNplots
+    PLOTS["AMP_VAR"][0].autofmt_xdate(bottom=0.1)
     PLOTS["AMP_VAR"][0].tight_layout()
     for p in range(Nplots):
         SubplotBoxCol1 = PLOTS["AMP_VAR"][1][p][0].get_position()
@@ -122,9 +108,9 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         DifXBoxesAmpVar = SubplotBoxCol2.x0 - (SubplotBoxCol1.x0 + SubplotBoxCol1.width)
 
         PLOTS["AMP_VAR"][1][p][0].set_position([SubplotBoxCol1.x0, SubplotBoxCol1.y0,
-                                                SubplotBoxCol1.width - 2.0*DifXBoxesAmpVar, SubplotBoxCol1.height])
+                                                SubplotBoxCol1.width - 1.5*DifXBoxesAmpVar, 0.9*SubplotBoxCol1.height])
         PLOTS["AMP_VAR"][1][p][1].set_position([SubplotBoxCol1.x0 + SubplotBoxCol1.width - DifXBoxesAmpVar, SubplotBoxCol2.y0,
-                                                SubplotBoxCol2.width + 2.0*DifXBoxesAmpVar, SubplotBoxCol2.height])
+                                                SubplotBoxCol2.width + 1.5*DifXBoxesAmpVar, 0.9*SubplotBoxCol2.height])
 
     SaveAllRegionPlot("AmplitudeVariations", PLOTS["AMP_VAR"][0]) 
 
