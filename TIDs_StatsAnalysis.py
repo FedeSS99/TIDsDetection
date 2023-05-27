@@ -9,6 +9,7 @@ from matplotlib.pyplot import close
 from DataScripts.Input_TID_Data import CreateInputDictionary
 from DataScripts.GetDataFile import GetSingleTID_Data
 from DataScripts.HistogramOcurrence import GetOcurrenceArray
+from DataScripts.ListUnpacking import UnpackListOfLists
 
 # CMAP and NORM routines
 from DataScripts.CMAP_NORM import ObtainCMAPandNORM
@@ -114,7 +115,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # Create numpy arrays from the tuple collections of all the TIDs
             # data for each Station
             Station_MonthArray = np.concatenate(tuple(Station_MonthArray), dtype=int)
-            Station_DateTID = [GroupDates[n] for GroupDates in Station_DateTID for n in range(len(GroupDates))]
+            Station_DateTID = UnpackListOfLists(Station_DateTID)
             Station_DateTID = np.array(Station_DateTID, dtype=np.datetime64)
             Station_TimeTID = np.concatenate(tuple(Station_TimeTID))
             Station_PeriodTID = np.concatenate(tuple(Station_PeriodTID))
@@ -148,7 +149,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Region_MaxAmps.append(StationResultsDict["MAX_AMPS"])
 
             # Check if the directory for the Station given its' Region exists,
-            # and if not, create it
+            # and if not, create itOcurrenceSampling_AllRegions
             StationSavedir = f"./../Results/{Region}/{Station}/"
             if not isdir(StationSavedir):
                 mkdir(StationSavedir)
