@@ -48,7 +48,7 @@ def CreateFiguresForAllRegions(Nplots):
     AmpPowSub[Nplots-1].set_xlabel("Average absolute amplitude (dTEC)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE VARIABILITY PLOT ----
-    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=2, sharex="col", figsize=(8, 6))
+    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
 
     # Add Amplitude Variability x-label and y-labels
     for i in range(Nplots):
@@ -226,9 +226,9 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-def AddBoxPlot(Plots, Num, Col, Center, Width, dx, InputData, Color):
+def AddBoxPlot(Plots, Row, Col, Center, Width, dx, InputData, Color):
     if InputData.size > 0:
-        BoxPlot = Plots[1][Num][Col].boxplot(InputData, sym="x", positions=[Center + dx], patch_artist=True,
+        BoxPlot = Plots[1][Row][Col].boxplot(InputData, sym="x", positions=[Center + dx], patch_artist=True,
                                              widths=Width)
 
         for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
@@ -241,7 +241,7 @@ def AddBoxPlot(Plots, Num, Col, Center, Width, dx, InputData, Color):
             BoxComponent.set_edgecolor(Color)
 
 
-def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Date_TIDs, Plots, Index, RegionName):
+def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
                                      usecols=(1, 2), unpack=True, skiprows=1)
@@ -258,14 +258,13 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Date_TIDs, 
         AverageMinMax_Amps = AverageAmplitude[MaskTime]
         AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
 
-        AddBoxPlot(Plots, Index, 0, Hour, 0.5, 1.0, AverageMinMax_Amps, "k")
+        AddBoxPlot(Plots, Index, 0, Hour, 0.75, 1.0, AverageMinMax_Amps, "k")
 
     # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1, 13):
         Conds_month = Months_TIDs == month
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
-            Date_Conds_month = Date_TIDs[Conds_month]
             AveAmp_Conds_month = AverageAmplitude[Conds_month]
 
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
@@ -274,24 +273,19 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Date_TIDs, 
             # Mean and Std of average amplitude from absolute min and max amplitude for...
             # day and ...
             AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
-            MeanDay, DevDay = AverageMinMax_DayAmps.mean(), AverageMinMax_DayAmps.std()
 
             # night
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
-            MeanNight, DevNight = AverageMinMax_NightAmps.mean(), AverageMinMax_NightAmps.std()
 
-            Plots[1][Index][1].scatter(Date_Conds_month[MaskNight], AverageMinMax_NightAmps, 
-                                       c=DayNightColors["Night"], alpha=0.5)
-            Plots[1][Index][1].scatter(Date_Conds_month[MaskDay], AverageMinMax_DayAmps, 
-                                       c=DayNightColors["Day"], alpha=0.5)
+            AddBoxPlot(Plots, Index, 1, month, 0.5, 0.0, AverageMinMax_DayAmps, DayNightColors["Day"])
+            AddBoxPlot(Plots, Index, 2, month, 0.5, 0.0, AverageMinMax_NightAmps, DayNightColors["Night"])
 
     # Apply logaritmic scale to the y-axis in first column
     for n in range(2):
         Plots[1][Index][n].set_yscale("log")
         Plots[1][Index][n].yaxis.set_major_formatter(LogFmt)
 
-    Plots[0].text(0.5, 0.975 - 0.3*Index, IndexName[Index], fontsize=12,
-         ha="center", va="center", transform=Plots[0].transFigure)
+    Plots[1][Index][1].set_title(IndexName[Index])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Nplots, RegionName):
