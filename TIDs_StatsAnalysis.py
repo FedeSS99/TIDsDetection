@@ -1,6 +1,5 @@
 from os import mkdir
 from os.path import isdir
-from datetime import date
 import numpy as np
 from matplotlib import rcParams
 from matplotlib.pyplot import close
@@ -9,7 +8,6 @@ from matplotlib.pyplot import close
 from DataScripts.Input_TID_Data import CreateInputDictionary
 from DataScripts.GetDataFile import GetSingleTID_Data
 from DataScripts.HistogramOcurrence import GetOcurrenceArray
-from DataScripts.ListUnpacking import UnpackListOfLists
 
 # CMAP and NORM routines
 from DataScripts.CMAP_NORM import ObtainCMAPandNORM
@@ -56,7 +54,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
         ActiveDays = 0
 
         Region_TimeTID = []
-        Region_DateTID = []
         Region_PeriodTID = []
         Region_PowerTID = []
         Region_MinAmps = []
@@ -70,7 +67,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # Declare the lists to save the data for each station and compute
             # the statistics for it
             Station_TimeTID = []
-            Station_DateTID = []
             Station_PeriodTID = []
             Station_PowerTID = []
             Station_MinAmps = []
@@ -82,17 +78,13 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Dates_TIDs = [fileName.split("/")[-1][8:18] for fileName in TIDs_DataPaths]
             MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in TIDs_DataPaths]
 
-
             TotalDays += len(TIDs_DataPaths)
             for fileTID, MonthFile, Date_TID in zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs):
                 if Date_TID not in StormDays:
                     Results = GetSingleTID_Data(fileTID)
                     if SizeResults := Results["TIME"].size:
                         ActiveDays += 1
-
                         Station_MonthArray.append(SizeResults*[MonthFile])
-                        Station_DateTID.append( SizeResults*[date.fromisoformat(Date_TID)])
-
                         # Get the timezone given NameOut
                         if NameOut == "North":
                             TimeZone = -8.0
@@ -115,8 +107,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # Create numpy arrays from the tuple collections of all the TIDs
             # data for each Station
             Station_MonthArray = np.concatenate(tuple(Station_MonthArray), dtype=int)
-            Station_DateTID = UnpackListOfLists(Station_DateTID)
-            Station_DateTID = np.array(Station_DateTID, dtype=np.datetime64)
             Station_TimeTID = np.concatenate(tuple(Station_TimeTID))
             Station_PeriodTID = np.concatenate(tuple(Station_PeriodTID))
             Station_PowerTID = np.concatenate(tuple(Station_PowerTID))
@@ -129,7 +119,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # Save all the Station data in one dictionary and...
             StationResultsDict = {
                 "TIME": Station_TimeTID,
-                "DATETIME": Station_DateTID,
                 "MONTH": Station_MonthArray,
                 "OCURRENCE": StationOcurrenceMap,
                 "PERIOD": Station_PeriodTID,
@@ -141,7 +130,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # and save these numpy arrays in the correspondent list to manage
             # all the TIDs data for each Region
             Region_MonthArray.append(StationResultsDict["MONTH"])
-            Region_DateTID.append(StationResultsDict["DATETIME"])
             Region_TimeTID.append(StationResultsDict["TIME"])
             Region_PeriodTID.append(StationResultsDict["PERIOD"])
             Region_PowerTID.append(StationResultsDict["POWER"])
@@ -160,7 +148,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
 
         # Create numpy arrays for all Stations data from the same Region
         Region_MonthArray = np.concatenate(tuple(Region_MonthArray), dtype=int)
-        Region_DateTID = np.concatenate(tuple(Region_DateTID), dtype=np.datetime64)
         Region_TimeTID = np.concatenate(tuple(Region_TimeTID))
         Region_PeriodTID = np.concatenate(tuple(Region_PeriodTID))
         Region_PowerTID = np.concatenate(tuple(Region_PowerTID))
@@ -177,7 +164,6 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
 
         RegionResultsDict = {
             "TIME": Region_TimeTID,
-            "DATETIME": Region_DateTID,
             "MONTH": Region_MonthArray,
             "OCURRENCE": HistogramOcurrence,
             "PERIOD": Region_PeriodTID,
