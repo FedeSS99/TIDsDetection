@@ -9,9 +9,9 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     TimeRange = (0.0, 24.0)
     MonthRange = (0, 12)
     # Setting y ticks with months names
-    MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    MonthStrTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    MonthAxisData = linspace(0.5, 11.5, 12, endpoint=True)
+    MonthTicksOcurr = linspace(0.5, 11.5, 12, endpoint=True)
     # Set the limits for Local Time and indexes for each Month
     timeTicks = arange(0, 25, 3)
 
@@ -20,7 +20,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
         warnings.simplefilter("ignore")
         PLOTS["OCURR"][0].tight_layout()
     for p in range(Nplots):
-        PLOTS["OCURR"][1][p].set_yticks(MonthAxisData, MonthTicks)
+        PLOTS["OCURR"][1][p].set_yticks(MonthTicksOcurr, MonthStrTicks)
 
         PLOTS["OCURR"][1][p].set_xlim(*TimeRange)
         PLOTS["OCURR"][1][p].set_ylim(*MonthRange)
@@ -77,40 +77,35 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     # ------ APPLY FORMAT TO AMPLITUDE VARIABILITY FIGURE ------
     # Create Hours and Months ticks to use change the labels in Amplitude variance
     # plots and save the figure
-    HOUR_TICKS = list(range(0, 25, 4))
-    HOUR_STR_TICKS = [str(num) for num in HOUR_TICKS]
+    HourTicks = list(range(0, 25, 4))
+    HourStrTicks = [str(num) for num in HourTicks]
+    MonthTicks = list(range(1,13))
     MinAmps_Plots, MaxAmps_Plots = [], []
     for p in range(Nplots-1):
         Y_MIN, Y_MAX = PLOTS["AMP_VAR"][1][p][0].get_ylim()
         MinAmps_Plots.append(Y_MIN)
         MaxAmps_Plots.append(Y_MAX)
 
-    # Setting x ticks within 24 hours
-    PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xticks(ticks=HOUR_TICKS, labels=HOUR_STR_TICKS)
-    PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
-
     # Set the same min and max value for all Amplitude variance plots
     Y_MIN, Y_MAX = min(MinAmps_Plots), max(MaxAmps_Plots)
     for p in range(Nplots):
-        for l in range(2):
+        for l in range(3):
             PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_MIN, Y_MAX)
 
-        PLOTS["AMP_VAR"][1][p][1].set_yticks(ticks=[], labels=[])
+            if l > 0:
+                PLOTS["AMP_VAR"][1][p][l].set_yticks(ticks=[], labels=[])
+                PLOTS["AMP_VAR"][1][p][l].set_xticks(ticks=MonthTicks, labels=MonthStrTicks)
+
+    # Fix date formatting in x axis
+    PLOTS["AMP_VAR"][0].autofmt_xdate(bottom=0.1, rotation=45)
+
+    # Setting x ticks within 24 hours, with zero rotation and centered
+    PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xticks(HourTicks, HourStrTicks, rotation=0, ha="center")
+    PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
 
     # Modify the fixed positions and dimensiones of the subplots for
     # better visualizationNplots
-    PLOTS["AMP_VAR"][0].autofmt_xdate(bottom=0.1)
     PLOTS["AMP_VAR"][0].tight_layout()
-    for p in range(Nplots):
-        SubplotBoxCol1 = PLOTS["AMP_VAR"][1][p][0].get_position()
-        SubplotBoxCol2 = PLOTS["AMP_VAR"][1][p][1].get_position()
-
-        DifXBoxesAmpVar = SubplotBoxCol2.x0 - (SubplotBoxCol1.x0 + SubplotBoxCol1.width)
-
-        PLOTS["AMP_VAR"][1][p][0].set_position([SubplotBoxCol1.x0, SubplotBoxCol1.y0,
-                                                SubplotBoxCol1.width - 1.5*DifXBoxesAmpVar, 0.9*SubplotBoxCol1.height])
-        PLOTS["AMP_VAR"][1][p][1].set_position([SubplotBoxCol1.x0 + SubplotBoxCol1.width - DifXBoxesAmpVar, SubplotBoxCol2.y0,
-                                                SubplotBoxCol2.width + 1.5*DifXBoxesAmpVar, 0.9*SubplotBoxCol2.height])
 
     SaveAllRegionPlot("AmplitudeVariations", PLOTS["AMP_VAR"][0]) 
 
