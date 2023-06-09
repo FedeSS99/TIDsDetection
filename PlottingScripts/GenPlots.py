@@ -50,16 +50,16 @@ def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS,
     
     # Add boxplots for time-power data in a figure for all regions
     BoxPlotObject = RegPlot.Add_TimePowerDataResultsToPlot(DataDict["TIME"], DataDict["POWER"],
-                                                       PLOTS["POWER_VAR"], RegionsInfo[Region][0], 
-                                                       RegionsInfo[Region][2])
+                                                           PLOTS["POWER_VAR"], RegionsInfo[Region][0], 
+                                                           RegionsInfo[Region][2])
     ListBoxPlots.append(BoxPlotObject)
     ListLegendsBoxPlots.append(Region)
 
     ## Add boxplots for time-amplitude data in a figure for all regions
     RegPlot.Add_AmplitudesAnalysis(DataDict["AVE_AMP"], DataDict["TIME"], DataDict["MONTH"],
-                               DataDict["DATETIME"], PLOTS["AMP_VAR"], RegionsInfo[Region][2], Region)
+                                   PLOTS["AMP_VAR"], RegionsInfo[Region][2], Region)
 
     # Add scatter plots of amplitude-power data in a figure for all regions
     RegPlot.Add_AmplitudePowerScatterPlot(DataDict["AVE_AMP"], DataDict["POWER"],
-                                  DataDict["TIME"], DataDict["MONTH"], PLOTS["AMP_POWER"],
-                                  RegionsInfo[Region][1], RegionsInfo[Region][2], Region)
+                                          DataDict["TIME"], DataDict["MONTH"], PLOTS["AMP_POWER"],
+                                          RegionsInfo[Region][1], RegionsInfo[Region][2], Region)
