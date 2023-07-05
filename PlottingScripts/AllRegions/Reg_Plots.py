@@ -253,8 +253,7 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
     # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
     Hours = list(range(0, 24, 2))
     for Hour in Hours:
-        MaskTime = np.where((Hour <= Time_TIDs) & (
-            Time_TIDs <= Hour+2), True, False)
+        MaskTime = np.where((Hour <= Time_TIDs) & (Time_TIDs <= Hour+2), True, False)
         AverageMinMax_Amps = AverageAmplitude[MaskTime]
         AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
 
@@ -267,14 +266,12 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
             Time_Conds_month = Time_TIDs[Conds_month]
             AveAmp_Conds_month = AverageAmplitude[Conds_month]
 
+            # Filter for daytime events
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
-            MaskNight = ~MaskDay
-
-            # Mean and Std of average amplitude from absolute min and max amplitude for...
-            # day and ...
             AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
 
-            # night
+            # Filter for nighttime events
+            MaskNight = (Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] <= Time_Conds_month)
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
 
             AddBoxPlot(Plots, Index, 1, month, 0.5, 0.0, AverageMinMax_DayAmps, DayNightColors["Day"])
@@ -297,7 +294,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
                                           interpolation="spline36", aspect="auto", origin="lower")
     
     if Index == Nplots - 1:
-        ColorBar_Ax = Plots[0].add_axes([0.85, 0.15, 0.05, 0.7])
+        ColorBar_Ax = Plots[0].add_axes([0.8, 0.15, 0.05, 0.7])
         colorbar(HistogramaImagen, cax=ColorBar_Ax, label="% Ocurrence")
 
     # Extracting rise and set hours for each region
