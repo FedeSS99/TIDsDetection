@@ -271,7 +271,7 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
             AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
 
             # Filter for nighttime events
-            MaskNight = (Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] <= Time_Conds_month)
+            MaskNight = (Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] < Time_Conds_month)
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
 
             AddBoxPlot(Plots, Index, 1, month, 0.5, 0.0, AverageMinMax_DayAmps, DayNightColors["Day"])
