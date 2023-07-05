@@ -28,7 +28,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
 
         SubplotBox = PLOTS["OCURR"][1][p].get_position()
         PLOTS["OCURR"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
-                               0.85*SubplotBox.width, SubplotBox.height])
+                               0.75*SubplotBox.width, SubplotBox.height])
     SaveAllRegionPlot("OcurrenceTIDs", PLOTS["OCURR"][0])
 
     # ------ APPLY FORMAT TO PERIOD DISTRIBUTION FIGURE ------
