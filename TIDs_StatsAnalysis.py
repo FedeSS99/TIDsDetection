@@ -179,7 +179,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
         CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions[-1])
         StartAnalysisForStationsAndRegions(Region, "", "Reg", RegionResultsDict, CMAP, NORM)
 
-        print(f"Total days:{TotalDays:d}\nRejected days:{Num_RejectedDates:d}\nActive days:{ActiveDays:d}\nActive day ratio: {NumTIDs/ActiveDays:.3f}\n")
+        print(f"Total days:{TotalDays:d}\nRejected days:{Num_RejectedDates:d}\nActive days:{ActiveDays:d}\nNo. of TIDs: {NumTIDs}\n#TIDs/Active Days: {NumTIDs/ActiveDays:.3f}\n")
 
     # Obtain ColorMap and Norm to use for all the regions
     OcurrenceSampling_AllRegions = np.concatenate(
