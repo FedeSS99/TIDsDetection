@@ -50,7 +50,10 @@ def WriteRegionDataByYears(RegionYearsData:dict):
 
             #Create output file in which all the data from one
             #Region on a specific Year will be saved
-            with open(f"../Analysis/{Region}/{Region}_{Year}.dat", "w") as Output:
+            NameFile = f"{Region}_{Year}.dat"
+            SavePath = f"../Analysis/{Region}/"
+            print(f"Writing {NameFile} in {SavePath}", end=" ")
+            with open(f"{SavePath}{NameFile}", "w") as Output:
                 Output.write(f"{Year}\n")
 
                 # Run over every path saved in a Region in Year
@@ -73,6 +76,7 @@ def WriteRegionDataByYears(RegionYearsData:dict):
                                 Output.write(DateString + " " + DataLine)
 
                     Counter += 1
+            print(f"-> Saved {NameFile} in {SavePath}")
                         
 
 if __name__ == "__main__":
