@@ -240,6 +240,9 @@ def AddBoxPlot(Plots, Row, Col, Center, Width, dx, InputData, Color):
             BoxComponent.set_facecolor("None")
             BoxComponent.set_edgecolor(Color)
 
+def AddBarPlot(Plots, Row, Col, BarCenter, Height, Width, Color):
+    Plots[1][Row][Col].bar(BarCenter, Height, width=Width, color=Color)
+
 
 def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
@@ -261,7 +264,7 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
 
     # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1, 13):
-        Conds_month = Months_TIDs == month
+        Conds_month = (Months_TIDs == month)
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
             AveAmp_Conds_month = AverageAmplitude[Conds_month]
@@ -269,18 +272,19 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
             # Filter for daytime events
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
             AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
+            DeviationDay = AverageMinMax_DayAmps.std()
 
             # Filter for nighttime events
             MaskNight = (Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] < Time_Conds_month)
             AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
+            DeviationNight = AverageMinMax_NightAmps.std()
 
-            AddBoxPlot(Plots, Index, 1, month, 0.5, 0.0, AverageMinMax_DayAmps, DayNightColors["Day"])
-            AddBoxPlot(Plots, Index, 2, month, 0.5, 0.0, AverageMinMax_NightAmps, DayNightColors["Night"])
+            AddBarPlot(Plots, Index, 1, month, DeviationDay, 0.5, DayNightColors["Day"])
+            AddBarPlot(Plots, Index, 2, month, DeviationNight, 0.5, DayNightColors["Night"])
 
     # Apply logaritmic scale to the y-axis in first column
-    for n in range(2):
-        Plots[1][Index][n].set_yscale("log")
-        Plots[1][Index][n].yaxis.set_major_formatter(LogFmt)
+    Plots[1][Index][0].set_yscale("log")
+    Plots[1][Index][0].yaxis.set_major_formatter(LogFmt)
 
     Plots[1][Index][1].set_title(IndexName[Index])
 
