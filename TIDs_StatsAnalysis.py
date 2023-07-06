@@ -25,6 +25,11 @@ from PlottingScripts.GenPlots import StartAnalysisForOnlyRegion
 from PlottingScripts.GenPlots import StartAnalysisForStationsAndRegions
 
 # --------------------------------------------------------------------------------------------------------
+TimeZone = dict(
+    North = -8.0,
+    Center = -6.0,
+    South = -5.0
+)
 
 def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
     # Ignore events that occoured in dates where a geomagnetic
@@ -85,16 +90,9 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
                     if SizeResults := Results["TIME"].size:
                         ActiveDays += 1
                         Station_MonthArray.append(SizeResults*[MonthFile])
-                        # Get the timezone given NameOut
-                        if NameOut == "North":
-                            TimeZone = -8.0
-                        elif NameOut == "Center":
-                            TimeZone = -6.0
-                        elif NameOut == "South":
-                            TimeZone = -5.0
 
                         # Apply timezone to get correct Local Time Hours
-                        Results["TIME"] += TimeZone
+                        Results["TIME"] += TimeZone[NameOut]
                         Results["TIME"] = np.where(Results["TIME"] < 0, Results["TIME"] + 24.0, Results["TIME"])
                         Station_TimeTID.append(Results["TIME"])
                         Station_PeriodTID.append(Results["PERIOD"])
