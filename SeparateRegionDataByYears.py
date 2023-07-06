@@ -39,11 +39,9 @@ def SeparateRegionDataByYear(DataDictionary:dict):
     
 
 def WriteRegionDataByYears(RegionYearsData:dict):
-    RegionNames = RegionYearsData.keys()
-
     # Run over every Region
+    RegionNames = RegionYearsData.keys()
     for Region in RegionNames:
-
         # Run over every existent Year of data
         Years = RegionYearsData[Region].keys()
         for Year in Years:
@@ -52,7 +50,7 @@ def WriteRegionDataByYears(RegionYearsData:dict):
 
             #Create output file in which all the data from one
             #Region on a specific Year will be saved
-            with open(f"{Region}_{Year}.dat", "w") as Output:
+            with open(f"../Analysis/{Region}/{Region}_{Year}.dat", "w") as Output:
                 Output.write(f"{Year}\n")
 
                 # Run over every path saved in a Region in Year
@@ -66,7 +64,6 @@ def WriteRegionDataByYears(RegionYearsData:dict):
                         DataLines = Lines[2:]                        
                         # Check if there is, at least, one event in file:
                         if DataLines:
-
                             # Write headers for columns if Counter is zero
                             if not Counter:
                                 Output.write("#Date " + Lines[1][1:])
@@ -83,12 +80,11 @@ if __name__ == "__main__":
     Define paths for input data   
     """
     DATA_COMMON_PATH = "../Analysis/"
-    RESULTS_COMMON_PATH = "../Analysis"
 
     SUBDIRECTORIES_REGIONS = ["North", "Center", "South"]
 
     RegionsData = CreateInputDictionary(SUBDIRECTORIES_REGIONS,
-                                        DATA_COMMON_PATH, RESULTS_COMMON_PATH) 
+                                        DATA_COMMON_PATH, "") 
     
     RegionYearsData = SeparateRegionDataByYear(RegionsData)
 
