@@ -41,10 +41,7 @@ def CreateInputDictionary(SubdirsResultsData, DataPath, ResultsPath):
                     # Create a list with the complete path for each analysis file in
                     # each year and month directory
                     StationDataPaths += list(
-                        map(
-                            lambda x: f"{NewAnalysisPath}/{x}",
-                            listdir(NewAnalysisPath),
-                        )
+                        map(lambda x: f"{NewAnalysisPath}/{x}",listdir(NewAnalysisPath))
                     )
 
             # Save the station list in StationsDict
