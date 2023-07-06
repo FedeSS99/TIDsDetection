@@ -80,21 +80,31 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     HourTicks = list(range(0, 25, 4))
     HourStrTicks = [str(num) for num in HourTicks]
     MonthTicks = list(range(1,13))
-    MinAmps_Plots, MaxAmps_Plots = [], []
-    for p in range(Nplots-1):
-        Y_MIN, Y_MAX = PLOTS["AMP_VAR"][1][p][0].get_ylim()
-        MinAmps_Plots.append(Y_MIN)
-        MaxAmps_Plots.append(Y_MAX)
+    MinVar, MaxVar = [], []
+    MinSTD, MaxSTD = [], []
+    for p in range(Nplots):
+        Y_MIN1, Y_MAX1 = PLOTS["AMP_VAR"][1][p][0].get_ylim()
+        Y_MIN2, Y_MAX2 = PLOTS["AMP_VAR"][1][p][1].get_ylim()
+        Y_MIN3, Y_MAX3 = PLOTS["AMP_VAR"][1][p][2].get_ylim()
+
+        MinVar.append(Y_MIN1)
+        MaxVar.append(Y_MAX1)
+
+        MinSTD.append(min(Y_MIN2, Y_MIN3))
+        MaxSTD.append(max(Y_MAX2, Y_MAX3))
+
 
     # Set the same min and max value for all Amplitude variance plots
-    Y_MIN, Y_MAX = min(MinAmps_Plots), max(MaxAmps_Plots)
+    Y_VARMIN, Y_VARMAX = min(MinVar), max(MaxVar)
+    Y_STDMIN, Y_STDMAX = min(MinSTD), max(MaxSTD)
     for p in range(Nplots):
         for l in range(3):
-            PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_MIN, Y_MAX)
-
             if l > 0:
-                PLOTS["AMP_VAR"][1][p][l].set_yticks(ticks=[], labels=[])
-                PLOTS["AMP_VAR"][1][p][l].set_xticks(ticks=MonthTicks, labels=MonthStrTicks)
+                PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_STDMIN, Y_STDMAX)
+                PLOTS["AMP_VAR"][1][p][l].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, fontsize="small")
+            else:    
+                PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_VARMIN, Y_VARMAX)
+
 
     # Fix date formatting in x axis
     PLOTS["AMP_VAR"][0].autofmt_xdate(bottom=0.1, rotation=45)
