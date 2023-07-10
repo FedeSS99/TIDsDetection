@@ -180,22 +180,18 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
         print(f"Total days:{TotalDays:d}\nRejected days:{Num_RejectedDates:d}\nActive days:{ActiveDays:d}\nNo. of TIDs: {NumTIDs}\n#TIDs/Active Days: {NumTIDs/ActiveDays:.3f}\n")
 
     # Obtain ColorMap and Norm to use for all the regions
-    OcurrenceSampling_AllRegions = np.concatenate(
-        tuple(OcurrenceSampling_AllRegions))
+    OcurrenceSampling_AllRegions = np.concatenate(tuple(OcurrenceSampling_AllRegions))
 
-    ListBoxPlots, ListLegendsBoxPlots = [], []
     CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions)
     PlotsResults = CreateFiguresForAllRegions(Nplots)
-
     for RegionDataResults in RESULTS:
         # Get a string Coord to use in the analysis' plots results
         NamePlot = RegionDataResults["NAME"]
 
         # Generate graphics to add results of each region
-        StartAnalysisForOnlyRegion(RegionDataResults, NamePlot, REGIONS_ATRIBS, CMAP, NORM, 
-                                   PlotsResults, ListBoxPlots, ListLegendsBoxPlots)
+        StartAnalysisForOnlyRegion(RegionDataResults, NamePlot, REGIONS_ATRIBS, CMAP, NORM, PlotsResults)
 
-    FormatAndSave_AllRegionPlots(Nplots, PlotsResults, ListBoxPlots, ListLegendsBoxPlots)
+    FormatAndSave_AllRegionPlots(Nplots, PlotsResults)
 
     for i in range(1,7):
         close(i)
