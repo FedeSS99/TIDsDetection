@@ -33,11 +33,12 @@ LogFmt = LogFormatterSciNotation(base=10.0, labelOnlyBase=True)
 
 def CreateFiguresForAllRegions(Nplots):
     # ---- CREATE MAIN FIGURE FOR POWER-TIME PLOT ----
-    FigurePowerTime = figure(1, figsize=(8, 6))
-    SubPlot_PowerTime = FigurePowerTime.add_subplot(111)
-    # Add Power-Time labels
-    SubPlot_PowerTime.set_xlabel("Local Time (Hours)")
-    SubPlot_PowerTime.set_ylabel("TID power")
+    FigurePowerTime, PowerTimeSub = subplots(num=1, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
+
+    # Add Amplitude Variability x-label and y-labels
+    for i in range(Nplots):
+        PowerTimeSub[i][0].set_ylabel("TID Power (dTEC²)")
+    PowerTimeSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE-POWER PLOT ----
     FigureAmplitudePower, AmpPowSub = subplots(num=2, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 6))
@@ -75,49 +76,13 @@ def CreateFiguresForAllRegions(Nplots):
     for i in range(Nplots):
         MonthBarsSub[i].set_ylabel("Number of events")            
 
-    return {"POWER_VAR":(FigurePowerTime, SubPlot_PowerTime),
+    return {"POWER_VAR":(FigurePowerTime, PowerTimeSub),
             "AMP_POWER":(FigureAmplitudePower, AmpPowSub),
             "AMP_VAR": (FigureAmplitudeVar, AmpVarSub),
             "OCURR": (FigureOcurrHist, OcurrHistSub),
             "PERIOD":(FigurePeriodDists, PeriodDistSub),
             "DAY-NIGHT_BARS":(FigureMonthBars, MonthBarsSub)
             }
-
-# -------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-def Add_TimePowerDataResultsToPlot(Time, Power, Plots, Color, Start):
-    # Plotting boxplots for each hour interval given the station's index
-    Indexes = list(range(Start, 24, 3))
-    for Index in Indexes:
-
-        # Creating mask of Time array given a one hour interval
-        MaskTime = np.where((Index <= Time) & (Time <= Index+1), True, False)
-        PowerMask = Power[MaskTime]
-        PowerMask = PowerMask.reshape(PowerMask.size, 1)
-
-        # Create a boxplot only if the size of the Power mask array has elements
-        if PowerMask.size > 0:
-
-            BoxPlot = Plots[1].boxplot(PowerMask, sym="x", positions=[Index + 0.5], patch_artist=True,
-                                       widths=0.25)
-
-            # Change colors of the boxplot given Color input
-            for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
-                for patch in ComponentBoxPlot:
-                    patch.set_color(Color)
-                    patch.set_linewidth(2)
-
-            for BoxComponent in BoxPlot["boxes"]:
-                BoxComponent.set_facecolor("None")
-                BoxComponent.set_edgecolor(Color)
-
-    Plots[1].set_xticks([])
-    XTICKS = list(range(0, 25, 4))
-    Plots[1].set_xticks(ticks=XTICKS, labels=XTICKS)
-
-    return BoxPlot["boxes"][0]
-
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 # Same power law function as used in lmfit module
@@ -244,7 +209,7 @@ def AddBarPlot(Plots, Row, Col, BarCenter, Height, Width, Color):
     Plots[1][Row][Col].bar(BarCenter, Height, width=Width, color=Color)
 
 
-def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
+def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
                                      usecols=(1, 2), unpack=True, skiprows=1)
@@ -257,27 +222,27 @@ def Add_AmplitudesAnalysis(AverageAmplitude, Time_TIDs, Months_TIDs, Plots, Inde
     Hours = list(range(0, 24, 2))
     for Hour in Hours:
         MaskTime = np.where((Hour <= Time_TIDs) & (Time_TIDs <= Hour+2), True, False)
-        AverageMinMax_Amps = AverageAmplitude[MaskTime]
-        AverageMinMax_Amps = AverageMinMax_Amps.reshape(AverageMinMax_Amps.size, 1)
+        AverageQuantity = Quantity[MaskTime]
+        AverageQuantity = AverageQuantity.reshape(AverageQuantity.size, 1)
 
-        AddBoxPlot(Plots, Index, 0, Hour, 0.75, 1.0, AverageMinMax_Amps, "k")
+        AddBoxPlot(Plots, Index, 0, Hour, 0.75, 1.0, AverageQuantity, "k")
 
     # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1, 13):
         Conds_month = (Months_TIDs == month)
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
-            AveAmp_Conds_month = AverageAmplitude[Conds_month]
+            Quantity_Conds_month = Quantity[Conds_month]
 
             # Filter for daytime events
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
-            AverageMinMax_DayAmps = AveAmp_Conds_month[MaskDay]
-            DeviationDay = AverageMinMax_DayAmps.std()
+            Quantity_Day = Quantity_Conds_month[MaskDay]
+            DeviationDay = Quantity_Day.std()
 
             # Filter for nighttime events
             MaskNight = (Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] < Time_Conds_month)
-            AverageMinMax_NightAmps = AveAmp_Conds_month[MaskNight]
-            DeviationNight = AverageMinMax_NightAmps.std()
+            Quantity_Night = Quantity_Conds_month[MaskNight]
+            DeviationNight = Quantity_Night.std()
 
             AddBarPlot(Plots, Index, 1, month, DeviationDay, 0.5, DayNightColors["Day"])
             AddBarPlot(Plots, Index, 2, month, DeviationNight, 0.5, DayNightColors["Night"])
