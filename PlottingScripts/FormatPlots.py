@@ -3,7 +3,7 @@ from numpy import linspace, arange
 
 import warnings
 
-def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlots):
+def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
     # ------ APPLY FORMAT TO OCURRENCE FIGURE ------
     # Setting number of bins and time range for histogram
     TimeRange = (0.0, 24.0)
@@ -64,15 +64,49 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS, ListBoxPlots, ListLegendsBoxPlot
     SaveAllRegionPlot("DayNightTIDs", PLOTS["DAY-NIGHT_BARS"][0])
 
     # ------ APPLY FORMAT TO POWER VARIABILITY FIGURE ------
-    # Apply logaritmic scale to Power variance plot and save the figure
-    PLOTS["POWER_VAR"][1].set_yscale("log")
-    SubplotBox = PLOTS["POWER_VAR"][1].get_position()
-    PLOTS["POWER_VAR"][1].set_position([SubplotBox.x0, SubplotBox.y0,
-                                        0.925*SubplotBox.width, SubplotBox.height])
-    PLOTS["POWER_VAR"][0].legend(ListBoxPlots, ListLegendsBoxPlots,
-                                 loc="upper right", fancybox=True, shadow=True, bbox_to_anchor=(1.0, 0.5))
-    SaveAllRegionPlot("PowerDistributionStations", PLOTS["POWER_VAR"][0])
+    # Create Hours and Months ticks to use change the labels in POWER variance
+    # plots and save the figure
+    HourTicks = list(range(0, 25, 4))
+    HourStrTicks = [str(num) for num in HourTicks]
+    MonthTicks = list(range(1,13))
+    MinVar, MaxVar = [], []
+    MinSTD, MaxSTD = [], []
+    for p in range(Nplots):
+        Y_MIN1, Y_MAX1 = PLOTS["POWER_VAR"][1][p][0].get_ylim()
+        Y_MIN2, Y_MAX2 = PLOTS["POWER_VAR"][1][p][1].get_ylim()
+        Y_MIN3, Y_MAX3 = PLOTS["POWER_VAR"][1][p][2].get_ylim()
 
+        MinVar.append(Y_MIN1)
+        MaxVar.append(Y_MAX1)
+
+        MinSTD.append(min(Y_MIN2, Y_MIN3))
+        MaxSTD.append(max(Y_MAX2, Y_MAX3))
+
+
+    # Set the same min and max value for all Amplitude variance plots
+    Y_VARMIN, Y_VARMAX = min(MinVar), max(MaxVar)
+    Y_STDMIN, Y_STDMAX = min(MinSTD), max(MaxSTD)
+    for p in range(Nplots):
+        for l in range(3):
+            if l > 0:
+                PLOTS["POWER_VAR"][1][p][l].set_ylim(Y_STDMIN, Y_STDMAX)
+                PLOTS["POWER_VAR"][1][p][l].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, fontsize="small")
+            else:    
+                PLOTS["POWER_VAR"][1][p][l].set_ylim(Y_VARMIN, Y_VARMAX)
+
+
+    # Fix date formatting in x axis
+    PLOTS["POWER_VAR"][0].autofmt_xdate(bottom=0.1, rotation=45)
+
+    # Setting x ticks within 24 hours, with zero rotation and centered
+    PLOTS["POWER_VAR"][1][Nplots - 1][0].set_xticks(HourTicks, HourStrTicks, rotation=0, ha="center")
+    PLOTS["POWER_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
+
+    # Modify the fixed positions and dimensiones of the subplots for
+    # better visualizationNplots
+    PLOTS["POWER_VAR"][0].tight_layout()
+
+    SaveAllRegionPlot("PowerVariations", PLOTS["POWER_VAR"][0])
 
     # ------ APPLY FORMAT TO AMPLITUDE VARIABILITY FIGURE ------
     # Create Hours and Months ticks to use change the labels in Amplitude variance
