@@ -107,7 +107,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     SubFigureSignalCMN.tick_params(axis="x",which="both",bottom=False, top=False, labelbottom=False)
     SubFigureWaveletCMN.set_xlabel("Universal Time (U.T.)")
     SubFigureWaveletCMN.set_ylabel("Periods (Hrs)")
-    SubFigureMeanWaveletCMN.set_xlabel("Mean Wavelet Power (VTEC²)")
+    SubFigureMeanWaveletCMN.set_xlabel("Mean Wavelet Power (dTEC²)")
     SubFigureMeanWaveletCMN.tick_params(axis="y",which="both",left=False, right=False, labelleft=False)
 
     #Extent data for plotting options
