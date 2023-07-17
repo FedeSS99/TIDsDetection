@@ -1,8 +1,8 @@
 from matplotlib import use
-from matplotlib.pyplot import figure, subplots, colorbar, text
-from matplotlib.gridspec import GridSpec
+from matplotlib.pyplot import subplots, colorbar, text
 from matplotlib.ticker import LogFormatterSciNotation
 
+from scipy.stats import iqr
 from scipy.stats.mstats import mquantiles
 import numpy as np
 from lmfit.models import GaussianModel, PowerLawModel
@@ -32,12 +32,13 @@ LogFmt = LogFormatterSciNotation(base=10.0, labelOnlyBase=True)
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 def CreateFiguresForAllRegions(Nplots):
-    # ---- CREATE MAIN FIGURE FOR POWER-TIME PLOT ----
-    FigurePowerTime, PowerTimeSub = subplots(num=1, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
+    # ---- CREATE MAIN FIGURE FOR POWER VARIABILITY PLOT ----
+    FigurePowerTime, PowerTimeSub = subplots(num=1, nrows=Nplots, ncols=2, sharex="col", figsize=(8, 6))
 
-    # Add Amplitude Variability x-label and y-labels
+    # Add Power Variability x-label and y-labels
     for i in range(Nplots):
         PowerTimeSub[i][0].set_ylabel("TID Power (dTEC²)")
+        #PowerTimeSub[i][1].set_ylabel(r"$IQR_{night}/IQR_{day}$")
     PowerTimeSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE-POWER PLOT ----
@@ -49,11 +50,12 @@ def CreateFiguresForAllRegions(Nplots):
     AmpPowSub[Nplots-1].set_xlabel("Average absolute amplitude (dTEC)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE VARIABILITY PLOT ----
-    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
+    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=2, sharex="col", figsize=(8, 6))
 
     # Add Amplitude Variability x-label and y-labels
     for i in range(Nplots):
         AmpVarSub[i][0].set_ylabel("Amplitude (dTEC)")
+        #AmpVarSub[i][1].set_ylabel(r"$IQR_{night}/IQR_{day}$")
     AmpVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR OCURRENCE PLOT ----
@@ -206,7 +208,8 @@ def AddBoxPlot(Plots, Row, Col, Center, Width, dx, InputData, Color):
             BoxComponent.set_edgecolor(Color)
 
 def AddBarPlot(Plots, Row, Col, BarCenter, Height, Width, Color):
-    Plots[1][Row][Col].bar(BarCenter, Height, width=Width, color=Color)
+    Plots[1][Row][Col].bar(BarCenter, Height, width=Width, 
+                           color=Color, alpha=0.75)
 
 
 def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
@@ -220,12 +223,24 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
     # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
     Hours = list(range(0, 24, 2))
-    for Hour in Hours:
+    LowerQ = len(Hours)*[0.0]
+    Median = len(Hours)*[0.0]
+    HigherQ = len(Hours)*[0.0]
+    for n, Hour in enumerate(Hours):
         MaskTime = np.where((Hour <= Time_TIDs) & (Time_TIDs <= Hour+2), True, False)
         AverageQuantity = Quantity[MaskTime]
-        AverageQuantity = AverageQuantity.reshape(AverageQuantity.size, 1)
+        TwoHourQuantityQuantiles = mquantiles(AverageQuantity)
 
-        AddBoxPlot(Plots, Index, 0, Hour, 0.75, 1.0, AverageQuantity, "k")
+        LowerQ[n] = TwoHourQuantityQuantiles[0]
+        Median[n] = TwoHourQuantityQuantiles[1]
+        HigherQ[n] = TwoHourQuantityQuantiles[2]
+
+        #AddBarPlot(Plots, Index, 0, Hour+1, AveHourQuantityIQR, 2.0, "black")
+        #AddBoxPlot(Plots, Index, 0, Hour, 0.75, 1.0, AverageQuantity, "k")
+
+    Plots[1][Index][0].fill_between(Hours, HigherQ, LowerQ, alpha=0.5, linewidth=0,
+                                    color="black")
+    Plots[1][Index][0].plot(Hours, Median, color="black", linewidth=1)
 
     # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
     for month in range(1, 13):
@@ -237,19 +252,20 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
             # Filter for daytime events
             MaskDay = (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
             Quantity_Day = Quantity_Conds_month[MaskDay]
-            DeviationDay = Quantity_Day.std()
+            DispersionDay = iqr(Quantity_Day)
 
             # Filter for nighttime events
             MaskNight = (Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] < Time_Conds_month)
             Quantity_Night = Quantity_Conds_month[MaskNight]
-            DeviationNight = Quantity_Night.std()
+            DispersionNight = iqr(Quantity_Night)
 
-            AddBarPlot(Plots, Index, 1, month, DeviationDay, 0.5, DayNightColors["Day"])
-            AddBarPlot(Plots, Index, 2, month, DeviationNight, 0.5, DayNightColors["Night"])
+            AddBarPlot(Plots, Index, 1, month, DispersionDay - DispersionNight, 0.5, "purple")
+            #AddBarPlot(Plots, Index, 1, month, DeviationDay, 0.5, DayNightColors["Day"])
+            #AddBarPlot(Plots, Index, 2, month, DeviationNight, 0.5, DayNightColors["Night"])
 
     # Apply logaritmic scale to the y-axis in first column
-    Plots[1][Index][0].set_yscale("log")
-    Plots[1][Index][0].yaxis.set_major_formatter(LogFmt)
+    #Plots[1][Index][0].set_yscale("log")
+    #Plots[1][Index][0].yaxis.set_major_formatter(LogFmt)
 
     Plots[1][Index][1].set_title(IndexName[Index])
 
@@ -307,10 +323,8 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
     for PeriodData, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], ["Night", "Day"]):
-
         # Setting number of bins by using the Freedman-Diaconis rule
-        Quantiles = mquantiles(PeriodData)
-        IQR = Quantiles[2]-Quantiles[0]
+        IQR = iqr(PeriodData)
         h = 2.0*IQR*(PeriodData.size**(-1/3))
         PeriodRange = (PeriodData.min(), PeriodData.max())
         PeriodBins = int((PeriodRange[1]-PeriodRange[0])/h)

@@ -63,95 +63,71 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
 
     SaveAllRegionPlot("DayNightTIDs", PLOTS["DAY-NIGHT_BARS"][0])
 
-    # ------ APPLY FORMAT TO POWER VARIABILITY FIGURE ------
-    # Create Hours and Months ticks to use change the labels in POWER variance
-    # plots and save the figure
-    HourTicks = list(range(0, 25, 4))
-    HourStrTicks = [str(num) for num in HourTicks]
-    MonthTicks = list(range(1,13))
-    MinVar, MaxVar = [], []
-    MinSTD, MaxSTD = [], []
-    for p in range(Nplots):
-        Y_MIN1, Y_MAX1 = PLOTS["POWER_VAR"][1][p][0].get_ylim()
-        Y_MIN2, Y_MAX2 = PLOTS["POWER_VAR"][1][p][1].get_ylim()
-        Y_MIN3, Y_MAX3 = PLOTS["POWER_VAR"][1][p][2].get_ylim()
+    # ------ APPLY FORMAT TO AMPLITUDE AND POWER VARIABILITY FIGURES ------
+    for QUANT_VAR, NAME_VAR in zip(["POWER_VAR", "AMP_VAR"], ["Power", "Amplitude"]):
+        # Create Hours and Months ticks to use change the labels in Amplitude variance
+        # plots and save the figure
+        HourTicks = list(range(0, 25, 4))
+        HourStrTicks = [str(num) for num in HourTicks]
+        MonthTicks = list(range(1,13))
+        Min0, Max0 = [], []
+        Min1, Max1 = [], []
+        for p in range(Nplots):
+            Y_MIN1, Y_MAX1 = PLOTS[QUANT_VAR][1][p][0].get_ylim()
+            Min0.append(Y_MIN1)
+            Max0.append(Y_MAX1)
 
-        MinVar.append(Y_MIN1)
-        MaxVar.append(Y_MAX1)
+            Y_MIN2, Y_MAX2 = PLOTS[QUANT_VAR][1][p][1].get_ylim()
+            Min1.append(Y_MIN2)
+            Max1.append(Y_MAX2)
 
-        MinSTD.append(min(Y_MIN2, Y_MIN3))
-        MaxSTD.append(max(Y_MAX2, Y_MAX3))
+            PLOTS[QUANT_VAR][1][p][1].axhline(color="black", linewidth=1)
 
+        # Set the same min and max value for all Amplitude variance plots
+        Y_MIN0, Y_MAX0 = min(Min0), max(Max0)
+        Y_MIN1, Y_MAX1 = min(Min1), max(Max1)
+        for p in range(Nplots):
+            PLOTS[QUANT_VAR][1][p][0].set_ylim(Y_MIN0, Y_MAX0)
+            PLOTS[QUANT_VAR][1][p][1].set_ylim(Y_MIN1, Y_MAX1)
 
-    # Set the same min and max value for all Amplitude variance plots
-    Y_VARMIN, Y_VARMAX = min(MinVar), max(MaxVar)
-    Y_STDMIN, Y_STDMAX = min(MinSTD), max(MaxSTD)
-    for p in range(Nplots):
-        for l in range(3):
-            if l > 0:
-                PLOTS["POWER_VAR"][1][p][l].set_ylim(Y_STDMIN, Y_STDMAX)
-                PLOTS["POWER_VAR"][1][p][l].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, fontsize="small")
-            else:    
-                PLOTS["POWER_VAR"][1][p][l].set_ylim(Y_VARMIN, Y_VARMAX)
+            PLOTS[QUANT_VAR][1][p][1].set_xticks(ticks=MonthTicks, labels=MonthStrTicks)
 
+            AmpPowBox0 = PLOTS[QUANT_VAR][1][p][0].get_position()
+            AmpPowBox1 = PLOTS[QUANT_VAR][1][p][1].get_position()
+            SpaceSeparation01 = AmpPowBox1.x0 - (AmpPowBox0.x0 + AmpPowBox0.width)
+            OldWidth0 = AmpPowBox0.width
+            NewWidth0 = 0.75*OldWidth0
 
-    # Fix date formatting in x axis
-    PLOTS["POWER_VAR"][0].autofmt_xdate(bottom=0.1, rotation=45)
-
-    # Setting x ticks within 24 hours, with zero rotation and centered
-    PLOTS["POWER_VAR"][1][Nplots - 1][0].set_xticks(HourTicks, HourStrTicks, rotation=0, ha="center")
-    PLOTS["POWER_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
-
-    # Modify the fixed positions and dimensiones of the subplots for
-    # better visualizationNplots
-    PLOTS["POWER_VAR"][0].tight_layout()
-
-    SaveAllRegionPlot("PowerVariations", PLOTS["POWER_VAR"][0])
-
-    # ------ APPLY FORMAT TO AMPLITUDE VARIABILITY FIGURE ------
-    # Create Hours and Months ticks to use change the labels in Amplitude variance
-    # plots and save the figure
-    HourTicks = list(range(0, 25, 4))
-    HourStrTicks = [str(num) for num in HourTicks]
-    MonthTicks = list(range(1,13))
-    MinVar, MaxVar = [], []
-    MinSTD, MaxSTD = [], []
-    for p in range(Nplots):
-        Y_MIN1, Y_MAX1 = PLOTS["AMP_VAR"][1][p][0].get_ylim()
-        Y_MIN2, Y_MAX2 = PLOTS["AMP_VAR"][1][p][1].get_ylim()
-        Y_MIN3, Y_MAX3 = PLOTS["AMP_VAR"][1][p][2].get_ylim()
-
-        MinVar.append(Y_MIN1)
-        MaxVar.append(Y_MAX1)
-
-        MinSTD.append(min(Y_MIN2, Y_MIN3))
-        MaxSTD.append(max(Y_MAX2, Y_MAX3))
+            PLOTS[QUANT_VAR][1][p][0].set_position([AmpPowBox0.x0, AmpPowBox0.y0,
+                                                    NewWidth0, AmpPowBox0.height])
+            PLOTS[QUANT_VAR][1][p][1].set_position([AmpPowBox0.x0 + NewWidth0 + SpaceSeparation01, AmpPowBox1.y0,
+                                                    AmpPowBox1.width + (OldWidth0-NewWidth0), AmpPowBox1.height])
 
 
-    # Set the same min and max value for all Amplitude variance plots
-    Y_VARMIN, Y_VARMAX = min(MinVar), max(MaxVar)
-    Y_STDMIN, Y_STDMAX = min(MinSTD), max(MaxSTD)
-    for p in range(Nplots):
-        for l in range(3):
-            if l > 0:
-                PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_STDMIN, Y_STDMAX)
-                PLOTS["AMP_VAR"][1][p][l].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, fontsize="small")
-            else:    
-                PLOTS["AMP_VAR"][1][p][l].set_ylim(Y_VARMIN, Y_VARMAX)
+        # Fix date formatting in x axis
+        PLOTS[QUANT_VAR][0].autofmt_xdate(bottom=0.1, rotation=45)
 
+        # Setting x ticks within 24 hours, with zero rotation and centered
+        PLOTS[QUANT_VAR][1][Nplots - 1][0].set_xticks(HourTicks, HourStrTicks, rotation=0, ha="center")
+        PLOTS[QUANT_VAR][1][Nplots - 1][0].set_xlim(0.0, 24.0)
 
-    # Fix date formatting in x axis
-    PLOTS["AMP_VAR"][0].autofmt_xdate(bottom=0.1, rotation=45)
+        # Modify the fixed positions and dimensiones of the subplots for
+        # better visualizationNplots
+        PLOTS[QUANT_VAR][0].tight_layout()
 
-    # Setting x ticks within 24 hours, with zero rotation and centered
-    PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xticks(HourTicks, HourStrTicks, rotation=0, ha="center")
-    PLOTS["AMP_VAR"][1][Nplots - 1][0].set_xlim(0.0, 24.0)
+        for p in range(Nplots):
+            AmpPowBox0 = PLOTS[QUANT_VAR][1][p][0].get_position()
+            AmpPowBox1 = PLOTS[QUANT_VAR][1][p][1].get_position()
+            SpaceSeparation01 = AmpPowBox1.x0 - (AmpPowBox0.x0 + AmpPowBox0.width)
+            OldWidth0 = AmpPowBox0.width
+            NewWidth0 = 0.75*OldWidth0
 
-    # Modify the fixed positions and dimensiones of the subplots for
-    # better visualizationNplots
-    PLOTS["AMP_VAR"][0].tight_layout()
+            PLOTS[QUANT_VAR][1][p][0].set_position([AmpPowBox0.x0, AmpPowBox0.y0,
+                                                    NewWidth0, AmpPowBox0.height])
+            PLOTS[QUANT_VAR][1][p][1].set_position([AmpPowBox0.x0 + NewWidth0 + SpaceSeparation01, AmpPowBox1.y0,
+                                                    AmpPowBox1.width + (OldWidth0-NewWidth0), AmpPowBox1.height])
 
-    SaveAllRegionPlot("AmplitudeVariations", PLOTS["AMP_VAR"][0]) 
+        SaveAllRegionPlot(f"{NAME_VAR}Variations", PLOTS[QUANT_VAR][0]) 
 
 
     # ------ APPLY FORMAT TO AMPLITUDE VS POWER FIGURE ------
