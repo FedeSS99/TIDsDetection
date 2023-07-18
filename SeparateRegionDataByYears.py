@@ -69,11 +69,13 @@ def WriteRegionDataByYears(RegionYearsData:dict):
                         if DataLines:
                             # Write headers for columns if Counter is zero
                             if not Counter:
-                                Output.write("#Date " + Lines[1][1:])
+                                Output.write("#Date Station " + Lines[1][1:])
 
-                            DateString = DataPath.split("/")[-1][8:18]
+                            FileName = DataPath.split("/")[-1]
+                            DateString = FileName[8:18]
+                            StationString = FileName[:4]
                             for DataLine in DataLines:
-                                Output.write(DateString + " " + DataLine)
+                                Output.write(DateString + " " + StationString + " " + DataLine)
 
                     Counter += 1
             print(f"-> Saved {NameFile} in {SavePath}")
