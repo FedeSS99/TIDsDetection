@@ -119,8 +119,6 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
     # Get best fit of the amplitude-power model
     Best_AmpPowerFit = PowerModelFit.best_fit
 
-    print(f"--Power Law Model for Amplitude-Power plot--\nA = {Best_A:.3f}\nExponent = {Best_k:.3f}\nR2-Score = {R2_Score:.3f}\n")
-
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
                                      usecols=(1, 2), unpack=True, skiprows=1)
