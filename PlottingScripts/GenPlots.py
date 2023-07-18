@@ -39,6 +39,7 @@ def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS)
     Nplots = len(RegionsInfo)
     Index = RegionsInfo[Region][2]
 
+    print(f"Adding analysis results for {Region} region...", end="")
     # Add ocurrence map in local time and months in a figure for all regions
     RegPlot.Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP, NORM, PLOTS["OCURR"],
                                           Index, Nplots, Region)
@@ -63,3 +64,4 @@ def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS)
     RegPlot.Add_AmplitudePowerScatterPlot(DataDict["AVE_AMP"], DataDict["POWER"],
                                           DataDict["TIME"], DataDict["MONTH"], PLOTS["AMP_POWER"],
                                           RegionsInfo[Region][1], Index, Region)
+    print("finished!")
