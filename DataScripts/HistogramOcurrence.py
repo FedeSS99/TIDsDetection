@@ -27,7 +27,10 @@ def GetOcurrenceArray(Time, Months_TIDs):
         index = Month - 1
 
         TimeHistogramByMonth, _ = histogram(TimeByMonth, bins=TimeBins, range=TimeRange)
-        HistogramMonths[index, :] = 100.0*(TimeHistogramByMonth[:]/TimeHistogramByMonth.sum())
+        if SumMonthHistogram := TimeHistogramByMonth.sum():
+            HistogramMonths[index, :] = 100.0*(TimeHistogramByMonth[:]/SumMonthHistogram)
+        else:
+            HistogramMonths[index, :] = 0.0
 
 
     return HistogramMonths
