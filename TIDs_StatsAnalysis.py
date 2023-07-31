@@ -25,12 +25,6 @@ from PlottingScripts.GenPlots import StartAnalysisForOnlyRegion
 from PlottingScripts.GenPlots import StartAnalysisForStationsAndRegions
 
 # --------------------------------------------------------------------------------------------------------
-TimeZone = dict(
-    North = -8.0,
-    Center = -6.0,
-    South = -5.0
-)
-
 def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
     # Ignore events that occoured in dates where a geomagnetic
     # storm had a major effect in the Dst value
@@ -49,8 +43,8 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
     Nplots = len(REGIONS_ATRIBS)
     OcurrenceSampling_AllRegions = []
     for Region in DICT_REGION_STATIONS.keys():
-        NameOut = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
-        print(f"-- Extracting data of {NameOut} Region --")
+        NameRegion = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
+        print(f"-- Extracting data of {NameRegion} Region --")
 
         # Declare counter for total days and active days for each region and
         # also the lists to save the data for all stations
@@ -64,6 +58,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
         Region_MinAmps = []
         Region_MaxAmps = []
         Region_MonthArray = []
+        Region_YearArray = []
 
         # Obtain the full path of the files located in each station given the Region
         StationsByRegion = DICT_REGION_STATIONS[Region]["DataPaths"].keys()
@@ -77,22 +72,27 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Station_MinAmps = []
             Station_MaxAmps = []
             Station_MonthArray = []
+            Station_YearArray = []
 
             # Extract DataPaths for each Station and also date and month data
             TIDs_DataPaths = DICT_REGION_STATIONS[Region]["DataPaths"][Station]
             Dates_TIDs = [fileName.split("/")[-1][8:18] for fileName in TIDs_DataPaths]
-            MonthPerFile = [int(fileName.split("/")[-1].split("-")[2]) for fileName in TIDs_DataPaths]
 
             TotalDays += len(TIDs_DataPaths)
-            for fileTID, MonthFile, Date_TID in zip(TIDs_DataPaths, MonthPerFile, Dates_TIDs):
-                if Date_TID not in StormDays:
+            for fileTID, Date in zip(TIDs_DataPaths, Dates_TIDs):
+                if Date not in StormDays:
+                    SplitDate = Date.split("-")
+                    Year = int(SplitDate[0])
+                    Month = int(SplitDate[1])
+
                     Results = GetSingleTID_Data(fileTID)
                     if SizeResults := Results["TIME"].size:
                         ActiveDays += 1
-                        Station_MonthArray.append(SizeResults*[MonthFile])
+                        Station_MonthArray.append(SizeResults*[Month])
+                        Station_YearArray.append(SizeResults*[Year])
 
                         # Apply timezone to get correct Local Time Hours
-                        Results["TIME"] += TimeZone[NameOut]
+                        Results["TIME"] += REGIONS_ATRIBS[NameRegion][3]
                         Results["TIME"] = np.where(Results["TIME"] < 0, Results["TIME"] + 24.0, Results["TIME"])
                         Station_TimeTID.append(Results["TIME"])
                         Station_PeriodTID.append(Results["PERIOD"])
@@ -105,6 +105,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # Create numpy arrays from the tuple collections of all the TIDs
             # data for each Station
             Station_MonthArray = np.concatenate(tuple(Station_MonthArray), dtype=int)
+            Station_YearArray = np.concatenate(tuple(Station_YearArray), dtype=int)
             Station_TimeTID = np.concatenate(tuple(Station_TimeTID))
             Station_PeriodTID = np.concatenate(tuple(Station_PeriodTID))
             Station_PowerTID = np.concatenate(tuple(Station_PowerTID))
@@ -118,6 +119,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             StationResultsDict = {
                 "TIME": Station_TimeTID,
                 "MONTH": Station_MonthArray,
+                "YEAR": Station_YearArray,
                 "OCURRENCE": StationOcurrenceMap,
                 "PERIOD": Station_PeriodTID,
                 "POWER": Station_PowerTID,
@@ -128,6 +130,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             # and save these numpy arrays in the correspondent list to manage
             # all the TIDs data for each Region
             Region_MonthArray.append(StationResultsDict["MONTH"])
+            Region_YearArray.append(StationResultsDict["YEAR"])
             Region_TimeTID.append(StationResultsDict["TIME"])
             Region_PeriodTID.append(StationResultsDict["PERIOD"])
             Region_PowerTID.append(StationResultsDict["POWER"])
@@ -146,6 +149,7 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
 
         # Create numpy arrays for all Stations data from the same Region
         Region_MonthArray = np.concatenate(tuple(Region_MonthArray), dtype=int)
+        Region_YearArray = np.concatenate(tuple(Region_YearArray), dtype=int)
         Region_TimeTID = np.concatenate(tuple(Region_TimeTID))
         Region_PeriodTID = np.concatenate(tuple(Region_PeriodTID))
         Region_PowerTID = np.concatenate(tuple(Region_PowerTID))
@@ -163,11 +167,12 @@ def StarAnnualAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
         RegionResultsDict = {
             "TIME": Region_TimeTID,
             "MONTH": Region_MonthArray,
+            "YEAR": Region_YearArray,
             "OCURRENCE": HistogramOcurrence,
             "PERIOD": Region_PeriodTID,
             "POWER": Region_PowerTID,
             "AVE_AMP": AveAbsAmplitude,
-            "NAME": NameOut
+            "NAME": NameRegion
         }
 
         # Save a flatten version of the ocurrence map of the Region
@@ -211,11 +216,11 @@ if __name__ == "__main__":
 
     # Create dictionary for atributes to use as input information for each Region
     # plot; the information has to be given in the following order
-    # [ Color, Symbol marker, Index]
+    # [ Color, Symbol marker, Index, Timezone]
     RegionsInfo = {
-        "North": ["blue", "^", 0],
-        "Center": ["green", "*", 1],
-        "South": ["red", "s", 2]
+        "North": ["blue", "^", 0, -8.0],
+        "Center": ["green", "*", 1, -6.0],
+        "South": ["red", "s", 2, -5.0]
     }
 
     InputRegionsData = CreateInputDictionary(
