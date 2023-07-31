@@ -152,6 +152,8 @@ if __name__ == "__main__":
     CenterHours = [Hour + 0.5 for Hour in range(24)]
     YminMonthList, YmaxMonthList = [], []
     YminHourList, YmaxHourList = [], []
+    MinHourMonth = min([WSDispersion_HourMonth[Region].min() for Region in Regions]) 
+    MaxHourMonth = max([WSDispersion_HourMonth[Region].max() for Region in Regions])
     for n, Region in enumerate(Regions):
         HourIndex = 2*n+1
         MonthIndex = 2*(n+1)
@@ -174,6 +176,10 @@ if __name__ == "__main__":
         HalfDispersionNight = 0.5*(WSDispersion_Month[Region][5,:]-WSDispersion_Month[Region][3,:])
         Subplots1[MonthIndex-1].errorbar(MonthsNight, WSDispersion_Month[Region][4,:], yerr=HalfDispersionNight,
                              ecolor="blue", color="blue", markerfacecolor="blue", fmt="o")
+
+        YminMonth, YmaxMonth = Subplots1[MonthIndex-1].get_ylim()
+        YminMonthList.append(YminMonth)
+        YmaxMonthList.append(YmaxMonth)
         
 
         # PLOTTING HOUR DISPERSION
@@ -182,18 +188,15 @@ if __name__ == "__main__":
                                          color="black", alpha=0.25)
         Subplots1[HourIndex-1].plot(CenterHours, WSDispersion_Hour[Region][1,:], "--k", linewidth=1)
 
-        YminMonth, YmaxMonth = Subplots1[MonthIndex-1].get_ylim()
         YminHour, YmaxHour = Subplots1[HourIndex-1].get_ylim()
-        YminMonthList.append(YminMonth)
-        YmaxMonthList.append(YmaxMonth)
         YminHourList.append(YminHour)
         YmaxHourList.append(YmaxHour)
 
         # PLOTTING HOUR-MONTH DISPERSION
         # ------------------------------------------------------------------------------------------------
         HourMonthImage = Subplots2[n].imshow(WSDispersion_HourMonth[Region], cmap="plasma", aspect="auto", 
-                                             origin="lower", extent=[0.0, 24.0, 0, 12])
-
+                                             origin="lower", extent=[0.0, 24.0, 0, 12],
+                                             vmin=MinHourMonth, vmax=MaxHourMonth)
 
     # FORMAT FOR DISPERSION PLOTS
     # ------------------------------------------------------------------------------------------------
