@@ -1,5 +1,5 @@
 from matplotlib import use
-from matplotlib.pyplot import subplots, colorbar, text
+from matplotlib.pyplot import subplots, colorbar
 from matplotlib.ticker import LogFormatterSciNotation
 
 from scipy.stats import iqr
@@ -7,6 +7,7 @@ from scipy.stats.mstats import mquantiles
 import numpy as np
 from lmfit.models import GaussianModel, PowerLawModel
 
+from json import load
 
 use("TkAgg")
 
@@ -33,13 +34,17 @@ LogFmt = LogFormatterSciNotation(base=10.0, labelOnlyBase=True)
 
 def CreateFiguresForAllRegions(Nplots):
     # ---- CREATE MAIN FIGURE FOR POWER VARIABILITY PLOT ----
-    FigurePowerTime, PowerTimeSub = subplots(num=1, nrows=Nplots, ncols=2, sharex="col", figsize=(8, 6))
+    FigurePowerVar, PowerVarSub = subplots(num=1, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
 
     # Add Power Variability x-label and y-labels
+    PowerVarWindSpeedSub = []
     for i in range(Nplots):
-        PowerTimeSub[i][0].set_ylabel("TID Power (dTEC²)")
-        #PowerTimeSub[i][1].set_ylabel(r"$IQR_{night}/IQR_{day}$")
-    PowerTimeSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
+        PowerVarSub[i][0].set_ylabel("TID Power (dTEC²)")
+        PowerVarSub[i][1].set_ylabel("IQR-Power (dTEC²)")
+        PowerVarWindSpeedSub.append([PowerVarSub[i][n].twinx() for n in range(1,3)])
+
+        PowerVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)")
+    PowerVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE-POWER PLOT ----
     FigureAmplitudePower, AmpPowSub = subplots(num=2, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 6))
@@ -50,18 +55,20 @@ def CreateFiguresForAllRegions(Nplots):
     AmpPowSub[Nplots-1].set_xlabel("Average absolute amplitude (dTEC)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE VARIABILITY PLOT ----
-    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=2, sharex="col", figsize=(8, 6))
+    FigureAmplitudeVar, AmpVarSub = subplots(num=3, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
 
     # Add Amplitude Variability x-label and y-labels
+    AmpVarWindSpeedSub = []
     for i in range(Nplots):
         AmpVarSub[i][0].set_ylabel("Amplitude (dTEC)")
-        #AmpVarSub[i][1].set_ylabel(r"$IQR_{night}/IQR_{day}$")
+        AmpVarSub[i][1].set_ylabel("IQR-Amplitude (dTEC)")
+        AmpVarWindSpeedSub.append([AmpVarSub[i][n].twinx() for n in range(1,3)])
+
+        AmpVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)")
     AmpVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR OCURRENCE PLOT ----
-    FigureOcurrHist, OcurrHistSub = subplots(num=4, nrows=Nplots, ncols=1, 
-                                             sharex=True, 
-                                             figsize=(6, 8))
+    FigureOcurrHist, OcurrHistSub = subplots(num=4, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 8))
     # Add Ocurrence x-label
     OcurrHistSub[Nplots-1].set_xlabel("Local Time (Hours)")
 
@@ -78,9 +85,9 @@ def CreateFiguresForAllRegions(Nplots):
     for i in range(Nplots):
         MonthBarsSub[i].set_ylabel("Number of events")            
 
-    return {"POWER_VAR":(FigurePowerTime, PowerTimeSub),
+    return {"POWER_VAR":(FigurePowerVar, PowerVarSub, PowerVarWindSpeedSub),
             "AMP_POWER":(FigureAmplitudePower, AmpPowSub),
-            "AMP_VAR": (FigureAmplitudeVar, AmpVarSub),
+            "AMP_VAR": (FigureAmplitudeVar, AmpVarSub, AmpVarWindSpeedSub),
             "OCURR": (FigureOcurrHist, OcurrHistSub),
             "PERIOD":(FigurePeriodDists, PeriodDistSub),
             "DAY-NIGHT_BARS":(FigureMonthBars, MonthBarsSub)
@@ -90,7 +97,6 @@ def CreateFiguresForAllRegions(Nplots):
 # Same power law function as used in lmfit module
 # check PowerLawModel in https://lmfit.github.io/lmfit-py/builtin_models.html
 def PowerFunction(x, A, k): return A*(x**k)
-
 
 def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, Marker, Index, RegionName):
     # Obtain AmplitudeAverage sorting array to sort
@@ -189,25 +195,9 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
                          transform=Plots[1][Index].transAxes)
     
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-def AddBoxPlot(Plots, Row, Col, Center, Width, dx, InputData, Color):
-    if InputData.size > 0:
-        BoxPlot = Plots[1][Row][Col].boxplot(InputData, sym="x", positions=[Center + dx], patch_artist=True,
-                                             widths=Width)
-
-        for ComponentBoxPlot in [BoxPlot["whiskers"], BoxPlot["caps"], BoxPlot["fliers"], BoxPlot["medians"]]:
-            for patch in ComponentBoxPlot:
-                patch.set_color(Color)
-                patch.set_linewidth(2)
-
-        for BoxComponent in BoxPlot["boxes"]:
-            BoxComponent.set_facecolor("None")
-            BoxComponent.set_edgecolor(Color)
-
 def AddBarPlot(Plots, Row, Col, BarCenter, Height, Width, Color):
     Plots[1][Row][Col].bar(BarCenter, Height, width=Width, 
-                           color=Color, alpha=0.75)
+                           color=Color, edgecolor="black")
 
 
 def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
@@ -220,7 +210,7 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
                                     DivH_12], SetHours[0:SizeData:DivH_12]
 
     # START ANALYSIS GIVEN THE ACTIVITY IN LOCAL TIME
-    Hours = list(range(0, 24, 2))
+    Hours = np.array(list(range(0, 24, 2)))
     LowerQ = len(Hours)*[0.0]
     Median = len(Hours)*[0.0]
     HigherQ = len(Hours)*[0.0]
@@ -233,14 +223,12 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
         Median[n] = TwoHourQuantityQuantiles[1]
         HigherQ[n] = TwoHourQuantityQuantiles[2]
 
-        #AddBarPlot(Plots, Index, 0, Hour+1, AveHourQuantityIQR, 2.0, "black")
-        #AddBoxPlot(Plots, Index, 0, Hour, 0.75, 1.0, AverageQuantity, "k")
-
-    Plots[1][Index][0].fill_between(Hours, HigherQ, LowerQ, alpha=0.5, linewidth=0,
+    Plots[1][Index][0].fill_between(Hours+1, HigherQ, LowerQ, alpha=0.5, linewidth=0,
                                     color="black")
-    Plots[1][Index][0].plot(Hours, Median, color="black", linewidth=1)
+    Plots[1][Index][0].plot(Hours+1, Median, color="black", linewidth=1)
 
     # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
+
     for month in range(1, 13):
         Conds_month = (Months_TIDs == month)
         if Conds_month.any():
@@ -257,13 +245,28 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
             Quantity_Night = Quantity_Conds_month[MaskNight]
             DispersionNight = iqr(Quantity_Night)
 
-            AddBarPlot(Plots, Index, 1, month, DispersionDay - DispersionNight, 0.5, "purple")
-            #AddBarPlot(Plots, Index, 1, month, DeviationDay, 0.5, DayNightColors["Day"])
-            #AddBarPlot(Plots, Index, 2, month, DeviationNight, 0.5, DayNightColors["Night"])
+            AddBarPlot(Plots, Index, 1, month+0.5, DispersionDay, 0.5, "red")
+            AddBarPlot(Plots, Index, 2, month+0.5, DispersionNight, 0.5, "blue")
 
-    # Apply logaritmic scale to the y-axis in first column
-    #Plots[1][Index][0].set_yscale("log")
-    #Plots[1][Index][0].yaxis.set_major_formatter(LogFmt)
+    # Extract wind dispersion data
+    with open("./WindSpeedData/WindDispersion.json", "r") as WS_JSON:
+        WindSpeedData = load(WS_JSON)
+
+    Width = 0.125
+    dx = 0.5
+    MonthsDay = [x + dx - Width for x in range(1,13)]
+    MonthsNight = [x + dx + Width for x in range(1,13)]
+    for Region in WindSpeedData.keys():
+        if RegionName in Region:
+
+            WindSpeedData[Region] = np.array(WindSpeedData[Region])
+
+            Plots[2][Index][0].fill_between(MonthsDay, WindSpeedData[Region][0,:], WindSpeedData[Region][2,:],
+                                            color="red", alpha=0.25)
+            Plots[2][Index][0].plot(MonthsDay, WindSpeedData[Region][1,:], "--r", linewidth=1)
+            Plots[2][Index][1].fill_between(MonthsNight, WindSpeedData[Region][3,:], WindSpeedData[Region][5,:],
+                                            color="blue", alpha=0.25)
+            Plots[2][Index][1].plot(MonthsNight, WindSpeedData[Region][4,:], "--b", linewidth=1)
 
     Plots[1][Index][1].set_title(IndexName[Index])
 
