@@ -1,5 +1,5 @@
 from os import listdir
-from numpy import array, zeros, ndarray
+from numpy import ndarray, array, zeros, ndarray
 from scipy.stats.mstats import mquantiles
 from matplotlib.pyplot import figure, show
 from matplotlib import rcParams, use
@@ -7,76 +7,83 @@ import json
 
 from DataScripts.WSDataRoutines import ReadWSFile
 
+
+# Encoder class to save numpy arrays as lists in json files
 class NumpyArrayEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-def AnalysisByCoordinate(Hours:list[int], Years:list[int], Coordinates:dict, FilesList:list[str]) -> dict:
-    DispersionCoordinateMonths = dict()
-    DispersionCoordinateHours = dict()
+# Function to get all data in a zone given the latitudes and longitudes
+# [IntLat-1, IntLat, IntLat+1], [IntLong-1, IntLong, IntLong+1]
+def ExtractData(Latitudes:list[int], Longitudes:list[int], FilesList:list[str])-> dict:
+    DataInZone = dict(
+        Year = [],
+        Month = [],
+        Hour = [],
+        Velocity = []
+    )
 
+    for Lat, Long in zip(Latitudes,Longitudes):
+        # First, search for neighbours coordinates
+        for dx in range(-1,2):
+            for dy in range(-1,2):
+                NewLat = Lat + dy
+                NewLong = Long + dx
+
+                for file in FilesList:
+                    if file.endswith(".txt"):
+                        SplitFileName = file.split("/")[-1].split("_")
+                        FileLat = SplitFileName[5][:3]
+                        FileLong = SplitFileName[6][:3]
+
+                        if NewLat == int(FileLat) and NewLong == int(FileLong):
+                            DataInFile = ReadWSFile(file)
+
+                            DataInZone["Year"] += DataInFile[0]
+                            DataInZone["Month"] += DataInFile[1]
+                            DataInZone["Hour"] += DataInFile[2]
+                            DataInZone["Velocity"] += DataInFile[3]
+    return DataInZone
+
+def AnalysisByCoordinate(Hours:list[int], Coordinates:dict, FilesList:list[str]) -> dict:
+    DataByRegions = dict()
     for Region in Coordinates.keys():
-        print(f"Starting dispersion analysis on {Region}", end=" ")
         LatitudesInRegion = Coordinates[Region]["Lat"]
         LongitudesInRegion = Coordinates[Region]["Long"]
+        
+        DataInRegion = ExtractData(LatitudesInRegion, LongitudesInRegion, FilesList)
+        DataByRegions[Region] = DataInRegion
+        print(f"Saved data for {Region} coordinates")
+
+    DispersionCoordinateMonths = dict()
+    DispersionCoordinateHours = dict()  
+    for Region in Coordinates.keys():
+        print(f"Starting dispersion analysis on {Region}", end="")
 
         DispersionCoordinateMonths[Region] = zeros((6,12), dtype=float)
         DispersionCoordinateHours[Region] = zeros((3,24), dtype=float)
 
-        # Start analysis for each month in the given coordinate and hours
         for Month in range(1,13):
-            for n, Hour in enumerate(Hours):
-                DataPerHourInMonth = []
+            MonthMask = DataByRegions[Region]["Month"] == Month
 
-                # Search every file in the region [IntLat-1, IntLat+1]x[IntLong-1, IntLong+1]
-                for IntLat, IntLong in zip(LatitudesInRegion,LongitudesInRegion):
+            for n, Time in enumerate(Hours):
+                TimeMask = DataByRegions[Region]["Hour"] == Time
 
-                    # First, search for neighbours coordinates
-                    for dx in range(-1,2):
-                        for dy in range(-1,2):
-                            NewLat = IntLat + dy
-                            NewLong = IntLong + dx
+                MaskedVelocity = DataByRegions[Region]["Velocity"][MonthMask*TimeMask]
 
-                            for file in FilesList:
-                                if file.endswith(".txt"):
-                                    SplitFileName = file.split("/")[-1].split("_")
-                                    FileLat = SplitFileName[5][:3]
-                                    FileLong = SplitFileName[6][:3]
-
-                                    if NewLat == int(FileLat) and NewLong == int(FileLong):
-                                        DataPerHourInMonth += ReadWSFile(file, Hour, Month, Years)
-
-                DataQuantiles = mquantiles(array(DataPerHourInMonth))
+                DataQuantiles = mquantiles(array(MaskedVelocity))
                 if n: 
                     DispersionCoordinateMonths[Region][:3,Month-1] = DataQuantiles[:]
                 else:
                     DispersionCoordinateMonths[Region][3:,Month-1] = DataQuantiles[:]
 
-        # Start analysis for each hour in the given coordinate
         for Hour in range(24):
-            DataPerMonthInHour = []
-            for Month in range(1,13):
-                # Search every file in the region [IntLat-1, IntLat+1]x[IntLong-1, IntLong+1]
-                for IntLat, IntLong in zip(LatitudesInRegion,LongitudesInRegion):
-
-                    # First, search for neighbours coordinates
-                    for dx in range(-1,2):
-                        for dy in range(-1,2):
-                            NewLat = IntLat + dy
-                            NewLong = IntLong + dx
-
-                            for file in FilesList:
-                                if file.endswith(".txt"):
-                                    SplitFileName = file.split("/")[-1].split("_")
-                                    FileLat = SplitFileName[5][:3]
-                                    FileLong = SplitFileName[6][:3]
-
-                                    if NewLat == int(FileLat) and NewLong == int(FileLong):
-                                        DataPerMonthInHour += ReadWSFile(file, Hour, Month, Years)
-
-            DataQuantiles = mquantiles(array(DataPerMonthInHour))
+            TimeMask = DataByRegions[Region]["Hour"] == Hour
+            
+            MaskedVelocity = DataByRegions[Region]["Velocity"][TimeMask]
+            DataQuantiles = mquantiles(array(MaskedVelocity))
             DispersionCoordinateHours[Region][:,Hour] = DataQuantiles[:]
 
         print("...finished!")
@@ -99,12 +106,9 @@ if __name__ == "__main__":
         Center_UCOE = dict(Lat=[19], Long=[101]),
         South = dict(Lat=[20], Long=[87])
     )
-
     Hours = [12, 20]
-    Years = [2018, 2019]
 
-    WSDispersion_Month, WSDispersion_Hour = AnalysisByCoordinate(Hours, Years, Coordinates, WS_ListFiles)
-
+    WSDispersion_Month, WSDispersion_Hour = AnalysisByCoordinate(Hours, Coordinates, WS_ListFiles)
 
     # MATPLOTLIB PARAMETERS
     #---------------------------------------------------------------------------------------
