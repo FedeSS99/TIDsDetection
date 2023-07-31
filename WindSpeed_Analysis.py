@@ -1,9 +1,11 @@
 from os import listdir
-from numpy import ndarray, array, zeros, ndarray
+from numpy import ndarray, array, zeros, linspace, arange, ndarray
 from scipy.stats.mstats import mquantiles
-from matplotlib.pyplot import figure, show
+from matplotlib.pyplot import figure, colorbar, show
 from matplotlib import rcParams, use
 import json
+
+import warnings
 
 from DataScripts.WSDataRoutines import ReadWSFile
 
@@ -45,6 +47,10 @@ def ExtractData(Latitudes:list[int], Longitudes:list[int], FilesList:list[str])-
                             DataInZone["Month"] += DataInFile[1]
                             DataInZone["Hour"] += DataInFile[2]
                             DataInZone["Velocity"] += DataInFile[3]
+
+    for Field in DataInZone.keys():
+        DataInZone[Field] = array(DataInZone[Field])
+    
     return DataInZone
 
 def AnalysisByCoordinate(Hours:list[int], Coordinates:dict, FilesList:list[str]) -> dict:
@@ -59,12 +65,15 @@ def AnalysisByCoordinate(Hours:list[int], Coordinates:dict, FilesList:list[str])
 
     DispersionCoordinateMonths = dict()
     DispersionCoordinateHours = dict()  
+    DispersionCoordinateMonthHour = dict()
     for Region in Coordinates.keys():
         print(f"Starting dispersion analysis on {Region}", end="")
 
         DispersionCoordinateMonths[Region] = zeros((6,12), dtype=float)
         DispersionCoordinateHours[Region] = zeros((3,24), dtype=float)
+        DispersionCoordinateMonthHour[Region] = zeros((12, 24), dtype=float)
 
+        # Analysis per month given integer Hours
         for Month in range(1,13):
             MonthMask = DataByRegions[Region]["Month"] == Month
 
@@ -73,19 +82,30 @@ def AnalysisByCoordinate(Hours:list[int], Coordinates:dict, FilesList:list[str])
 
                 MaskedVelocity = DataByRegions[Region]["Velocity"][MonthMask*TimeMask]
 
-                DataQuantiles = mquantiles(array(MaskedVelocity))
+                DataQuantiles = mquantiles(MaskedVelocity)
                 if n: 
                     DispersionCoordinateMonths[Region][:3,Month-1] = DataQuantiles[:]
                 else:
                     DispersionCoordinateMonths[Region][3:,Month-1] = DataQuantiles[:]
 
+        # Analysis per hour (local time)
         for Hour in range(24):
             TimeMask = DataByRegions[Region]["Hour"] == Hour
             
             MaskedVelocity = DataByRegions[Region]["Velocity"][TimeMask]
-            DataQuantiles = mquantiles(array(MaskedVelocity))
+            DataQuantiles = mquantiles(MaskedVelocity)
             DispersionCoordinateHours[Region][:,Hour] = DataQuantiles[:]
 
+        # Analysis of dispersion per month and local time
+        for Month in range(1,13):
+            MonthMask = DataByRegions[Region]["Month"] == Month
+            for Hour in range(24):
+                HourMask = DataByRegions[Region]["Hour"] == Hour
+            
+                MaskedVelocity = DataByRegions[Region]["Velocity"][MonthMask*HourMask]
+                DataQuantiles = mquantiles(MaskedVelocity)
+                DispersionCoordinateMonthHour[Region][Month-1,Hour] = DataQuantiles[2]-DataQuantiles[0]
+                                                                                  
         print("...finished!")
 
     with open("./WindSpeedData/WindMonthDispersion.json", "w") as OutJSON:
@@ -94,7 +114,7 @@ def AnalysisByCoordinate(Hours:list[int], Coordinates:dict, FilesList:list[str])
     with open("./WindSpeedData/WindHourDispersion.json", "w") as OutJSON:
         json.dump(DispersionCoordinateHours, OutJSON, cls=NumpyArrayEncoder)
 
-    return DispersionCoordinateMonths, DispersionCoordinateHours
+    return DispersionCoordinateMonths, DispersionCoordinateHours, DispersionCoordinateMonthHour
 
 if __name__ == "__main__":
     WS_DataDir = "../50M Wind Maps"
@@ -108,21 +128,22 @@ if __name__ == "__main__":
     )
     Hours = [12, 20]
 
-    WSDispersion_Month, WSDispersion_Hour = AnalysisByCoordinate(Hours, Coordinates, WS_ListFiles)
+    WSDispersion_Month, WSDispersion_Hour, WSDispersion_HourMonth = AnalysisByCoordinate(Hours, Coordinates, WS_ListFiles)
 
     # MATPLOTLIB PARAMETERS
     #---------------------------------------------------------------------------------------
     use("TkAgg")
     rcParams["font.family"] = "serif"
     rcParams['savefig.dpi'] = 400
-    Figure1 = figure(1, figsize=(7,6))
 
     # MONTH DISPERSION FIGURE
     #---------------------------------------------------------------------------------------
-    Figure = figure(1, figsize=(8,6))
+    Figure1 = figure(1, figsize=(8,6))
+    Figure2 = figure(2, figsize=(6,6))
     Regions = WSDispersion_Month.keys()
     N = len(Regions)
-    Subplots = []
+    Subplots1 = []
+    Subplots2 = []
     Width = 0.125
     dx = 0.5
 
@@ -135,36 +156,47 @@ if __name__ == "__main__":
         HourIndex = 2*n+1
         MonthIndex = 2*(n+1)
 
-        Subplots.append(Figure.add_subplot(N,2,HourIndex))
-        Subplots.append(Figure.add_subplot(N,2,MonthIndex))
-        Subplots[HourIndex].set_title(Region)
+        Subplots1.append(Figure1.add_subplot(N,2,HourIndex))
+        Subplots1.append(Figure1.add_subplot(N,2,MonthIndex))
+        Subplots2.append(Figure2.add_subplot(N,1,n+1))
+        Subplots1[HourIndex].set_title(Region)
+        Subplots2[n].set_title(Region)
 
         # PLOTTING MONTH DISPERSION
         # ------------------------------------------------------------------------------------------------
         for x in range(1,13):
-            Subplots[MonthIndex-1].axvline(x, linestyle="--", linewidth=1.0, color="black")
+            Subplots1[MonthIndex-1].axvline(x, linestyle="--", linewidth=1.0, color="black")
 
         HalfDispersionDay = 0.5*(WSDispersion_Month[Region][2,:]-WSDispersion_Month[Region][0,:])
-        Subplots[MonthIndex-1].errorbar(MonthsDay, WSDispersion_Month[Region][1,:], yerr=HalfDispersionDay,
+        Subplots1[MonthIndex-1].errorbar(MonthsDay, WSDispersion_Month[Region][1,:], yerr=HalfDispersionDay,
                              ecolor="red", color="red", markerfacecolor="red", fmt="o")
 
         HalfDispersionNight = 0.5*(WSDispersion_Month[Region][5,:]-WSDispersion_Month[Region][3,:])
-        Subplots[MonthIndex-1].errorbar(MonthsNight, WSDispersion_Month[Region][4,:], yerr=HalfDispersionNight,
+        Subplots1[MonthIndex-1].errorbar(MonthsNight, WSDispersion_Month[Region][4,:], yerr=HalfDispersionNight,
                              ecolor="blue", color="blue", markerfacecolor="blue", fmt="o")
         
 
         # PLOTTING HOUR DISPERSION
         # ------------------------------------------------------------------------------------------------
-        Subplots[HourIndex-1].fill_between(CenterHours, WSDispersion_Hour[Region][0,:], WSDispersion_Hour[Region][2,:],
+        Subplots1[HourIndex-1].fill_between(CenterHours, WSDispersion_Hour[Region][0,:], WSDispersion_Hour[Region][2,:],
                                          color="black", alpha=0.25)
-        Subplots[HourIndex-1].plot(CenterHours, WSDispersion_Hour[Region][1,:], "--k", linewidth=1)
+        Subplots1[HourIndex-1].plot(CenterHours, WSDispersion_Hour[Region][1,:], "--k", linewidth=1)
 
-        YminMonth, YmaxMonth = Subplots[MonthIndex-1].get_ylim()
-        YminHour, YmaxHour = Subplots[HourIndex-1].get_ylim()
+        YminMonth, YmaxMonth = Subplots1[MonthIndex-1].get_ylim()
+        YminHour, YmaxHour = Subplots1[HourIndex-1].get_ylim()
         YminMonthList.append(YminMonth)
         YmaxMonthList.append(YmaxMonth)
         YminHourList.append(YminHour)
         YmaxHourList.append(YmaxHour)
+
+        # PLOTTING HOUR-MONTH DISPERSION
+        # ------------------------------------------------------------------------------------------------
+        HourMonthImage = Subplots2[n].imshow(WSDispersion_HourMonth[Region], cmap="plasma", aspect="auto", 
+                                             origin="lower", extent=[0.0, 24.0, 0, 12])
+
+
+    # FORMAT FOR DISPERSION PLOTS
+    # ------------------------------------------------------------------------------------------------
 
     minMonthY, maxMonthY = min(YminMonthList), max(YmaxMonthList)
     minHourY, maxHourY = min(YminHourList), max(YmaxHourList)
@@ -172,19 +204,32 @@ if __name__ == "__main__":
               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     Hours = list(range(0,25,6))
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        Figure1.tight_layout()
+        Figure2.tight_layout()
+
     for n in range(len(Regions)):
         HourIndex = 2*n+1
         MonthIndex = 2*(n+1)
 
-        Subplots[MonthIndex-1].set_ylim(minMonthY, maxMonthY)
-        Subplots[MonthIndex-1].set_xlim(1, 13)
-        Subplots[MonthIndex-1].set_xticks(ticks=list(range(1,13)),
+        Subplots1[MonthIndex-1].set_ylim(minMonthY, maxMonthY)
+        Subplots1[MonthIndex-1].set_xlim(1, 13)
+        Subplots1[MonthIndex-1].set_xticks(ticks=list(range(1,13)),
                                labels=Months)
         
-        Subplots[HourIndex-1].set_ylim(minHourY, maxHourY)
-        Subplots[HourIndex-1].set_xlim(0, 24)
-        Subplots[HourIndex-1].set_xticks(ticks=Hours,
+        Subplots1[HourIndex-1].set_ylim(minHourY, maxHourY)
+        Subplots1[HourIndex-1].set_xlim(0, 24)
+        Subplots1[HourIndex-1].set_xticks(ticks=Hours,
                                        labels=list(map(lambda x: str(x), Hours)))
+        
+        Subplots2[n].set_yticks(linspace(0.5, 11.5, 12, endpoint=True), Months)
+        Subplots2[n].set_xticks(arange(0, 25, 3))
+        SubplotBox = Subplots2[n].get_position()
+        Subplots2[n].set_position([SubplotBox.x0, SubplotBox.y0,
+                               0.75*SubplotBox.width, SubplotBox.height])
 
-    Figure.tight_layout()
+    Colorbar_Subplots2 = Figure2.add_axes([0.8, 0.15, 0.05, 0.7])
+    colorbar(HourMonthImage, cax=Colorbar_Subplots2, label="IQR-Velocity (m/s)") 
+
     show()

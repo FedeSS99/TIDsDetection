@@ -10,9 +10,9 @@ def ReadWSFile(FileName:str):
             if numLine >= 14:
                 SplitLine = [Val for Val in Line.split(" ") if Val != ""]
                     
-                YearList.append(float(SplitLine[6]))
-                MonthList.append(float(SplitLine[6]))
-                HourList.append(float(SplitLine[6]))
+                YearList.append(int(SplitLine[0]))
+                MonthList.append(int(SplitLine[1]))
+                HourList.append(int(SplitLine[3]))
                 VelList.append(float(SplitLine[6]))
 
     return (YearList, MonthList, HourList, VelList)
