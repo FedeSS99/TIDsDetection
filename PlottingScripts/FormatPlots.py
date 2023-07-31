@@ -4,6 +4,8 @@ from numpy import linspace, arange
 import warnings
 
 def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
+    print("Setting final format in all-region plots...", end="")
+
     # ------ APPLY FORMAT TO OCURRENCE FIGURE ------
     # Setting number of bins and time range for histogram
     TimeRange = (0.0, 24.0)
@@ -70,42 +72,18 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
         HourTicks = list(range(0, 25, 4))
         HourStrTicks = [str(num) for num in HourTicks]
         MonthTicks = list(range(1,13))
-        Min0, Max0 = [], []
-        Min1, Max1 = [], []
+
+        # Run over every row, set the x limits for local time analysis and
+        # months ticks for quantity dispersion and wind speed profiles
         for p in range(Nplots):
-            Y_MIN1, Y_MAX1 = PLOTS[QUANT_VAR][1][p][0].get_ylim()
-            Min0.append(Y_MIN1)
-            Max0.append(Y_MAX1)
+            PLOTS[QUANT_VAR][1][p][1].set_xlim(1,13)
+            PLOTS[QUANT_VAR][1][p][2].set_xlim(1,13)
+            
+            PLOTS[QUANT_VAR][1][p][1].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, rotation = 90, ha="center")
+            PLOTS[QUANT_VAR][1][p][2].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, rotation = 90, ha="center")
 
-            Y_MIN2, Y_MAX2 = PLOTS[QUANT_VAR][1][p][1].get_ylim()
-            Min1.append(Y_MIN2)
-            Max1.append(Y_MAX2)
-
-            PLOTS[QUANT_VAR][1][p][1].axhline(color="black", linewidth=1)
-
-        # Set the same min and max value for all Amplitude variance plots
-        Y_MIN0, Y_MAX0 = min(Min0), max(Max0)
-        Y_MIN1, Y_MAX1 = min(Min1), max(Max1)
-        for p in range(Nplots):
-            PLOTS[QUANT_VAR][1][p][0].set_ylim(Y_MIN0, Y_MAX0)
-            PLOTS[QUANT_VAR][1][p][1].set_ylim(Y_MIN1, Y_MAX1)
-
-            PLOTS[QUANT_VAR][1][p][1].set_xticks(ticks=MonthTicks, labels=MonthStrTicks)
-
-            AmpPowBox0 = PLOTS[QUANT_VAR][1][p][0].get_position()
-            AmpPowBox1 = PLOTS[QUANT_VAR][1][p][1].get_position()
-            SpaceSeparation01 = AmpPowBox1.x0 - (AmpPowBox0.x0 + AmpPowBox0.width)
-            OldWidth0 = AmpPowBox0.width
-            NewWidth0 = 0.75*OldWidth0
-
-            PLOTS[QUANT_VAR][1][p][0].set_position([AmpPowBox0.x0, AmpPowBox0.y0,
-                                                    NewWidth0, AmpPowBox0.height])
-            PLOTS[QUANT_VAR][1][p][1].set_position([AmpPowBox0.x0 + NewWidth0 + SpaceSeparation01, AmpPowBox1.y0,
-                                                    AmpPowBox1.width + (OldWidth0-NewWidth0), AmpPowBox1.height])
-
-
-        # Fix date formatting in x axis
-        PLOTS[QUANT_VAR][0].autofmt_xdate(bottom=0.1, rotation=45)
+            PLOTS[QUANT_VAR][2][p][0].tick_params(axis="y", which="both", right=False, labelright=False)
+            PLOTS[QUANT_VAR][1][p][2].tick_params(axis="y", which="both", left=False, labelleft=False)
 
         # Setting x ticks within 24 hours, with zero rotation and centered
         PLOTS[QUANT_VAR][1][Nplots - 1][0].set_xticks(HourTicks, HourStrTicks, rotation=0, ha="center")
@@ -115,17 +93,39 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
         # better visualizationNplots
         PLOTS[QUANT_VAR][0].tight_layout()
 
+        # Reduce the separation between day and night analysis subplots to zero
         for p in range(Nplots):
-            AmpPowBox0 = PLOTS[QUANT_VAR][1][p][0].get_position()
-            AmpPowBox1 = PLOTS[QUANT_VAR][1][p][1].get_position()
-            SpaceSeparation01 = AmpPowBox1.x0 - (AmpPowBox0.x0 + AmpPowBox0.width)
-            OldWidth0 = AmpPowBox0.width
-            NewWidth0 = 0.75*OldWidth0
+            SubplotBoxDay = PLOTS[QUANT_VAR][1][p][1].get_position()
+            SubplotBoxNight = PLOTS[QUANT_VAR][1][p][2].get_position()
 
-            PLOTS[QUANT_VAR][1][p][0].set_position([AmpPowBox0.x0, AmpPowBox0.y0,
-                                                    NewWidth0, AmpPowBox0.height])
-            PLOTS[QUANT_VAR][1][p][1].set_position([AmpPowBox0.x0 + NewWidth0 + SpaceSeparation01, AmpPowBox1.y0,
-                                                    AmpPowBox1.width + (OldWidth0-NewWidth0), AmpPowBox1.height])
+            SeparationDayNightPlots = SubplotBoxNight.x0 - (SubplotBoxDay.x0 + SubplotBoxDay.width)
+            HalfSeparation = 0.4*SeparationDayNightPlots
+
+            PLOTS[QUANT_VAR][1][p][1].set_position([SubplotBoxDay.x0, SubplotBoxDay.y0,
+                                                    SubplotBoxDay.width + HalfSeparation, SubplotBoxDay.height])
+            PLOTS[QUANT_VAR][1][p][2].set_position([SubplotBoxNight.x0-HalfSeparation, SubplotBoxNight.y0,
+                                                    SubplotBoxNight.width+HalfSeparation, SubplotBoxNight.height])
+
+        # Set equal y max limit for local time and month analysis
+        DictYLims = dict(
+            LocalTime = 0.0,
+            Power = 0.0,
+            WindSpeed = 0.0
+        )
+        for p in range(Nplots):
+            MaxValPowerLT = PLOTS[QUANT_VAR][1][p][0].get_ylim()[1]
+            MaxValPower = max([PLOTS[QUANT_VAR][1][p][n].get_ylim()[1] for n in range(1,3)])
+            MaxValWindSpeed = max([PLOTS[QUANT_VAR][2][p][n].get_ylim()[1] for n in range(2)])
+
+            DictYLims["LocalTime"] = max(DictYLims["LocalTime"], MaxValPowerLT)
+            DictYLims["Power"] = max(DictYLims["Power"], MaxValPower)
+            DictYLims["WindSpeed"] = max(DictYLims["WindSpeed"], MaxValWindSpeed)
+
+        for p in range(Nplots):
+            PLOTS[QUANT_VAR][1][p][0].set_ylim(top=DictYLims["LocalTime"])
+            for m, n in enumerate(range(1,3)):
+                PLOTS[QUANT_VAR][1][p][n].set_ylim(top=DictYLims["Power"])
+                PLOTS[QUANT_VAR][2][p][m].set_ylim(top=DictYLims["WindSpeed"])
 
         SaveAllRegionPlot(f"{NAME_VAR}Variations", PLOTS[QUANT_VAR][0]) 
 
@@ -160,3 +160,5 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
                                  fancybox=True, shadow=True)
 
     SaveAllRegionPlot("AmplitudePowerRegions", PLOTS["AMP_POWER"][0])
+
+    print("finished!")
