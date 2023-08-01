@@ -161,7 +161,8 @@ if __name__ == "__main__":
         Subplots1.append(Figure1.add_subplot(N,2,HourIndex))
         Subplots1.append(Figure1.add_subplot(N,2,MonthIndex))
         Subplots2.append(Figure2.add_subplot(N,1,n+1))
-        Subplots1[HourIndex].set_title(Region)
+        Subplots1[HourIndex-1].set_title(Region)
+        Subplots1[HourIndex-1].set_ylabel("Velocity (m/s)")
         Subplots2[n].set_title(Region)
 
         # PLOTTING MONTH DISPERSION
