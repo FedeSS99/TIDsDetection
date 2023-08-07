@@ -1,7 +1,7 @@
 from os import listdir
 from numpy import ndarray, array, zeros, linspace, arange, loadtxt, ndarray
 from scipy.stats.mstats import mquantiles
-from matplotlib.pyplot import figure, colorbar, show
+from matplotlib.pyplot import figure, colorbar
 from matplotlib import rcParams, use
 import json
 
@@ -80,11 +80,10 @@ def AnalysisByCoordinate(Hours:list[int], Coordinates:dict, Field:str, FilesList
         DispersionCoordinateMonthHour[Region] = zeros((12, 24), dtype=float)
 
         # Analysis per month given integer Hours
-        for Month in range(1,13):
-            MonthMask = DataByRegions[Region]["Month"] == Month
-
-            for n, Time in enumerate(Hours):
-                TimeMask = DataByRegions[Region]["Hour"] == Time
+        for n, Time in enumerate(Hours):
+            TimeMask = DataByRegions[Region]["Hour"] == Time
+            for Month in range(1,13):
+                MonthMask = DataByRegions[Region]["Month"] == Month
 
                 MaskedField = DataByRegions[Region][Field][MonthMask*TimeMask]
 
@@ -184,13 +183,15 @@ if __name__ == "__main__":
             for x in range(1,13):
                 Subplots1[MonthIndex-1].axvline(x, linestyle="--", linewidth=1.0, color="black")
 
-            HalfDispersionDay = 0.5*(WSDispersion_Month[Region][2,:]-WSDispersion_Month[Region][0,:])
-            Subplots1[MonthIndex-1].errorbar(MonthsDay, WSDispersion_Month[Region][1,:], yerr=HalfDispersionDay,
-                                ecolor="red", color="red", markerfacecolor="red", fmt="o")
+            LowerDay, UpperDay = WSDispersion_Month[Region][0,:], WSDispersion_Month[Region][2,:]
+            MedianDay = WSDispersion_Month[Region][1,:]
+            Subplots1[MonthIndex-1].errorbar(MonthsDay, MedianDay, yerr=(MedianDay - LowerDay, UpperDay - MedianDay), 
+                                             ecolor="red", color="red", markerfacecolor="red", fmt="o")
 
-            HalfDispersionNight = 0.5*(WSDispersion_Month[Region][5,:]-WSDispersion_Month[Region][3,:])
-            Subplots1[MonthIndex-1].errorbar(MonthsNight, WSDispersion_Month[Region][4,:], yerr=HalfDispersionNight,
-                                ecolor="blue", color="blue", markerfacecolor="blue", fmt="o")
+            LowerNight, UpperNight = WSDispersion_Month[Region][3,:], WSDispersion_Month[Region][5,:]
+            MedianNight = WSDispersion_Month[Region][4,:]
+            Subplots1[MonthIndex-1].errorbar(MonthsNight, MedianNight, yerr=(MedianNight - LowerNight, UpperNight - MedianNight), 
+                                             ecolor="blue", color="blue", markerfacecolor="blue", fmt="o")
 
             YminMonth, YmaxMonth = Subplots1[MonthIndex-1].get_ylim()
             YminMonthList.append(YminMonth)
@@ -227,7 +228,7 @@ if __name__ == "__main__":
         minHourY, maxHourY = min(YminHourList), max(YmaxHourList)
         Months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        Hours = list(range(0,25,6))
+        HoursLabels = list(range(0,25,6))
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -245,8 +246,8 @@ if __name__ == "__main__":
             
             Subplots1[HourIndex-1].set_ylim(minHourY, maxHourY)
             Subplots1[HourIndex-1].set_xlim(0, 24)
-            Subplots1[HourIndex-1].set_xticks(ticks=Hours,
-                                        labels=list(map(lambda x: str(x), Hours)))
+            Subplots1[HourIndex-1].set_xticks(ticks=HoursLabels,
+                                        labels=list(map(lambda x: str(x), HoursLabels)))
             
             Subplots2[n].set_yticks(linspace(0.5, 11.5, 12, endpoint=True), Months)
             Subplots2[n].set_xticks(arange(0, 25, 3))
