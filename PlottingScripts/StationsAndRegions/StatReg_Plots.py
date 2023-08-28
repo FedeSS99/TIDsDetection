@@ -5,19 +5,10 @@ from lmfit.models import GaussianModel
 from scipy.stats.mstats import mquantiles
 import numpy as np
 
+from DataScripts.CommonDictionaries import TerminatorsDict, DayNightColors
 from PlottingScripts.SaveFunctions import SaveStationPlot, SaveRegionPlot
 
 use("TkAgg")
-
-# Dictionary to extract filename of Terminator data for each region
-TerminatorsDict = dict(
-    North="./TerminatorData/TerminatorHours_North.dat",
-    Center="./TerminatorData/TerminatorHours_Center.dat",
-    South="./TerminatorData/TerminatorHours_South.dat"
-)
-
-# Dictionary to extract colors to use in day-night filter for amplitude-power data
-DayNightColors = dict(Day="red", Night="blue")
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 

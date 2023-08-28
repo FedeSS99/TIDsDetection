@@ -1,4 +1,3 @@
-from matplotlib import use
 from matplotlib.pyplot import subplots, colorbar
 from matplotlib.ticker import LogFormatterSciNotation
 
@@ -9,23 +8,7 @@ from lmfit.models import GaussianModel, PowerLawModel
 
 from json import load
 
-use("TkAgg")
-
-# Dictionary to extract filename of Terminator data for each region
-TerminatorsDict = dict(
-    North="./TerminatorData/TerminatorHours_North.dat",
-    Center="./TerminatorData/TerminatorHours_Center.dat",
-    South="./TerminatorData/TerminatorHours_South.dat"
-    )
-
-IndexName = {
-    0: "A) North",
-    1: "B) Center",
-    2: "C) South"
-    }
-
-# Dictionary to extract colors to use in day-night filter for amplitude-power data
-DayNightColors = dict(Day="red", Night="blue")
+from DataScripts.CommonDictionaries import TerminatorsDict, DayNightColors, IndexName
 
 # Logaritmic format to use in Amplitude variance plots
 LogFmt = LogFormatterSciNotation(base=10.0, labelOnlyBase=True)
@@ -39,11 +22,12 @@ def CreateFiguresForAllRegions(Nplots):
     # Add Power Variability x-label and y-labels
     PowerVarWindSpeedSub = []
     for i in range(Nplots):
-        PowerVarSub[i][0].set_ylabel("TID Power (dTEC²)")
-        PowerVarSub[i][1].set_ylabel("IQR-Power (dTEC²)")
         PowerVarWindSpeedSub.append([PowerVarSub[i][n].twinx() for n in range(1,3)])
 
-        PowerVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)")
+    #PowerVarSub[2][0].set_ylabel("\tTID Power (dTEC²)")
+    #PowerVarSub[2][1].set_ylabel("\tIQR-Power (dTEC²)")
+
+    #PowerVarWindSpeedSub[2][1].set_ylabel("\tWind speed (m/s)")
     PowerVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE-POWER PLOT ----
@@ -60,11 +44,11 @@ def CreateFiguresForAllRegions(Nplots):
     # Add Amplitude Variability x-label and y-labels
     AmpVarWindSpeedSub = []
     for i in range(Nplots):
-        AmpVarSub[i][0].set_ylabel("Amplitude (dTEC)")
-        AmpVarSub[i][1].set_ylabel("IQR-Amplitude (dTEC)")
+        #AmpVarSub[i][0].set_ylabel("Amplitude (dTEC)")
+        #AmpVarSub[i][1].set_ylabel("IQR-Amplitude (dTEC)")
         AmpVarWindSpeedSub.append([AmpVarSub[i][n].twinx() for n in range(1,3)])
 
-        AmpVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)")
+        #AmpVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)")
     AmpVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR OCURRENCE PLOT ----
@@ -77,7 +61,7 @@ def CreateFiguresForAllRegions(Nplots):
     PeriodDistSub[Nplots-1].set_xlabel("TID Period (Minutes)")
     
     for i in range(Nplots):
-        PeriodDistSub[i].set_ylabel("Probability Density")
+        PeriodDistSub[i].set_ylabel("Prob. Density")
 
     # ---- CREATE MAIN FIGURE FOR DAY-NIGHT BARS PLOT ----
     FigureMonthBars, MonthBarsSub = subplots(num=6, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 6))
@@ -248,8 +232,8 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
             AddBarPlot(Plots, Index, 1, month+0.5, DispersionDay, 0.5, "red")
             AddBarPlot(Plots, Index, 2, month+0.5, DispersionNight, 0.5, "blue")
 
-    # Extract wind dispersion data
-    with open("./WindSpeedData/WindDispersion.json", "r") as WS_JSON:
+    # Extract wind dispersion data0
+    with open("./WindSpeedData/VelocityMonthDispersion.json", "r") as WS_JSON:
         WindSpeedData = load(WS_JSON)
 
     Width = 0.125
@@ -373,7 +357,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
                          label=labelFit)
 
     Plots[1][Index].set_title(IndexName[Index])
-    Plots[1][Index].legend()
+    Plots[1][Index].legend(prop={"size":8})
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
