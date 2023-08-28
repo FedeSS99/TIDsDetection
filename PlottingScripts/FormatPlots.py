@@ -139,7 +139,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
     for p in range(Nplots):
         SubplotBox = PLOTS["AMP_POWER"][1][p].get_position()
         PLOTS["AMP_POWER"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
-                                               0.7*SubplotBox.width, SubplotBox.height])
+                                               0.65*SubplotBox.width, SubplotBox.height])
 
         Y_MIN, Y_MAX = PLOTS["AMP_POWER"][1][p].get_ylim()
         MinAmpPow_Plots.append(Y_MIN)
