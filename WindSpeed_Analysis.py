@@ -18,11 +18,12 @@ class NumpyArrayEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
     
 # Dictionary to extract filename of Terminator data for each region
-TerminatorsDict = dict(
-    North="./TerminatorData/TerminatorHours_North.dat",
-    Center="./TerminatorData/TerminatorHours_Center.dat",
-    South="./TerminatorData/TerminatorHours_South.dat"
-    )
+TerminatorsDict = {
+    "North":"./TerminatorData/TerminatorHours_North.dat",
+    "Center-MNIG":"./TerminatorData/TerminatorHours_Center.dat",
+    "Center-UCOE":"./TerminatorData/TerminatorHours_Center.dat",
+    "South":"./TerminatorData/TerminatorHours_South.dat"
+    }
 
 # Function to get all data in a zone given the latitudes and longitudes
 # [IntLat-1, IntLat, IntLat+1], [IntLong-1, IntLong, IntLong+1]
@@ -126,12 +127,12 @@ if __name__ == "__main__":
     WS_DataDir = "../50M Wind Maps"
     WS_ListFiles = list(map(lambda x: WS_DataDir + "/" + x , listdir(WS_DataDir)))
 
-    Coordinates = dict(
-        North = dict(Lat=[31], Long=[116]),
-        Center_MNIG = dict(Lat=[25], Long=[100]),
-        Center_UCOE = dict(Lat=[19], Long=[101]),
-        South = dict(Lat=[20], Long=[87])
-    )
+    Coordinates = {
+        "North": dict(Lat=[31], Long=[116]),
+        "Center-MNIG": dict(Lat=[25], Long=[100]),
+        "Center-UCOE": dict(Lat=[19], Long=[101]),
+        "South": dict(Lat=[20], Long=[87])
+    }
     Hours = [12, 20]
 
     # MATPLOTLIB PARAMETERS
