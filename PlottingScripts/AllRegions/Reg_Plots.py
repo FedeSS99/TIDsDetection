@@ -278,7 +278,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 # Same probability density function as used in lmfit module
-# check GaussianModdel in https://lmfit.github.io/lmfit-py/builtin_models.html
+# check GaussianModel in https://lmfit.github.io/lmfit-py/builtin_models.html
 def GaussianDist(x, A, mu, sigma): return (
     A/(sigma*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sigma)**2.0)
 
@@ -360,8 +360,6 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
     Plots[1][Index].legend(prop={"size":8})
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName):
     # Setting y ticks with months names
     MonthTicks = ["Jan", "Feb", "Mar", "Apr", "May",
