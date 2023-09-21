@@ -4,7 +4,7 @@ from numpy import linspace, arange
 import warnings
 
 def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
-    print("Setting final format in all-region plots...", end="")
+    print("Setting final format for all-region figures...", end="")
 
     # ------ APPLY FORMAT TO OCURRENCE FIGURE ------
     # Setting number of bins and time range for histogram
@@ -138,8 +138,8 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
     MinAmpPow_Plots, MaxAmpPow_Plots = [], []
     for p in range(Nplots):
         SubplotBox = PLOTS["AMP_POWER"][1][p].get_position()
-        PLOTS["AMP_POWER"][1][p].set_position([SubplotBox.x0, SubplotBox.y0,
-                                               0.65*SubplotBox.width, SubplotBox.height])
+        PLOTS["AMP_POWER"][1][p].set_position([1.15*SubplotBox.x0, SubplotBox.y0,
+                                               0.7*SubplotBox.width, SubplotBox.height])
 
         Y_MIN, Y_MAX = PLOTS["AMP_POWER"][1][p].get_ylim()
         MinAmpPow_Plots.append(Y_MIN)
