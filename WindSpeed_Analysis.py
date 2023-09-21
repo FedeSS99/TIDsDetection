@@ -212,7 +212,8 @@ if __name__ == "__main__":
             # ------------------------------------------------------------------------------------------------
             HourMonthImage = Subplots2[n].imshow(WSDispersion_HourMonth[Region], cmap="plasma", aspect="auto", 
                                                 origin="lower", extent=[0.0, 24.0, 0, 12],
-                                                vmin=MinHourMonth, vmax=MaxHourMonth)
+                                                vmin=MinHourMonth, vmax=MaxHourMonth,
+                                                interpolation="spline36")
 
             # Extracting rise and set hours for each region
             RiseHours, SetHours = loadtxt(TerminatorsDict[Region.split("_")[0]], dtype=float,
