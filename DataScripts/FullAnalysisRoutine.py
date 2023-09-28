@@ -5,9 +5,8 @@ from matplotlib import rcParams, use
 from matplotlib.pyplot import close
 
 # Numerical and data routines
-from DataScripts.Input_TID_Data import CreateInputDictionary
 from DataScripts.GetDataFile import GetSingleTID_Data
-from DataScripts.HistogramOcurrence import GetOcurrenceArray
+from DataScripts.HistogramFunctions import GetOcurrenceArray, GetPowerTimeArray
 
 # CMAP and NORM routines
 from DataScripts.CMAP_NORM import ObtainCMAPandNORM
@@ -47,6 +46,7 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
     RESULTS = []
     Nplots = len(REGIONS_ATRIBS)
     OcurrenceSampling_AllRegions = []
+    PowerMedians_AllRegions = []
     for Region in DICT_REGION_STATIONS.keys():
         NameRegion = DICT_REGION_STATIONS[Region]["ResultPath"].split("/")[-1]
         print(f"-- Extracting data of {NameRegion} Region --")
@@ -134,8 +134,8 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
                 "OCURRENCE": StationOcurrenceMap,
                 "PERIOD": Station_PeriodTID,
                 "POWER": Station_PowerTID,
-                "MIN_AMPS": Station_MinAmps,
-                "MAX_AMPS": Station_MaxAmps,
+                "MIN-AMPS": Station_MinAmps,
+                "MAX-AMPS": Station_MaxAmps,
             }
 
             # and save these numpy arrays in the correspondent list to manage
@@ -145,8 +145,8 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Region_TimeTID.append(StationResultsDict["TIME"])
             Region_PeriodTID.append(StationResultsDict["PERIOD"])
             Region_PowerTID.append(StationResultsDict["POWER"])
-            Region_MinAmps.append(StationResultsDict["MIN_AMPS"])
-            Region_MaxAmps.append(StationResultsDict["MAX_AMPS"])
+            Region_MinAmps.append(StationResultsDict["MIN-AMPS"])
+            Region_MaxAmps.append(StationResultsDict["MAX-AMPS"])
 
             # Check if the directory for the Station given its' Region exists,
             # and if not, create itOcurrenceSampling_AllRegions
@@ -170,9 +170,10 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
 
         # Get ocurrence map for each Region
         HistogramOcurrence = GetOcurrenceArray(Region_TimeTID, Region_MonthArray)
-
-        # Get average absolute amplitude for each region and all the correspond data in the directory
-        # in a dictionary
+        # Get Power variability in time and month for each Region
+        PowerMedianArray = GetPowerTimeArray(Region_PowerTID, Region_TimeTID, Region_MonthArray)
+    
+        # Get average absolute amplitude for each region
         AveAbsAmplitude = (np.abs(Region_MinAmps) + Region_MaxAmps)/2.0
 
         RegionResultsDict = {
@@ -180,14 +181,16 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             "MONTH": Region_MonthArray,
             "YEAR": Region_YearArray,
             "OCURRENCE": HistogramOcurrence,
+            "POWER-MED": PowerMedianArray,
             "PERIOD": Region_PeriodTID,
             "POWER": Region_PowerTID,
-            "AVE_AMP": AveAbsAmplitude,
+            "AVE-AMP": AveAbsAmplitude,
             "NAME": NameRegion
         }
 
         # Save a flatten version of the ocurrence map of the Region
         OcurrenceSampling_AllRegions.append(HistogramOcurrence.flatten())
+        PowerMedians_AllRegions.append(PowerMedianArray.flatten())
         RESULTS.append(RegionResultsDict)
 
         CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions[-1])
@@ -195,10 +198,19 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
 
         print(f"Total days:{TotalDays:d}\nRejected days:{Num_RejectedDates:d}\nActive days:{ActiveDays:d}\nNo. of TIDs: {NumTIDs}\n#TIDs/Active Days: {NumTIDs/ActiveDays:.3f}\n")
 
-    # Obtain ColorMap and Norm to use for all the regions
+    # Obtain ColorMap and Norm to use for all the regions for TIDs ocurrence
     OcurrenceSampling_AllRegions = np.concatenate(tuple(OcurrenceSampling_AllRegions))
+    CMAP_Ocurr, NORM_Ocurr = ObtainCMAPandNORM(OcurrenceSampling_AllRegions)
 
-    CMAP, NORM = ObtainCMAPandNORM(OcurrenceSampling_AllRegions)
+    # Obtain ColorMap and Norm to use for all the regions for Power IQR array
+    PowerMedians_AllRegions = np.concatenate(tuple(PowerMedians_AllRegions))
+    CMAP_PowerMed, NORM_PowerMed = ObtainCMAPandNORM(PowerMedians_AllRegions)
+
+
+    # Save CMAP and NORM for each array in a pair of tuples
+    CMAP = (CMAP_Ocurr, CMAP_PowerMed)
+    NORM = (NORM_Ocurr, NORM_PowerMed)
+
     PlotsResults = CreateFiguresForAllRegions(Nplots)
     for RegionDataResults in RESULTS:
         # Get a string Coord to use in the analysis' plots results
