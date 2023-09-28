@@ -1,10 +1,11 @@
 from matplotlib.pyplot import subplots, colorbar
 from matplotlib.ticker import LogFormatterSciNotation
 
-from scipy.stats import iqr
+from scipy.stats import iqr, skew
+from scipy.special import erf
 from scipy.stats.mstats import mquantiles
 import numpy as np
-from lmfit.models import GaussianModel, PowerLawModel
+from lmfit.models import SkewedGaussianModel, PowerLawModel
 
 from json import load
 
@@ -14,8 +15,6 @@ from DataScripts.CommonDictionaries import TerminatorsDict, DayNightColors, Inde
 LogFmt = LogFormatterSciNotation(base=10.0, labelOnlyBase=True)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 def CreateFiguresForAllRegions(Nplots):
     # ---- CREATE MAIN FIGURE FOR POWER VARIABILITY ----
     FigurePowerVar, PowerVarSub = subplots(
@@ -64,11 +63,12 @@ def CreateFiguresForAllRegions(Nplots):
 
     # ---- CREATE MAIN FIGURE FOR PERIOD DISTRIBUTION ----
     FigurePeriodDists, PeriodDistSub = subplots(
-        num=5, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 6))
-    PeriodDistSub[Nplots-1].set_xlabel("TID Period (Minutes)")
+        num=5, nrows=Nplots, ncols=2, sharex="all", sharey="all", figsize=(8, 6))
+    PeriodDistSub[Nplots-1][0].set_xlabel("TID Period (Minutes)")
+    PeriodDistSub[Nplots-1][1].set_xlabel("TID Period (Minutes)")
 
     for i in range(Nplots):
-        PeriodDistSub[i].set_ylabel("Prob. Density")
+        PeriodDistSub[i][0].set_ylabel("Prob. Density")
 
     # ---- CREATE MAIN FIGURE FOR DAY-NIGHT BARS ----
     FigureMonthBars, MonthBarsSub = subplots(
@@ -77,12 +77,19 @@ def CreateFiguresForAllRegions(Nplots):
     for i in range(Nplots):
         MonthBarsSub[i].set_ylabel("Number of events")
 
-    return {"POWER_VAR": (FigurePowerVar, PowerVarSub, PowerVarWindSpeedSub),
-            "AMP_POWER": (FigureAmplitudePower, AmpPowSub),
+    # ---- CREATE MAIN FIGURE FOR POWER TIME DISTRIBUTION ----
+    FigurePowerHist, PowerHistSub = subplots(
+        num=7, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 8))
+    # Add Ocurrence x-label
+    PowerHistSub[Nplots-1].set_xlabel("Local Time (Hours)")
+
+    return {"POWER-VAR": (FigurePowerVar, PowerVarSub, PowerVarWindSpeedSub),
+            "AMP-POWER": (FigureAmplitudePower, AmpPowSub),
             "AMP-VAR": (FigureAmplitudeVar, AmpVarSub, AmpVarWindSpeedSub),
             "OCURR": (FigureOcurrHist, OcurrHistSub),
             "PERIOD": (FigurePeriodDists, PeriodDistSub),
-            "DAY-NIGHT_BARS": (FigureMonthBars, MonthBarsSub)
+            "DAY-NIGHT-BARS": (FigureMonthBars, MonthBarsSub),
+            "POWER-MED": (FigurePowerHist, PowerHistSub)
             }
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -277,7 +284,7 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Nplots, RegionName):
+def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Nplots, RegionName, Label):
     TimeRange = (0.0, 24.0)
     MonthRange = (0, 12)
     extent = (*TimeRange, *MonthRange)
@@ -287,7 +294,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
 
     if Index == Nplots - 1:
         ColorBar_Ax = Plots[0].add_axes([0.8, 0.15, 0.05, 0.7])
-        colorbar(HistogramaImagen, cax=ColorBar_Ax, label="% Ocurrence")
+        colorbar(HistogramaImagen, cax=ColorBar_Ax, label=Label)
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
@@ -303,8 +310,8 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
 # check GaussianModel in https://lmfit.github.io/lmfit-py/builtin_models.html
 
 
-def GaussianDist(x, A, mu, sigma): return (
-    A/(sigma*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sigma)**2.0)
+def SkewedGaussianDist(x, A, mu, sigma, gamma): 
+    return (A/(sigma*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sigma)**2.0)*(1 + erf(gamma*(x - mu)/(sigma*(2**0.5))))
 
 
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
@@ -334,57 +341,63 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
-    for PeriodData, NamePlot in zip([NightTIDsPeriods, DayTIDsPeriods], ["Night", "Day"]):
+    for n, Periods_Name in enumerate(zip([DayTIDsPeriods, NightTIDsPeriods], ["Day", "Night"])):
         # Setting number of bins by using the Freedman-Diaconis rule
-        IQR = iqr(PeriodData)
-        h = 2.0*IQR*(PeriodData.size**(-1/3))
-        PeriodRange = (PeriodData.min(), PeriodData.max())
-        PeriodBins = int((PeriodRange[1]-PeriodRange[0])/h)
+        #IQR = iqr(Periods_Name[0])
+        #h = 2.0*IQR*(Periods_Name[0].size**(-1/3))
+        PeriodRange = (Periods_Name[0].min(), Periods_Name[0].max())
+        #PeriodBins = int((PeriodRange[1]-PeriodRange[0])/h)
+        #PeriodBins = int(np.ceil(np.log2(Periods_Name[0].size)) + 1)
+        size = Periods_Name[0].size
+        PeriodBins = 1 + int(np.log2(size) + np.log2(1 + abs(skew(Periods_Name[0]))/np.sqrt(6*(size-2)/((size+1)*(size+3)))))
 
         # Extract color
-        Color = DayNightColors[NamePlot]
+        Color = DayNightColors[Periods_Name[1]]
 
         # Adding density histogram of period data
-        PeriodHistogram, Edges, _ = Plots[1][Index].hist(PeriodData, bins=PeriodBins, range=PeriodRange, density=True,
+        PeriodHistogram, Edges, _ = Plots[1][Index][n].hist(Periods_Name[0], bins=PeriodBins, range=PeriodRange, density=True,
                                                          facecolor=Color, edgecolor="None", alpha=0.5)
 
         # Stablish the median of each bin as the X value for each density bar
         MidEdges = Edges[:PeriodBins] + np.diff(Edges)
 
-        # Getting mean, deviation of period data and max value of Ocurrence
-        Mean, Deviation = PeriodData.mean(), PeriodData.std()
+        # Getting mean, deviation and skewness of period data and max value of Ocurrence
+        Mean, Deviation = Periods_Name[0].mean(), Periods_Name[0].std()
         MaxValue = PeriodHistogram.max()
+        Skewness = skew(Periods_Name[0])
 
         # Declaring an Exponential Gaussian Model as the proposed theoretical distribution
-        GaussianToFit = GaussianModel()
+        SkewGaussianToFit = SkewedGaussianModel()
         # Setting parameters
-        ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue,
-                                                          center=Mean, sigma=Deviation)
+        ParametersExpGaussian = SkewGaussianToFit.make_params(amplitude=MaxValue, center=Mean, 
+                                                          sigma=Deviation, gamma=Skewness)
         # Calculate best fit
-        ExpGaussianFitResult = GaussianToFit.fit(
-            PeriodHistogram, ParametersExpGaussian, x=MidEdges)
+        SkewGaussianFitResult = SkewGaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x=MidEdges)
 
         # Extracting optimal parameters for gaussian fit
-        ParamsResults = ExpGaussianFitResult.params
+        ParamsResults = SkewGaussianFitResult.params
         AmpFit = ParamsResults["amplitude"].value
         MeanFit, MeanError = ParamsResults["center"].value, ParamsResults["center"].stderr
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
+        SkewFit, SkewError = ParamsResults["gamma"].value, ParamsResults["gamma"].stderr
 
         # Create string sequence to show optimal mean and deviation values for the input data
-        labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(
-            MeanFit, MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit, SigmaError)
+        labelFit = Periods_Name[1]+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit, MeanError)
+        labelFit += "\n"
+        labelFit += r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit, SigmaError)
+        labelFit += "\n"
+        labelFit += r"$\gamma$={0:.3f}$\pm${1:.3f}".format(SkewFit, SkewError)
 
         # Create theoretical distribution given these optimal values
-        PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200)
-        GaussianFitCurve = GaussianDist(
-            PeriodLinSampling, AmpFit, MeanFit, SigmaFit)
+        PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200, endpoint=True)
+        GaussianFitCurve = SkewedGaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit, SkewFit)
 
         # Adding gaussian curve by using the optimal parameters
-        Plots[1][Index].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
+        Plots[1][Index][n].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
                              label=labelFit)
 
-    Plots[1][Index].set_title(IndexName[Index])
-    Plots[1][Index].legend(prop={"size": 8})
+    #Plots[1][Index].set_title(IndexName[Index])
+        Plots[1][Index][n].legend(prop={"size": 8})
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -401,8 +414,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName)
                                      usecols=(1, 2), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
-    RiseHours, SetHours = RiseHours[0:SizeData:
-                                    DivH_12], SetHours[0:SizeData:DivH_12]
+    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
 
     # Count number of events per month given the rise and set hours of the sun
     NumEventerPerMonth = []
@@ -410,8 +422,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName)
         Conds_month = Months_TIDs == month
         if Conds_month.any():
             Time_Conds_month = Time_TIDs[Conds_month]
-            NumDayNight_month = np.where(
-                (RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1]), 1, 0)
+            NumDayNight_month = np.where((RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1]), 1, 0)
             NumDay = (NumDayNight_month == 1).sum()
             NumNight = (NumDayNight_month == 0).sum()
 

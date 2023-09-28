@@ -41,27 +41,31 @@ def StartAnalysisForOnlyRegion(DataDict, Region, RegionsInfo, CMAP, NORM, PLOTS)
 
     print(f"Adding analysis results for {Region} region...", end="")
     # Add ocurrence map in local time and months in a figure for all regions
-    RegPlot.Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP, NORM, PLOTS["OCURR"],
-                                          Index, Nplots, Region)
+    RegPlot.Add_TimeMonthsHistogramToPlot(DataDict["OCURRENCE"], CMAP[0], NORM[0], PLOTS["OCURR"],
+                                          Index, Nplots, Region, "Ocurrence %")
+    
+    # Add ocurrence map in local time and months in a figure for all regions
+    RegPlot.Add_TimeMonthsHistogramToPlot(DataDict["POWER-MED"], CMAP[1], NORM[1], PLOTS["POWER-MED"],
+                                          Index, Nplots, Region, "TIDs' Power IQR")
 
     # Add period distribution in a figure for all regions
     RegPlot.Add_PeriodHistogramToPlot(DataDict["PERIOD"], DataDict["TIME"], DataDict["MONTH"],
                                       PLOTS["PERIOD"], Index, Region)
 
     # Add bars for total of events in day and night in a figure for all regions
-    RegPlot.Add_BarsFreq_Month(DataDict["TIME"], DataDict["MONTH"], PLOTS["DAY-NIGHT_BARS"], 
+    RegPlot.Add_BarsFreq_Month(DataDict["TIME"], DataDict["MONTH"], PLOTS["DAY-NIGHT-BARS"], 
                                Index, Nplots, Region)
 
     # Add analysis for time-amplitude data in a figure for all regions
-    RegPlot.Add_QuantityVarAnalysis(DataDict["AVE_AMP"], DataDict["TIME"], DataDict["MONTH"],
-                                   PLOTS["AMP_VAR"], Index, Region)
+    RegPlot.Add_QuantityVarAnalysis(DataDict["AVE-AMP"], DataDict["TIME"], DataDict["MONTH"],
+                                   PLOTS["AMP-VAR"], Index, Region)
     
     # Add analysis for time-amplitude data in a figure for all regions
     RegPlot.Add_QuantityVarAnalysis(DataDict["POWER"], DataDict["TIME"], DataDict["MONTH"],
-                                   PLOTS["POWER_VAR"], Index, Region)
+                                   PLOTS["POWER-VAR"], Index, Region)
 
     # Add scatter plots of amplitude-power data in a figure for all regions
-    RegPlot.Add_AmplitudePowerScatterPlot(DataDict["AVE_AMP"], DataDict["POWER"],
-                                          DataDict["TIME"], DataDict["MONTH"], PLOTS["AMP_POWER"],
+    RegPlot.Add_AmplitudePowerScatterPlot(DataDict["AVE-AMP"], DataDict["POWER"],
+                                          DataDict["TIME"], DataDict["MONTH"], PLOTS["AMP-POWER"],
                                           RegionsInfo[Region][1], Index, Region)
     print("finished!")
