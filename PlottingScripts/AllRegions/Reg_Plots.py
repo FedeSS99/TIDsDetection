@@ -359,7 +359,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
                                                          facecolor=Color, edgecolor="None", alpha=0.5)
 
         # Stablish the median of each bin as the X value for each density bar
-        MidEdges = Edges[:PeriodBins] + np.diff(Edges)
+        MidEdges = Edges[:PeriodBins] + 0.5*np.diff(Edges)
 
         # Getting mean, deviation and skewness of period data and max value of Ocurrence
         Mean, Deviation = Periods_Name[0].mean(), Periods_Name[0].std()
