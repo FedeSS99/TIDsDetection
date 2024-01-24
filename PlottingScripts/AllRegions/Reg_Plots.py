@@ -388,7 +388,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         labelFit += "\n"
         labelFit += r"$\gamma$={0:.3f}$\pm${1:.3f}".format(SkewFit, SkewError)
 
-        # Create theoretical distribution given these optimal values
+        # Create theoretical distribution given the optimal values
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200, endpoint=True)
         GaussianFitCurve = SkewedGaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit, SkewFit)
 
@@ -396,8 +396,8 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         Plots[1][Index][n].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
                              label=labelFit)
 
-    #Plots[1][Index].set_title(IndexName[Index])
         Plots[1][Index][n].legend(prop={"size": 8})
+
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 

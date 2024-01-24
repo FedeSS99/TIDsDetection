@@ -1,4 +1,5 @@
 from PlottingScripts.SaveFunctions import SaveAllRegionPlot
+from DataScripts.CommonDictionaries import IndexName
 from numpy import linspace, arange
 
 import warnings
@@ -35,15 +36,9 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
 
     # ------ APPLY FORMAT TO PERIOD DISTRIBUTION FIGURE ------
     PLOTS["PERIOD"][0].tight_layout()
-    #MinDistPer_Plots, MaxDistPer_Plots = [], []
-    #for p in range(Nplots):      
-    #    Y_MIN, Y_MAX = PLOTS["PERIOD"][1][p].get_ylim()
-    #    MinDistPer_Plots.append(Y_MIN)
-    #    MaxDistPer_Plots.append(Y_MAX)
-
-    #Y_MIN, Y_MAX = min(MinDistPer_Plots), max(MaxDistPer_Plots)
-    #for p in range(Nplots):
-    #    PLOTS["PERIOD"][1][p].set_ylim(Y_MIN, Y_MAX)
+    for Index in range(PLOTS["PERIOD"][1].shape[0]):
+        SubplotBox = PLOTS["PERIOD"][1][Index][0].get_position()
+        PLOTS["PERIOD"][0].text(0.525, SubplotBox.y0 + SubplotBox.height + 0.0125, IndexName[Index], ha="center", va="center")
 
     SaveAllRegionPlot("PeriodDistribution", PLOTS["PERIOD"][0])
 
