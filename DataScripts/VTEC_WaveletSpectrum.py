@@ -115,7 +115,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     print(f"-- Wavelet Spectrum Data of {plot_name} --")
     print(f"{s0=:f}\nInitial Time:{extent[0]:f}  Final Time:{extent[1]:f}")
     print(f"Minimum Period:{extent[2]:f}  Maximum Period:{extent[3]:f}")
-    print(f"Time Interval of Analysis: {extent[1]-extent[0]:.3f}\n")
+    print(f"Time Interval of Analysis: {extent[1]-extent[0]:.1f}\n")
 
     #Plotting VTEC data
     SubFigureSignalCMN.plot(time_data_CMN, vtec_data_CMN, "k-", linewidth=1)

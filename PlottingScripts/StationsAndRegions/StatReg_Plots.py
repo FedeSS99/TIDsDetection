@@ -156,8 +156,8 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
 
         # Create string sequence to show optimal mean and deviation values for the input data
-        labelFit = NamePlot+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(
-            MeanFit, MeanError)+"\n"+r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit, SigmaError)
+        labelFit = NamePlot+"\n"+r"$\mu$={0:.1f}$\pm${1:.1f}".format(
+            MeanFit, MeanError)+"\n"+r"$\sigma$={0:.1f}$\pm${1:.1f}".format(SigmaFit, SigmaError)
 
         # Create theoretical distribution given these optimal values
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200)

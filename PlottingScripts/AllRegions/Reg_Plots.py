@@ -186,7 +186,7 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
 
     # Add best fit of power law model for average amplitudes and power data
     Plots[1][Index].plot(AverageAmplitude, Best_AmpPowerFit, "--k")
-    Plots[1][Index].text(0.05, 0.95, f"A = {Best_A:.3f}\nExponent = {Best_k:.3f}\n"+r"$R^{{2}}$ = {0:.3f}".format(R2_Score),
+    Plots[1][Index].text(0.05, 0.95, f"A = {Best_A:.1f}\nExponent = {Best_k:.1f}\n"+r"$R^{{2}}$ = {0:.1f}".format(R2_Score),
                          horizontalalignment="left", verticalalignment="top", fontsize=9,
                          transform=Plots[1][Index].transAxes)
 
@@ -382,11 +382,11 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         SkewFit, SkewError = ParamsResults["gamma"].value, ParamsResults["gamma"].stderr
 
         # Create string sequence to show optimal mean and deviation values for the input data
-        labelFit = Periods_Name[1]+"\n"+r"$\mu$={0:.3f}$\pm${1:.3f}".format(MeanFit, MeanError)
+        labelFit = Periods_Name[1]+"\n"+r"$\mu$={0:.1f}$\pm${1:.1f}".format(MeanFit, MeanError)
         labelFit += "\n"
-        labelFit += r"$\sigma$={0:.3f}$\pm${1:.3f}".format(SigmaFit, SigmaError)
+        labelFit += r"$\sigma$={0:.1f}$\pm${1:.1f}".format(SigmaFit, SigmaError)
         labelFit += "\n"
-        labelFit += r"$\gamma$={0:.3f}$\pm${1:.3f}".format(SkewFit, SkewError)
+        labelFit += r"$\gamma$={0:.1f}$\pm${1:.1f}".format(SkewFit, SkewError)
 
         # Create theoretical distribution given the optimal values
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200, endpoint=True)
