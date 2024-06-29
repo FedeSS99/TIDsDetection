@@ -82,7 +82,13 @@ def select_file(window):
             OutTIDs.write("#TimeTID PeriodTID PowerTID InitTime FinalTime InitPeriod FinalPeriod minSignal maxSignal\n")
             CMN_WaveletAnalysis(TimeFilter_cmn, VtecFilter_cmn, dj, plot_name, OutTIDs)
 
-        print(f"\nSaved file {OutFileName} at {SAVEFILE_PATH}")
+            # Get number of events in the output analysis file
+            NumEventsInFile = len(OutTIDs.readlines()) - 2
+            
+        if NumEventsInFile:
+            os.remove(f"{SAVEFILE_PATH}/{OutFileName}")
+        else:
+            print(f"\nSaved file {OutFileName} at {SAVEFILE_PATH}")
 
 
 if __name__=="__main__":
