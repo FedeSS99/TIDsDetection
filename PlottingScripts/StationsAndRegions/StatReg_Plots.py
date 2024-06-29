@@ -71,7 +71,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, RegionName
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     NumMonthTerminator = np.linspace(0.0, 12.0, RiseHours.size)
     Plots[1].plot(RiseHours, NumMonthTerminator, "--k", linewidth=1.0)
     Plots[1].plot(SetHours, NumMonthTerminator, "--k", linewidth=1.0)
@@ -95,7 +95,7 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, RegionName,
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:
@@ -188,7 +188,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, RegionName, StationName, S
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:
