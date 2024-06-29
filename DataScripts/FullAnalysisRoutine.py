@@ -1,6 +1,7 @@
 from os import mkdir
 from os.path import isdir
 import numpy as np
+from scipy.stats import iqr
 from matplotlib import rcParams, use
 from matplotlib.pyplot import close
 
@@ -40,6 +41,9 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Date = Line.split()[0]
             if Date not in StormDays:
                 StormDays.append(Line.split()[0])
+
+    if not isdir("../OutliersData/"):
+        mkdir("../OutliersData/")
 
     # Create RESULTS list to save data of time, period and power from TIDs
     # saved with VTEC_MainRoutine_IndividualCMN.py
@@ -84,6 +88,7 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Station_MaxAmps = []
             Station_MonthArray = []
             Station_YearArray = []
+            Station_DatesTID = []
 
             # Extract DataPaths for each Station and also date and month data
             TIDs_DataPaths = DICT_REGION_STATIONS[Region]["DataPaths"][Station]
@@ -101,6 +106,7 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
                         ActiveDays += 1
                         Station_MonthArray.append(SizeResults*[Month])
                         Station_YearArray.append(SizeResults*[Year])
+                        Station_DatesTID += SizeResults*[Date]
 
                         # Apply timezone to get correct Local Time Hours
                         Results["TIME"] += REGIONS_ATRIBS[NameRegion][3]
@@ -122,6 +128,15 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
             Station_PowerTID = np.concatenate(tuple(Station_PowerTID))
             Station_MinAmps = np.concatenate(tuple(Station_MinAmps))
             Station_MaxAmps = np.concatenate(tuple(Station_MaxAmps))
+            
+            # Find events that could be considered outliers per station given the saved periods
+            PeriodIQR = iqr(Station_PeriodTID)
+            PeriodQ1, PeriodQ3 = np.quantile(Station_PeriodTID, 0.25), np.quantile(Station_PeriodTID, 0.75)
+            PeriodValues_Outliers = np.argwhere((Station_PeriodTID < PeriodQ1 - 1.5*PeriodIQR) | (Station_PeriodTID > PeriodQ3 + 1.5*PeriodIQR))[:,0]
+            
+            with open("../OutliersData/" + Station + ".csv", "w") as outlier_output:
+                for index_outlier in PeriodValues_Outliers:
+                    outlier_output.write(", ".join([Station_DatesTID[index_outlier], str(Station_TimeTID[index_outlier]), str(60.0*Station_PeriodTID[index_outlier])]) + "\n")
 
             # Obtain the ocurrence map for the TIDs in this same Station
             StationOcurrenceMap = GetOcurrenceArray(Station_TimeTID, Station_MonthArray)
