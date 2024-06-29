@@ -4,13 +4,14 @@ from math import log2, pi, sqrt
 import numpy as np
 import scipy.signal as signal
 
-def GetCOIcurveToPeriods(coi, dt, N):
+def GetCOIcurveToPeriods(coi:float, dt:float, N:int) -> np.ndarray:
     #Generate cone of influence given the time sampling and
     #number of data points (Time, dTEC)
     coi = coi * dt * (N / 2 - np.abs(np.arange(0, N) - (N - 1) / 2))
     return coi
 
-def ObtainDataFromRegion(Spectrum, Signal, TID_Region, Time, Period):
+def ObtainDataFromRegion(Spectrum: np.ndarray, Signal:np.ndarray, 
+                         TID_Region:tuple, Time:np.ndarray, Period:np.ndarray):
     #Obtain data from the power spectrum given the pair of
     #coordinates in TID_Region and return values like time, period
     #and power from Time, Period and Spectrum
@@ -44,7 +45,7 @@ def ObtainDataFromRegion(Spectrum, Signal, TID_Region, Time, Period):
 
     return TimeTID, PeriodTID, maxPowerTID, minTime, maxTime, minPeriod, maxPeriod, minSig, maxSig
 
-def ObtainWidthAndHeight(Region):
+def ObtainWidthAndHeight(Region:tuple) -> tuple[float, float]:
     #Obtaining region dimensions by the following scheme:
     #           |---------------------------(R[1][0],R[1][1])
     #           |                           |
@@ -54,7 +55,7 @@ def ObtainWidthAndHeight(Region):
 
     return Width, Height
 
-def CheckIntersection(Region1, Region2):
+def CheckIntersection(Region1:tuple, Region2:tuple) -> bool:
     #Check if two selected regions on the power spectrums from the
     #same satellite data intersect
     Region1Width, Region1Height = ObtainWidthAndHeight(Region1)
@@ -69,10 +70,10 @@ def CheckIntersection(Region1, Region2):
 
     return CondX1 and CondX2 and CondY1 and CondY2
 
-def ObtainMaxMinValuesForMSTIDs(Spectrum, Periods):
+def ObtainMaxMinValuesForMSTIDs(Spectrum:np.ndarray, Periods:np.ndarray):
     #Function to filter the total power spectrum to only watch
     #data between periods of 15 minutes and 1 hour (MSTIDs)
-    MaskPeriods = np.argwhere((15.0/60.0 <= Periods) & (Periods <= 1.0))
+    MaskPeriods = np.argwhere((0.25 <= Periods) & (Periods <= 1.0))
     MaskPeriodsMin,MaskPeriodsMax = MaskPeriods.min(), MaskPeriods.max()+1
 
     SpectrumMSTIDs = Spectrum[MaskPeriodsMin:MaskPeriodsMax,:]
@@ -191,6 +192,18 @@ def WriteNonRepeatedTIDs(DataEvents, RepeatedEvents, NumEvents, OutFILE):
             minSig, maxSig = DataEvents[i][7:] 
             dataString = f"{TimeTID:.6f} {PeriodTID:.6f} {maxPowerTID:.6f} {minTime:.6f} {maxTime:.6f} {minPeriod:.6f} {maxPeriod:.6f} {minSig:.6f} {maxSig:.6f}\n"
             OutFILE.write(dataString)
+
+
+def SaveNonRepeatedTIDs(DataEvents, RepeatedEvents, NumEvents, TIDsOutput):
+    RepeatedEvents = set(RepeatedEvents)
+    for i in range(NumEvents):
+        if i not in RepeatedEvents:
+            TimeTID, PeriodTID, maxPowerTID = DataEvents[i][:3]
+            minTime, maxTime = DataEvents[i][3:5]
+            minPeriod, maxPeriod = DataEvents[i][5:7]
+            minSig, maxSig = DataEvents[i][7:]
+            TIDsOutput = (TimeTID, PeriodTID, maxPowerTID, minTime, maxTime, minPeriod, maxPeriod, minSig, maxSig)
+            TIDsOutput.append(TIDsOutput)
 
 
 def CMN_WaveletAnalysis(time_data_CMN, vtec_data_CMN, dj, StationDate, fileOutResults):
