@@ -1,11 +1,11 @@
 from matplotlib.pyplot import subplots, colorbar
 from matplotlib.ticker import LogFormatterSciNotation
 
-from scipy.stats import iqr, skew
-from scipy.special import erf
+from scipy.stats import iqr, skew, f, t, ttest_ind, shapiro, gamma, probplot
+from scipy.optimize import root_scalar
 from scipy.stats.mstats import mquantiles
 import numpy as np
-from lmfit.models import SkewedGaussianModel, PowerLawModel
+from lmfit.models import GaussianModel, PowerLawModel
 
 from json import load
 
@@ -129,7 +129,7 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:
@@ -208,7 +208,7 @@ def AddBarPlot(Plots, Row, Col, BarCenter, Height, Width, Color):
 def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:
@@ -298,7 +298,7 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     NumMonthTerminator = np.linspace(0.0, 12.0, RiseHours.size)
     Plots[1][Index].plot(RiseHours, NumMonthTerminator, "--k", linewidth=1.0)
     Plots[1][Index].plot(SetHours, NumMonthTerminator, "--k", linewidth=1.0)
@@ -306,20 +306,129 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
     Plots[1][Index].set_title(IndexName[Index])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
+
+def ComparisonOfDayNightVarianceMean(DayTIDsPeriods, NightTIDsPeriods, RegionName):
+    large_std = max(DayTIDsPeriods.std(), NightTIDsPeriods.std())
+    small_std = min(DayTIDsPeriods.std(), NightTIDsPeriods.std())
+    print(large_std, small_std)
+
+    if large_std == DayTIDsPeriods.std():
+        N1 = DayTIDsPeriods.size
+        N2 = NightTIDsPeriods.size
+    else:
+        N1 = NightTIDsPeriods.size
+        N2 = DayTIDsPeriods.size
+
+    F = (large_std/small_std) ** 2.0
+    alpha = 0.05
+    F_crit_lower_value = f.ppf(0.5*alpha, N1 - 1, N2 - 1)
+    F_crit_upper_value = f.ppf(1 - 0.5*alpha, N1 - 1, N2 - 1)
+
+    print("\nF-test for " + RegionName)
+    print(f"{alpha=}")
+    print(f"F statistic= {F:.5f}")
+    print(f"F lower critic value= {F_crit_lower_value:.5f}")
+    print(f"F upper critic value= {F_crit_upper_value:.5f}")
+
+    if F < F_crit_lower_value or F > F_crit_upper_value:
+        print("Reject the F-test null hypothesis. Day and Night variances are significantly different")
+        ttest_results = ttest_ind(DayTIDsPeriods, NightTIDsPeriods, equal_var=False)
+    else:
+        print("Don't reject the F-test null hypothesis. Day and Night variances are basically the same")
+        ttest_results = ttest_ind(DayTIDsPeriods, NightTIDsPeriods, equal_var=True)
+    T_crit_value = t.ppf(1.0 - 0.5*alpha, ttest_results.df)
+
+    print("T-test for " + RegionName)
+    print(f"T statistic= {ttest_results.statistic:.5f}")
+    print(f"T critic value= {T_crit_value:.5f}")                                
+    if abs(ttest_results.statistic) > T_crit_value:
+        print("Reject the T-test null hypothesis. Day and Night means are significantly different")
+    else:
+        print("Don't reject the T-test null hypothesis. Day and Night means are basically the same")
+    print("\n")
+
+# Compute S-W for a given Gamma shape parameter and sample size
+def ComputeShapiroWilk(gshape=20, n=50):
+    data = gamma.ppf((np.arange(1, n + 1) / (n + 1)), a=gshape, scale=1)
+    stat, p_value = shapiro(data)
+    return stat, p_value
+
+# Find shape parameter that corresponds to a particular p-value
+def FindShape(n, alpha):
+    def objective(gshape):
+        _, p_value = ComputeShapiroWilk(gshape, n)
+        return p_value - alpha
+    
+    result = root_scalar(objective, bracket=[0.01, 100], method='brentq')
+    return result.root
+
+# Find W statistic for given n and alpha
+def FindCriticalW(n, alpha):
+    s = FindShape(n, alpha)
+    stat, _ = ComputeShapiroWilk(s, n)
+    return stat
+
+def CheckNormality(DayTIDsPeriods, NightTIDsPeriods, RegionName):
+    alpha = 0.05
+    day_normality = shapiro(DayTIDsPeriods)
+    CriticalWDay = FindCriticalW(DayTIDsPeriods.size, alpha)
+    night_normality = shapiro(NightTIDsPeriods)
+    CriticalWNight = FindCriticalW(NightTIDsPeriods.size, alpha)
+
+    print("\nShapiro-Wilk test for " + RegionName)
+    print(f"{alpha=}")
+    print(f"Day statistic= {day_normality[0]:.5f}")
+    print(f"Day critical statistic= {CriticalWDay:.5f}")
+    print(f"Day p-value= {day_normality[1]:.5f}")
+    print(f"Night statistic= {night_normality[0]:.5f}")
+    print(f"Night critical statistic= {CriticalWNight:.5f}")
+    print(f"Night p-value= {night_normality[1]:.5f}")
+    if day_normality[0] > CriticalWDay:
+        print("Don't reject Shapiro null hypothesis. Day TIDs period distribute as normal")
+    else:
+        print("Reject Shapiro null hypothesis. Day TIDs period do not distribute as normal")
+
+    if night_normality[0] > CriticalWNight:
+        print("Don't reject Shapiro null hypothesis. Night TIDs period distribute as normal")
+    else:
+        print("Reject Shapiro null hypothesis. Night TIDs period do not distribute as normal")
+
+
+    FigNormality, SubplotsNorm = subplots(num = 8, nrows = 1, ncols = 2, sharey = "all")
+
+    rDay = probplot(DayTIDsPeriods, plot = SubplotsNorm[0])[1][2]
+    rNight = probplot(NightTIDsPeriods, plot = SubplotsNorm[1])[1][2]
+
+    bbox_props = dict(boxstyle='round', facecolor='white', alpha=1.0)
+
+    FigNormality.suptitle(RegionName)
+    SubplotsNorm[0].set_title("Day")
+    SubplotsNorm[0].grid()
+    SubplotsNorm[1].set_title("Night")
+    SubplotsNorm[1].grid()
+    SubplotsNorm[1].set_ylabel("")
+
+    SubplotsNorm[0].text(0.2, 0.8, r'$R^{{2}}$={0:.3f}'.format(rDay**2.0), horizontalalignment='center',
+    verticalalignment='center', transform=SubplotsNorm[0].transAxes, bbox = bbox_props)
+    SubplotsNorm[1].text(0.2, 0.8, r'$R^{{2}}$={0:.3f}'.format(rNight**2.0), horizontalalignment='center',
+    verticalalignment='center', transform=SubplotsNorm[1].transAxes, bbox = bbox_props)
+
+    FigNormality.tight_layout()
+    FigNormality.savefig(f"../Results/{RegionName}/QQplots_{RegionName}.png")
+    FigNormality.clear()
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 # Same probability density function as used in lmfit module
 # check GaussianModel in https://lmfit.github.io/lmfit-py/builtin_models.html
-
-
-def SkewedGaussianDist(x, A, mu, sigma, gamma): 
-    return (A/(sigma*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sigma)**2.0)*(1 + erf(gamma*(x - mu)/(sigma*(2**0.5))))
-
+def GaussianDist(x, A, mu, sigma): 
+    return (A/(sigma*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sigma)**2.0)
 
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     Period = 60.0*Period
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:
@@ -341,15 +450,13 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
+    CheckNormality(DayTIDsPeriods, NightTIDsPeriods, RegionName)
+    ComparisonOfDayNightVarianceMean(DayTIDsPeriods, NightTIDsPeriods, RegionName)
+
     for n, Periods_Name in enumerate(zip([DayTIDsPeriods, NightTIDsPeriods], ["Day", "Night"])):
         # Setting number of bins by using the Freedman-Diaconis rule
-        #IQR = iqr(Periods_Name[0])
-        #h = 2.0*IQR*(Periods_Name[0].size**(-1/3))
         PeriodRange = (Periods_Name[0].min(), Periods_Name[0].max())
-        #PeriodBins = int((PeriodRange[1]-PeriodRange[0])/h)
-        #PeriodBins = int(np.ceil(np.log2(Periods_Name[0].size)) + 1)
-        size = Periods_Name[0].size
-        PeriodBins = 1 + int(np.log2(size) + np.log2(1 + abs(skew(Periods_Name[0]))/np.sqrt(6*(size-2)/((size+1)*(size+3)))))
+        PeriodBins = int(np.ceil(np.log2(Periods_Name[0].size)) + 1)
 
         # Extract color
         Color = DayNightColors[Periods_Name[1]]
@@ -361,46 +468,48 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         # Stablish the median of each bin as the X value for each density bar
         MidEdges = Edges[:PeriodBins] + 0.5*np.diff(Edges)
 
+        # Filter events that could be considered outliers given the saved periods
+        PeriodIQR = iqr(Periods_Name[0])
+        PeriodQ1, PeriodQ3 = np.quantile(Periods_Name[0], 0.25), np.quantile(Periods_Name[0], 0.75)
+        PeriodValues_Outliers = np.argwhere((Periods_Name[0] < PeriodQ1 - 1.5*PeriodIQR) | (Periods_Name[0] > PeriodQ3 + 1.5*PeriodIQR))[:,0]
+
         # Getting mean, deviation and skewness of period data and max value of Ocurrence
         Mean, Deviation = Periods_Name[0].mean(), Periods_Name[0].std()
         MaxValue = PeriodHistogram.max()
         Skewness = skew(Periods_Name[0])
 
-        # Declaring an Exponential Gaussian Model as the proposed theoretical distribution
-        SkewGaussianToFit = SkewedGaussianModel()
+        # Declaring an Gaussian Model as the proposed theoretical distribution
+        GaussianToFit = GaussianModel()
         # Setting parameters
-        ParametersExpGaussian = SkewGaussianToFit.make_params(amplitude=MaxValue, center=Mean, 
+        ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue, center=Mean, 
                                                           sigma=Deviation, gamma=Skewness)
         # Calculate best fit
-        SkewGaussianFitResult = SkewGaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x=MidEdges)
+        GaussianFitResult = GaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x=MidEdges)
 
         # Extracting optimal parameters for gaussian fit
-        ParamsResults = SkewGaussianFitResult.params
+        ParamsResults = GaussianFitResult.params
         AmpFit = ParamsResults["amplitude"].value
         MeanFit, MeanError = ParamsResults["center"].value, ParamsResults["center"].stderr
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
-        SkewFit, SkewError = ParamsResults["gamma"].value, ParamsResults["gamma"].stderr
 
         # Create string sequence to show optimal mean and deviation values for the input data
         labelFit = Periods_Name[1]+"\n"+r"$\mu$={0:.1f}$\pm${1:.1f}".format(MeanFit, MeanError)
         labelFit += "\n"
         labelFit += r"$\sigma$={0:.1f}$\pm${1:.1f}".format(SigmaFit, SigmaError)
-        labelFit += "\n"
-        labelFit += r"$\gamma$={0:.1f}$\pm${1:.1f}".format(SkewFit, SkewError)
 
         # Create theoretical distribution given the optimal values
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200, endpoint=True)
-        GaussianFitCurve = SkewedGaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit, SkewFit)
+        GaussianFitCurve = GaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit)
 
         # Adding gaussian curve by using the optimal parameters
         Plots[1][Index][n].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
                              label=labelFit)
+        # Plot outliers as dots in x-axis
+        Plots[1][Index][n].scatter(Periods_Name[0][PeriodValues_Outliers], PeriodValues_Outliers.size*[0.0025], c = "black", s = 4.0, marker = "o")  
 
         Plots[1][Index][n].legend(prop={"size": 8})
 
-
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName):
     # Setting y ticks with months names
@@ -411,7 +520,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName)
 
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
-                                     usecols=(1, 2), unpack=True, skiprows=1)
+                                     usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
     RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
