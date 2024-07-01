@@ -502,7 +502,6 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
         # Create theoretical distribution given the optimal values
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200, endpoint=True)
-        print(AmpFit)
         GaussianFitCurve = GaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit)
 
         # Adding gaussian kde curve
