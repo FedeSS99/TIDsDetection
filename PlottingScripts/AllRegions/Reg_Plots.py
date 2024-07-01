@@ -1,7 +1,7 @@
 from matplotlib.pyplot import subplots, colorbar
 from matplotlib.ticker import LogFormatterSciNotation
 
-from scipy.stats import iqr, skew, f, t, ttest_ind, shapiro, gamma, probplot
+from scipy.stats import iqr, skew, f, t, ttest_ind, shapiro, gamma, probplot, gaussian_kde
 from scipy.optimize import root_scalar
 from scipy.stats.mstats import mquantiles
 import numpy as np
@@ -308,9 +308,8 @@ def Add_TimeMonthsHistogramToPlot(HistogramMonths, CMAP, NORM, Plots, Index, Npl
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 def ComparisonOfDayNightVarianceMean(DayTIDsPeriods, NightTIDsPeriods, RegionName):
-    large_std = max(DayTIDsPeriods.std(), NightTIDsPeriods.std())
-    small_std = min(DayTIDsPeriods.std(), NightTIDsPeriods.std())
-    print(large_std, small_std)
+    large_std = max(DayTIDsPeriods.std(ddof = 1), NightTIDsPeriods.std(ddof = 1))
+    small_std = min(DayTIDsPeriods.std(ddof = 1), NightTIDsPeriods.std(ddof = 1))
 
     if large_std == DayTIDsPeriods.std():
         N1 = DayTIDsPeriods.size
@@ -454,37 +453,41 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
     ComparisonOfDayNightVarianceMean(DayTIDsPeriods, NightTIDsPeriods, RegionName)
 
     for n, Periods_Name in enumerate(zip([DayTIDsPeriods, NightTIDsPeriods], ["Day", "Night"])):
-        # Setting number of bins by using the Freedman-Diaconis rule
-        PeriodRange = (Periods_Name[0].min(), Periods_Name[0].max())
-        PeriodBins = int(np.ceil(np.log2(Periods_Name[0].size)) + 1)
-
+        # Extract the sample of periods
+        SamplePeriods = np.copy(Periods_Name[0])
+        SamplePeriods.sort()
         # Extract color
         Color = DayNightColors[Periods_Name[1]]
 
-        # Adding density histogram of period data
-        PeriodHistogram, Edges, _ = Plots[1][Index][n].hist(Periods_Name[0], bins=PeriodBins, range=PeriodRange, density=True,
-                                                         facecolor=Color, edgecolor="None", alpha=0.5)
-
-        # Stablish the median of each bin as the X value for each density bar
-        MidEdges = Edges[:PeriodBins] + 0.5*np.diff(Edges)
-
         # Filter events that could be considered outliers given the saved periods
-        PeriodIQR = iqr(Periods_Name[0])
-        PeriodQ1, PeriodQ3 = np.quantile(Periods_Name[0], 0.25), np.quantile(Periods_Name[0], 0.75)
-        PeriodValues_Outliers = np.argwhere((Periods_Name[0] < PeriodQ1 - 1.5*PeriodIQR) | (Periods_Name[0] > PeriodQ3 + 1.5*PeriodIQR))[:,0]
+        PeriodIQR = iqr(SamplePeriods)
+        PeriodQ1, PeriodQ3 = np.quantile(SamplePeriods, 0.25), np.quantile(SamplePeriods, 0.75)
+        PeriodValues_Outliers = np.argwhere((SamplePeriods < PeriodQ1 - 1.5*PeriodIQR) | (SamplePeriods > PeriodQ3 + 1.5*PeriodIQR))[:,0]
 
-        # Getting mean, deviation and skewness of period data and max value of Ocurrence
-        Mean, Deviation = Periods_Name[0].mean(), Periods_Name[0].std()
-        MaxValue = PeriodHistogram.max()
-        Skewness = skew(Periods_Name[0])
+        PeriodRange = (SamplePeriods.min(), SamplePeriods.max())
+        # Setting number of bins by using the Scotts's rule
+        BinWidth = 3.5 * SamplePeriods.std(ddof = 1) / (SamplePeriods.size ** (1/3))
+        PeriodBins = int( (PeriodRange[1] - PeriodRange[0])/BinWidth )
+
+        # Adding density histogram of period data
+        Plots[1][Index][n].hist(SamplePeriods, bins=PeriodBins, range=PeriodRange, density=True,
+                                facecolor=Color, edgecolor="None", alpha=0.5)[0]
+
+        # Declare a Gaussian KDE to find a numerical distribution
+        GaussianKDE = gaussian_kde(SamplePeriods, bw_method = "scott")
+        GaussianKDE_eval = GaussianKDE.evaluate(SamplePeriods)
 
         # Declaring an Gaussian Model as the proposed theoretical distribution
         GaussianToFit = GaussianModel()
+        # Getting mean, deviation and skewness of period data and max value of Ocurrence
+        Mean, Deviation = SamplePeriods.mean(), SamplePeriods.std(ddof = 1)
+        MaxValue = GaussianKDE_eval.max()
+        Skewness = skew(SamplePeriods)
         # Setting parameters
         ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue, center=Mean, 
                                                           sigma=Deviation, gamma=Skewness)
         # Calculate best fit
-        GaussianFitResult = GaussianToFit.fit(PeriodHistogram, ParametersExpGaussian, x=MidEdges)
+        GaussianFitResult = GaussianToFit.fit(GaussianKDE_eval, ParametersExpGaussian, x = SamplePeriods)
 
         # Extracting optimal parameters for gaussian fit
         ParamsResults = GaussianFitResult.params
@@ -493,19 +496,27 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         SigmaFit, SigmaError = ParamsResults["sigma"].value, ParamsResults["sigma"].stderr
 
         # Create string sequence to show optimal mean and deviation values for the input data
-        labelFit = Periods_Name[1]+"\n"+r"$\mu$={0:.1f}$\pm${1:.1f}".format(MeanFit, MeanError)
+        labelFit = Periods_Name[1]+" fit"+"\n"+r"$\mu$={0:.1f}$\pm${1:.2f}".format(MeanFit, MeanError)
         labelFit += "\n"
-        labelFit += r"$\sigma$={0:.1f}$\pm${1:.1f}".format(SigmaFit, SigmaError)
+        labelFit += r"$\sigma$={0:.1f}$\pm${1:.2f}".format(SigmaFit, SigmaError)
 
         # Create theoretical distribution given the optimal values
         PeriodLinSampling = np.linspace(PeriodRange[0], 60.0, 200, endpoint=True)
+        print(AmpFit)
         GaussianFitCurve = GaussianDist(PeriodLinSampling, AmpFit, MeanFit, SigmaFit)
 
+        # Adding gaussian kde curve
+        #Plots[1][Index][n].plot(SamplePeriods, GaussianKDE.evaluate(SamplePeriods), 
+        #                        linestyle="--", color="black", 
+        #                        linewidth=1.5, alpha = 0.5,
+        #                        label=f"KDE\nh={GaussianKDE.factor:.3f}")
         # Adding gaussian curve by using the optimal parameters
         Plots[1][Index][n].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
                              label=labelFit)
+
         # Plot outliers as dots in x-axis
-        Plots[1][Index][n].scatter(Periods_Name[0][PeriodValues_Outliers], PeriodValues_Outliers.size*[0.0025], c = "black", s = 4.0, marker = "o")  
+        Plots[1][Index][n].scatter(SamplePeriods[PeriodValues_Outliers], PeriodValues_Outliers.size*[0.0025], 
+                                   c = "black", s = 4.0, marker = "o")  
 
         Plots[1][Index][n].legend(prop={"size": 8})
 
