@@ -21,16 +21,11 @@ def CreateFiguresForAllRegions(Nplots):
         num=1, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
 
     # Add Power Variability x-label and y-labels
-    PowerVarWindSpeedSub = []
     for i in range(Nplots):
         PowerVarSub[i][0].set_ylabel("TID Power (dTEC²)", fontsize=8)
         PowerVarSub[i][1].set_ylabel("IQR-Power (dTEC²)", fontsize=8)
-        PowerVarWindSpeedSub.append(
-            [PowerVarSub[i][n].twinx() for n in range(1, 3)])
-
-        PowerVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)", fontsize=8)
     PowerVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
-
+    
     # ---- CREATE MAIN FIGURE FOR AMPLITUDE-POWER ----
     FigureAmplitudePower, AmpPowSub = subplots(
         num=2, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 6))
@@ -40,26 +35,21 @@ def CreateFiguresForAllRegions(Nplots):
 
     AmpPowSub[Nplots-1].set_xlabel("Average absolute amplitude (dTEC)")
 
-    # ---- CREATE MAIN FIGURE FOR AMPLITUDE VARIABILITY ----
+    # ---- CREATE MAIN FIGURE FOR AMPLITUDE VARIABILITY ----        
     FigureAmplitudeVar, AmpVarSub = subplots(
         num=3, nrows=Nplots, ncols=3, sharex="col", figsize=(8, 6))
 
     # Add Amplitude Variability x-label and y-labels
-    AmpVarWindSpeedSub = []
     for i in range(Nplots):
-        AmpVarSub[i][0].set_ylabel("Amplitude (dTEC)", fontsize=8)
-        AmpVarSub[i][1].set_ylabel("IQR-AMA (dTEC)", fontsize=8)
-        AmpVarWindSpeedSub.append([AmpVarSub[i][n].twinx()
-                                  for n in range(1, 3)])
-
-        AmpVarWindSpeedSub[i][1].set_ylabel("Wind speed (m/s)", fontsize=8)
+        AmpVarSub[i][0].set_ylabel("AMA (dTEC)", fontsize=8)
+        AmpVarSub[i][1].set_ylabel("AMA (dTEC)", fontsize=8)
     AmpVarSub[Nplots-1][0].set_xlabel("Local Time (Hours)")
 
     # ---- CREATE MAIN FIGURE FOR OCURRENCE ----
     FigureOcurrHist, OcurrHistSub = subplots(
         num=4, nrows=Nplots, ncols=1, sharex=True, figsize=(6, 8))
     # Add Ocurrence x-label
-    OcurrHistSub[Nplots-1].set_xlabel("Local Time (Hours)")
+    OcurrHistSub[Nplots-1].set_xlabel("Local Time (Hours)")             
 
     # ---- CREATE MAIN FIGURE FOR PERIOD DISTRIBUTION ----
     FigurePeriodDists, PeriodDistSub = subplots(
@@ -83,9 +73,9 @@ def CreateFiguresForAllRegions(Nplots):
     # Add Ocurrence x-label
     PowerHistSub[Nplots-1].set_xlabel("Local Time (Hours)")
 
-    return {"POWER-VAR": (FigurePowerVar, PowerVarSub, PowerVarWindSpeedSub),
+    return {"POWER-VAR": (FigurePowerVar, PowerVarSub),
             "AMP-POWER": (FigureAmplitudePower, AmpPowSub),
-            "AMP-VAR": (FigureAmplitudeVar, AmpVarSub, AmpVarWindSpeedSub),
+            "AMP-VAR": (FigureAmplitudeVar, AmpVarSub),
             "OCURR": (FigureOcurrHist, OcurrHistSub),
             "PERIOD": (FigurePeriodDists, PeriodDistSub),
             "DAY-NIGHT-BARS": (FigureMonthBars, MonthBarsSub),
@@ -199,12 +189,6 @@ def Add_AmplitudePowerScatterPlot(AverageAmplitude, Power, Time, Months, Plots, 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-def AddBarPlot(Plots, Row, Col, BarCenter, Height, Width, Color):
-    Plots[1][Row][Col].bar(BarCenter, Height, width=Width,
-                           color=Color, edgecolor="black")
-
-
 def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     # Extracting rise and set hours for each region
     RiseHours, SetHours = np.loadtxt(TerminatorsDict[RegionName], dtype=np.float64,
@@ -220,8 +204,7 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
     Median = len(Hours)*[0.0]
     HigherQ = len(Hours)*[0.0]
     for n, Hour in enumerate(Hours):
-        MaskTime = np.where((Hour <= Time_TIDs) & (
-            Time_TIDs <= Hour+2), True, False)
+        MaskTime = np.where((Hour <= Time_TIDs) & (Time_TIDs <= Hour+2), True, False)
         AverageQuantity = Quantity[MaskTime]
         TwoHourQuantityQuantiles = mquantiles(AverageQuantity)
 
@@ -231,54 +214,57 @@ def Add_QuantityVarAnalysis(Quantity, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
     Plots[1][Index][0].fill_between(Hours+1, HigherQ, LowerQ, alpha=0.5, linewidth=0,
                                     color="black")
-    Plots[1][Index][0].plot(Hours+1, Median, color="black", linewidth=1)
+    Plots[1][Index][0].plot(Hours+1, LowerQ, color="black", linewidth=1, linestyle = "--")
+    Plots[1][Index][0].plot(Hours+1, Median, color="black", linewidth=1, linestyle = "-")
+    Plots[1][Index][0].plot(Hours+1, HigherQ, color="black", linewidth=1, linestyle = "--")
 
     # START ANALYSIS BY DATE DIVIDED IN DAY AND NIGHT ACTIVITY
+    Months = np.array(list(range(1, 13, 1)))
+    DayLowerQ = len(Months)*[0.0]
+    DayMedian = len(Months)*[0.0]
+    DayHigherQ = len(Months)*[0.0]          
+    NightLowerQ = len(Months)*[0.0]
+    NightMedian = len(Months)*[0.0]
+    NightHigherQ = len(Months)*[0.0]
 
     for month in range(1, 13):
         Conds_month = (Months_TIDs == month)
         if Conds_month.any():
+            month_index = month - 1
             Time_Conds_month = Time_TIDs[Conds_month]
-            Quantity_Conds_month = Quantity[Conds_month]
+            Quantity_Conds_month = Quantity[Conds_month]        
 
             # Filter for daytime events
-            MaskDay = (
-                RiseHours[month-1] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month-1])
+            MaskDay = (RiseHours[month_index] <= Time_Conds_month) & (Time_Conds_month <= SetHours[month_index])
             Quantity_Day = Quantity_Conds_month[MaskDay]
-            DispersionDay = iqr(Quantity_Day)
+            MonthDayQuantiles = mquantiles(Quantity_Day)
+
+            DayLowerQ[month_index] = MonthDayQuantiles[0]
+            DayMedian[month_index] = MonthDayQuantiles[1]
+            DayHigherQ[month_index] = MonthDayQuantiles[2]
 
             # Filter for nighttime events
-            MaskNight = (
-                Time_Conds_month < RiseHours[month-1]) | (SetHours[month-1] < Time_Conds_month)
+            MaskNight = (Time_Conds_month < RiseHours[month_index]) | (SetHours[month_index] < Time_Conds_month)
             Quantity_Night = Quantity_Conds_month[MaskNight]
-            DispersionNight = iqr(Quantity_Night)
+            MonthNighQuantiles = mquantiles(Quantity_Night)
 
-            AddBarPlot(Plots, Index, 1, month+0.5, DispersionDay, 0.5, "red")
-            AddBarPlot(Plots, Index, 2, month+0.5,
-                       DispersionNight, 0.5, "blue")
+            NightLowerQ[month_index] = MonthNighQuantiles[0]
+            NightMedian[month_index] = MonthNighQuantiles[1]
+            NightHigherQ[month_index] = MonthNighQuantiles[2]
 
-    # Extract wind dispersion data0
-    with open("./WindSpeedData/VelocityMonthDispersion.json", "r") as WS_JSON:
-        WindSpeedData = load(WS_JSON)
+    Plots[1][Index][1].fill_between(Months, DayHigherQ, DayLowerQ, alpha=0.5, linewidth=0,
+                                    color="red")
+    Plots[1][Index][1].plot(Months, DayLowerQ, color="red", linewidth=1, linestyle = "--")
+    Plots[1][Index][1].plot(Months, DayMedian, color="red", linewidth=1, linestyle = "-")
+    Plots[1][Index][1].plot(Months, DayHigherQ, color="red", linewidth=1, linestyle = "--")
 
-    Width = 0.125
-    dx = 0.5
-    MonthsDay = [x + dx - Width for x in range(1, 13)]
-    MonthsNight = [x + dx + Width for x in range(1, 13)]
-    for Region in WindSpeedData.keys():
-        if RegionName in Region:
+    Plots[1][Index][2].fill_between(Months, NightHigherQ, NightLowerQ, alpha=0.5, linewidth=0,
+                                    color="blue")
+    Plots[1][Index][2].plot(Months, NightLowerQ, color="blue", linewidth=1, linestyle="--")
+    Plots[1][Index][2].plot(Months, NightMedian, color="blue", linewidth=1, linestyle="-")
+    Plots[1][Index][2].plot(Months, NightHigherQ, color="blue", linewidth=1, linestyle="--")
 
-            WindSpeedData[Region] = np.array(WindSpeedData[Region])
-
-            Plots[2][Index][0].fill_between(MonthsDay, WindSpeedData[Region][0, :], WindSpeedData[Region][2, :],
-                                            color="red", alpha=0.25)
-            Plots[2][Index][0].plot(
-                MonthsDay, WindSpeedData[Region][1, :], "--r", linewidth=1)
-            Plots[2][Index][1].fill_between(MonthsNight, WindSpeedData[Region][3, :], WindSpeedData[Region][5, :],
-                                            color="blue", alpha=0.25)
-            Plots[2][Index][1].plot(
-                MonthsNight, WindSpeedData[Region][4, :], "--b", linewidth=1)
-
+    # Set title to middle column
     Plots[1][Index][1].set_title(IndexName[Index])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -422,6 +408,17 @@ def CheckNormality(DayTIDsPeriods, NightTIDsPeriods, RegionName):
 def GaussianDist(x, A, mu, sigma): 
     return (A/(sigma*(2.0*np.pi)**0.5))*np.exp(-0.5*((x-mu)/sigma)**2.0)
 
+def RemovePeriodOutliers(SamplePeriods):
+    PeriodIQR = iqr(SamplePeriods)
+    PeriodQ1, PeriodQ3 = np.quantile(SamplePeriods, 0.25), np.quantile(SamplePeriods, 0.75)
+    PeriodValues_Outliers = np.argwhere((SamplePeriods < PeriodQ1 - 1.5*PeriodIQR) | (SamplePeriods > PeriodQ3 + 1.5*PeriodIQR))[:,0]
+    OutliersSamplePeriods = np.copy(SamplePeriods[PeriodValues_Outliers])
+    PeriodValues_NotOutliers = np.argwhere((SamplePeriods >= PeriodQ1 - 1.5*PeriodIQR) & (SamplePeriods <= PeriodQ3 + 1.5*PeriodIQR))[:,0]
+    SamplePeriods = SamplePeriods[PeriodValues_NotOutliers]
+    SamplePeriods.sort()
+
+    return SamplePeriods, OutliersSamplePeriods
+
 def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, RegionName):
     Period = 60.0*Period
 
@@ -449,22 +446,21 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
 
     DayTIDsPeriods = np.concatenate(tuple(DayTIDsPeriods))
     NightTIDsPeriods = np.concatenate(tuple(NightTIDsPeriods))
+
+    # Filter events that could be considered outliers given the saved periods
+    DayTIDsPeriods, OutliersDay = RemovePeriodOutliers(DayTIDsPeriods)
+    NightTIDsPeriods, OutliersNight = RemovePeriodOutliers(NightTIDsPeriods)
+
     CheckNormality(DayTIDsPeriods, NightTIDsPeriods, RegionName)
     ComparisonOfDayNightVarianceMean(DayTIDsPeriods, NightTIDsPeriods, RegionName)
 
-    for n, Periods_Name in enumerate(zip([DayTIDsPeriods, NightTIDsPeriods], ["Day", "Night"])):
+    for n, Periods_Name in enumerate(zip([(DayTIDsPeriods, OutliersDay), (NightTIDsPeriods, OutliersNight)], ["Day", "Night"])):
         # Extract the sample of periods
-        SamplePeriods = np.copy(Periods_Name[0])
-        SamplePeriods.sort()
+        SamplePeriods = np.copy(Periods_Name[0][0])
         # Extract color
         Color = DayNightColors[Periods_Name[1]]
 
-        # Filter events that could be considered outliers given the saved periods
-        PeriodIQR = iqr(SamplePeriods)
-        PeriodQ1, PeriodQ3 = np.quantile(SamplePeriods, 0.25), np.quantile(SamplePeriods, 0.75)
-        PeriodValues_Outliers = np.argwhere((SamplePeriods < PeriodQ1 - 1.5*PeriodIQR) | (SamplePeriods > PeriodQ3 + 1.5*PeriodIQR))[:,0]
-
-        PeriodRange = (SamplePeriods.min(), SamplePeriods.max())
+        PeriodRange = (SamplePeriods.min(), SamplePeriods.max())    
         # Setting number of bins by using the Scotts's rule
         BinWidth = 3.5 * SamplePeriods.std(ddof = 1) / (SamplePeriods.size ** (1/3))
         PeriodBins = int( (PeriodRange[1] - PeriodRange[0])/BinWidth )
@@ -482,10 +478,8 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         # Getting mean, deviation and skewness of period data and max value of Ocurrence
         Mean, Deviation = SamplePeriods.mean(), SamplePeriods.std(ddof = 1)
         MaxValue = GaussianKDE_eval.max()
-        Skewness = skew(SamplePeriods)
         # Setting parameters
-        ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue, center=Mean, 
-                                                          sigma=Deviation, gamma=Skewness)
+        ParametersExpGaussian = GaussianToFit.make_params(amplitude=MaxValue, center=Mean, sigma=Deviation)
         # Calculate best fit
         GaussianFitResult = GaussianToFit.fit(GaussianKDE_eval, ParametersExpGaussian, x = SamplePeriods)
 
@@ -507,16 +501,17 @@ def Add_PeriodHistogramToPlot(Period, Time_TIDs, Months_TIDs, Plots, Index, Regi
         # Adding gaussian kde curve
         #Plots[1][Index][n].plot(SamplePeriods, GaussianKDE.evaluate(SamplePeriods), 
         #                        linestyle="--", color="black", 
-        #                        linewidth=1.5, alpha = 0.5,
+        #                        linewidth=1.5, alpha = 0.65,
         #                        label=f"KDE\nh={GaussianKDE.factor:.3f}")
         # Adding gaussian curve by using the optimal parameters
         Plots[1][Index][n].plot(PeriodLinSampling, GaussianFitCurve, linestyle="--", color=Color, linewidth=1.5,
                              label=labelFit)
 
         # Plot outliers as dots in x-axis
-        Plots[1][Index][n].scatter(SamplePeriods[PeriodValues_Outliers], PeriodValues_Outliers.size*[0.0025], 
+        Plots[1][Index][n].scatter(Periods_Name[0][1], Periods_Name[0][1].size*[0.0025], 
                                    c = "black", s = 4.0, marker = "o")  
-
+        
+        Plots[1][Index][n].set_xlim(15.0, 60.0)
         Plots[1][Index][n].legend(prop={"size": 8})
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -533,7 +528,7 @@ def Add_BarsFreq_Month(Time_TIDs, Months_TIDs, Plots, Index, Nplots, RegionName)
                                      usecols=(0, 1), unpack=True, skiprows=1)
     SizeData = RiseHours.size
     DivH_12 = SizeData//12
-    RiseHours, SetHours = RiseHours[0:SizeData:DivH_12], SetHours[0:SizeData:DivH_12]
+    RiseHours, SetHours = RiseHours[::DivH_12], SetHours[::DivH_12]
 
     # Count number of events per month given the rise and set hours of the sun
     NumEventerPerMonth = []
