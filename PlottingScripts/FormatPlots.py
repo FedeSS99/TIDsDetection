@@ -71,13 +71,11 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
         # Run over every row, set the x limits for local time analysis and
         # months ticks for quantity dispersion and wind speed profiles
         for p in range(Nplots):
-            PLOTS[QUANT_VAR][1][p][1].set_xlim(1,13)
-            PLOTS[QUANT_VAR][1][p][2].set_xlim(1,13)
+            PLOTS[QUANT_VAR][1][p][1].set_xlim(1,12)
+            PLOTS[QUANT_VAR][1][p][2].set_xlim(1,12)
             
             PLOTS[QUANT_VAR][1][p][1].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, rotation = 90, ha="center")
             PLOTS[QUANT_VAR][1][p][2].set_xticks(ticks=MonthTicks, labels=MonthStrTicks, rotation = 90, ha="center")
-
-            PLOTS[QUANT_VAR][2][p][0].tick_params(axis="y", which="both", right=False, labelright=False)
             PLOTS[QUANT_VAR][1][p][2].tick_params(axis="y", which="both", left=False, labelleft=False)
 
         # Setting x ticks within 24 hours, with zero rotation and centered
@@ -85,7 +83,7 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
         PLOTS[QUANT_VAR][1][Nplots - 1][0].set_xlim(0.0, 24.0)
 
         # Modify the fixed positions and dimensiones of the subplots for
-        # better visualizationNplots
+        # better visualizationNplots                
         PLOTS[QUANT_VAR][0].tight_layout()
 
         # Reduce the separation between day and night analysis subplots to zero
@@ -105,22 +103,18 @@ def FormatAndSave_AllRegionPlots(Nplots, PLOTS):
         DictYLims = dict(
             LocalTime = 0.0,
             Power = 0.0,
-            WindSpeed = 0.0
         )
         for p in range(Nplots):
             MaxValPowerLT = PLOTS[QUANT_VAR][1][p][0].get_ylim()[1]
             MaxValPower = max([PLOTS[QUANT_VAR][1][p][n].get_ylim()[1] for n in range(1,3)])
-            MaxValWindSpeed = max([PLOTS[QUANT_VAR][2][p][n].get_ylim()[1] for n in range(2)])
 
             DictYLims["LocalTime"] = max(DictYLims["LocalTime"], MaxValPowerLT)
-            DictYLims["Power"] = max(DictYLims["Power"], MaxValPower)
-            DictYLims["WindSpeed"] = max(DictYLims["WindSpeed"], MaxValWindSpeed)
+            DictYLims["Power"] = max(DictYLims["Power"], MaxValPower)   
 
         for p in range(Nplots):
-            PLOTS[QUANT_VAR][1][p][0].set_ylim(top=DictYLims["LocalTime"])
-            for m, n in enumerate(range(1,3)):
-                PLOTS[QUANT_VAR][1][p][n].set_ylim(top=DictYLims["Power"])
-                PLOTS[QUANT_VAR][2][p][m].set_ylim(top=DictYLims["WindSpeed"])
+            PLOTS[QUANT_VAR][1][p][0].set_ylim(bottom = 0.0, top=DictYLims["LocalTime"])
+            for n in range(1,3):
+                PLOTS[QUANT_VAR][1][p][n].set_ylim(bottom = 0.0, top=DictYLims["Power"])
 
         SaveAllRegionPlot(f"{NAME_VAR}Variations", PLOTS[QUANT_VAR][0]) 
 
