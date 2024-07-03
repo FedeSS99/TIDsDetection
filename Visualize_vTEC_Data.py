@@ -21,8 +21,6 @@ def select_file(window):
     if window.cmn_file is not None:
         os.system('cls' if os.name == 'nt' else 'clear')
         cmn_file_path = window.cmn_file.name
-        new_path_name = cmn_file_path.split("/")[-1]
-        plot_name = new_path_name.split(".")[0]
 
         #------------------------------------------------------------------------------------
         with open(cmn_file_path, "+r") as cmn_file:
@@ -53,7 +51,7 @@ def select_file(window):
         #Getting dictionaries for time-vtec data without tendency using running average on .cmn file
         Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn = ObtainIntervalsWith_SGFilter(cmn_time_vtec_readings, time_window)
 
-        SignalPlots = CreateSignalPlotFigure(plot_name)
+        SignalPlots = CreateSignalPlotFigure()
         CMN_SignalPlots(Time_cmn, Vtec_cmn, TimeFilter_cmn, VtecFilter_cmn, SignalPlots)
 
 if __name__=="__main__":
