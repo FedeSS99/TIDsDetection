@@ -20,4 +20,4 @@ if __name__ == "__main__":
     InputRegionsData = CreateInputDictionary(
         SUBDIRECTORIES_REGIONS, DATA_COMMON_PATH, RESULTS_COMMON_PATH)
 
-    StarFullAnalysis(InputRegionsData, RegionsInfo)                 
+    StarFullAnalysis(InputRegionsData, RegionsInfo)
