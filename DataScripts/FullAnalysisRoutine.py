@@ -191,7 +191,7 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
         # Get average absolute amplitude for each region
         AveAbsAmplitude = (np.abs(Region_MinAmps) + Region_MaxAmps)/2.0
 
-        RegionResultsDict = {
+        RegionResultsDict = {                       
             "TIME": Region_TimeTID,
             "MONTH": Region_MonthArray,
             "YEAR": Region_YearArray,
@@ -220,7 +220,6 @@ def StarFullAnalysis(DICT_REGION_STATIONS, REGIONS_ATRIBS):
     # Obtain ColorMap and Norm to use for all the regions for Power IQR array
     PowerMedians_AllRegions = np.concatenate(tuple(PowerMedians_AllRegions))
     CMAP_PowerMed, NORM_PowerMed = ObtainCMAPandNORM(PowerMedians_AllRegions)
-
 
     # Save CMAP and NORM for each array in a pair of tuples
     CMAP = (CMAP_Ocurr, CMAP_PowerMed)

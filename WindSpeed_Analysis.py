@@ -7,8 +7,8 @@ import json
 
 import warnings
 
+from DataScripts.CommonDictionaries import TerminatorsDict
 from DataScripts.WSDataRoutines import ReadWSFile
-
 
 # Encoder class to save numpy arrays as lists in json files
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -16,14 +16,6 @@ class NumpyArrayEncoder(json.JSONEncoder):
         if isinstance(obj, ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
-    
-# Dictionary to extract filename of Terminator data for each region
-TerminatorsDict = {
-    "North":"./TerminatorData/TerminatorHours_North.dat",
-    "Center-MNIG":"./TerminatorData/TerminatorHours_Center.dat",
-    "Center-UCOE":"./TerminatorData/TerminatorHours_Center.dat",
-    "South":"./TerminatorData/TerminatorHours_South.dat"
-    }
 
 # Function to get all data in a zone given the latitudes and longitudes
 # [IntLat-1, IntLat, IntLat+1], [IntLong-1, IntLong, IntLong+1]
@@ -128,10 +120,10 @@ if __name__ == "__main__":
     WS_ListFiles = list(map(lambda x: WS_DataDir + "/" + x , listdir(WS_DataDir)))
 
     Coordinates = {
-        "North": dict(Lat=[31], Long=[116]),
+        "West": dict(Lat=[31], Long=[116]),
         "Center-MNIG": dict(Lat=[25], Long=[100]),
         "Center-UCOE": dict(Lat=[19], Long=[101]),
-        "South": dict(Lat=[20], Long=[87])
+        "East": dict(Lat=[20], Long=[87])
     }
     Hours = [12, 20]
 
@@ -217,7 +209,7 @@ if __name__ == "__main__":
 
             # Extracting rise and set hours for each region
             RiseHours, SetHours = loadtxt(TerminatorsDict[Region.split("_")[0]], dtype=float,
-                                        usecols=(1, 2), unpack=True, skiprows=1)
+                                        usecols=(0, 1), unpack=True, skiprows=1)
 
             NumMonthTerminator = linspace(0.0, 12.0, RiseHours.size)
             Subplots2[n].plot(RiseHours, NumMonthTerminator, "--k", linewidth=1.0)
