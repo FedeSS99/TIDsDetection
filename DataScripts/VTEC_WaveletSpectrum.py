@@ -127,7 +127,8 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     #periodicities of MSTIDs) 
     WaveletSpectrum = SubFigureWaveletCMN.pcolormesh(time_data_CMN, Periods, powerWavelet, cmap="jet") 
     SubFigureWaveletCMN.set_ylim(*extent[2:])
-    colorbar(WaveletSpectrum, ax=SubFigureMeanWaveletCMN)
+    colorbar(WaveletSpectrum, ax=SubFigureWaveletCMN, location = "bottom",
+             label = "Wavelet power (TEC units)²", aspect = 40)
 
     #Plotting cone of influence
     SubFigureWaveletCMN.plot(time_data_CMN, coi_Complex, "k-", linewidth=0.5)
@@ -143,6 +144,7 @@ def CMN_Scipy_WaveletAnalysis(time_data_CMN, vtec_data_CMN, scales_j, coi_Comple
     SubFigureMeanWaveletCMN.invert_yaxis()
 
     MainFigure.tight_layout()
+    
 
     DotsSpectrum = MainFigure.ginput(-1, timeout=0, show_clicks=True)
     TIDsRegions = []
