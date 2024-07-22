@@ -11,8 +11,8 @@ DayNightColors = dict(Day="red", Night="blue")
 
 # Dictionary to assign title to each region subplot
 IndexName = {
-    0: "A) West",
-    1: "B) Center-MNIG",
-    2: "C) Center-UCOE",
-    3: "D) East"
+    0: "(A) West",
+    1: "(B) Center-MNIG",
+    2: "(C) Center-UCOE",
+    3: "(D) East"
     }

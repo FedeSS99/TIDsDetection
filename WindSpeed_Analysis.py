@@ -7,7 +7,7 @@ import json
 
 import warnings
 
-from DataScripts.CommonDictionaries import TerminatorsDict
+from DataScripts.CommonDictionaries import TerminatorsDict, IndexName
 from DataScripts.WSDataRoutines import ReadWSFile
 
 # Encoder class to save numpy arrays as lists in json files
@@ -167,9 +167,9 @@ if __name__ == "__main__":
             Subplots1.append(Figure1.add_subplot(N,2,HourIndex))
             Subplots1.append(Figure1.add_subplot(N,2,MonthIndex))
             Subplots2.append(Figure2.add_subplot(2,2,n+1))
-            Subplots1[HourIndex-1].set_title(Region)
+            Subplots1[HourIndex-1].set_title(IndexName[n])
             Subplots1[HourIndex-1].set_ylabel(Label)
-            Subplots2[n].set_title(Region)
+            Subplots2[n].set_title(IndexName[n])
 
             # PLOTTING MONTH DISPERSION
             # ------------------------------------------------------------------------------------------------
