@@ -42,9 +42,7 @@ The project, as already told, is divided in three different programs with differ
 
   The scrip will notify you in the terminal if there is no more data to show.
 
-- **TIDs_StatsAnalysis.py**: This script is the final step in the project since it implements different statistical procedures like boxplots, probability density functions and model fitting.
+- **TIDs_StatsAnalysis.py**: This script is the final step in the project since it implements different statistical procedures like boxplots, probability density functions and model fitting. To do so, the script receives the paths for all "Regions" which have "Stations" folders with TIDs' output data generated with **WaveletAnalaysisCMN.py**; it will create statistical analysis for each region, station and general figures that includes all the regions.
 
 ## Article
 The article in which the present software was used and primarily used is show in the following link [MSTIDs article](https://www.mdpi.com/2886434).
-
-  To do so, the script receives the paths for all "Regions" which have "Stations" folders with TIDs' output data generated with **WaveletAnalaysisCMN.py**; it will create statistical analysis for each region, station and general figures that includes all the regions.
